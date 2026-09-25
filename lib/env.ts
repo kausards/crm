@@ -14,6 +14,7 @@ const envSchema = z.object({
   EMAIL_FROM: z.string().email().optional().default('noreply@yourdomain.com'),
   UPSTASH_REDIS_REST_URL: z.string().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
+  COURIER_WEBHOOK_SECRET: z.string().optional(),
   SENTRY_DSN: z.string().optional(),
   SUPER_ADMIN_USER_ID: z.string().optional(),
 });

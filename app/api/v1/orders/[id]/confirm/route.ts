@@ -33,11 +33,44 @@ export async function POST(
       return errorResponse('BAD_REQUEST', `Cannot confirm order with current status: ${order.status}`, 400);
     }
 
-    // 2. Determine courier provider to use
+    // 2. Pre-flight validation: check stock availability for all items in order
+    const orderItems = order.order_items || [];
+    if (orderItems.length === 0) {
+      return errorResponse('BAD_REQUEST', 'Cannot confirm an order with no items', 400);
+    }
+
+    const productIds = orderItems.map((item: { product_id: string }) => item.product_id);
+    const { data: products, error: prodErr } = await supabase
+      .from('products')
+      .select('id, name, stock_quantity')
+      .in('id', productIds)
+      .eq('tenant_id', auth.tenantId);
+
+    if (prodErr || !products) {
+      return errorResponse('INTERNAL_ERROR', 'Failed to verify inventory levels', 500);
+    }
+
+    const productMap = new Map(products.map((p) => [p.id, p]));
+    const stockErrors: string[] = [];
+
+    for (const item of orderItems) {
+      const prod = productMap.get(item.product_id);
+      if (!prod) {
+        stockErrors.push(`Product ID ${item.product_id} not found`);
+      } else if (prod.stock_quantity < item.quantity) {
+        stockErrors.push(`"${prod.name}": requires ${item.quantity}, available: ${prod.stock_quantity}`);
+      }
+    }
+
+    if (stockErrors.length > 0) {
+      return errorResponse('CONFLICT', `Insufficient inventory to confirm order: ${stockErrors.join('; ')}`, 409);
+    }
+
+    // 3. Determine courier provider to use
     const body = await req.json().catch(() => ({}));
     const chosenProvider = body.courier_provider || order.courier_provider || 'steadfast';
 
-    // 3. Retrieve decrypted courier credentials for tenant
+    // 4. Retrieve decrypted courier credentials for tenant
     const { data: credsRow } = await supabase
       .from('courier_credentials')
       .select('*')

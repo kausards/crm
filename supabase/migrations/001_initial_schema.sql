@@ -9,7 +9,7 @@ create or replace function auth.tenant_id() returns uuid as $$
     (auth.jwt() -> 'app_metadata' ->> 'tenant_id')::uuid,
     (auth.jwt() -> 'user_metadata' ->> 'tenant_id')::uuid
   );
-$$ language sql stable;
+$$ language sql stable security definer set search_path = public;
 
 -- Helper to check if current user is owner
 create or replace function auth.is_owner() returns boolean as $$
@@ -19,7 +19,7 @@ create or replace function auth.is_owner() returns boolean as $$
       and tenant_id = auth.tenant_id()
       and role = 'owner'
   );
-$$ language sql stable;
+$$ language sql stable security definer set search_path = public;
 
 -- 2. Tenants table (one per subscribed store/business)
 create table if not exists public.tenants (

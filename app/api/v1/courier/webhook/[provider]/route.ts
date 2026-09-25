@@ -2,6 +2,9 @@ import { NextRequest } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { logStockMovement } from '@/lib/accounting/stockMovement';
 import { successResponse, errorResponse } from '@/lib/apiResponse';
+import { timingSafeCompare } from '@/lib/encryption';
+
+const VALID_PROVIDERS = ['steadfast', 'pathao', 'redx'];
 
 export async function POST(
   req: NextRequest,
@@ -9,7 +12,28 @@ export async function POST(
 ) {
   try {
     const { provider } = await params;
-    const body = await req.json();
+
+    if (!VALID_PROVIDERS.includes(provider)) {
+      return errorResponse('BAD_REQUEST', `Unsupported courier provider: ${provider}`, 400);
+    }
+
+    // Webhook authorization check if secret is configured
+    const configuredSecret = process.env.COURIER_WEBHOOK_SECRET;
+    if (configuredSecret) {
+      const { searchParams } = new URL(req.url);
+      const incomingSecret =
+        req.headers.get('x-webhook-secret') ||
+        req.headers.get('x-pathao-signature') ||
+        req.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ||
+        searchParams.get('secret') ||
+        '';
+
+      if (!incomingSecret || !timingSafeCompare(incomingSecret, configuredSecret)) {
+        return errorResponse('UNAUTHORIZED', 'Invalid or missing webhook signature/secret', 401);
+      }
+    }
+
+    const body = await req.json().catch(() => ({}));
 
     // Provider specific consignment identification
     let consignmentId: string | null = null;
@@ -35,6 +59,7 @@ export async function POST(
       .from('courier_shipments')
       .select('*, orders(*, order_items(*))')
       .eq('consignment_id', consignmentId)
+      .eq('provider', provider)
       .single();
 
     if (!shipment || !shipment.orders) {
@@ -69,17 +94,19 @@ export async function POST(
       })
       .eq('id', shipment.id);
 
-    // 4. Update order status
-    await supabaseAdmin
-      .from('orders')
-      .update({
-        status: mappedStatus as unknown as 'delivered',
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', order.id);
+    // 4. Update order status if changed
+    if (order.status !== mappedStatus) {
+      await supabaseAdmin
+        .from('orders')
+        .update({
+          status: mappedStatus as unknown as 'delivered',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', order.id);
+    }
 
-    // 5. If RETURNED/RTO:
-    // a) Restore stock
+    // 5. If RETURNED/RTO and not previously recorded as returned:
+    // a) Restore stock deterministically
     // b) Log return cost into bill_costs (category: 'return_cost')
     if (isReturned && order.status !== 'returned') {
       for (const item of order.order_items || []) {
@@ -112,6 +139,8 @@ export async function POST(
       provider,
       consignmentId,
       status: mappedStatus,
+      isDelivered,
+      isReturned,
     });
   } catch (err: unknown) {
     console.error('Webhook error:', err);
