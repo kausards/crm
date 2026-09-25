@@ -81,17 +81,17 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   const refreshUser = async () => {
     try {
       const data = await fetchApi<{
-        user: { id: string; email: string };
-        profile: { tenant_id: string; role: 'owner' | 'staff'; full_name: string | null };
-        tenant: { business_name: string; plan: 'trial' | 'basic' | 'pro'; subscription_status: string };
+        user: { id: string; email: string; fullName?: string | null; role?: 'owner' | 'staff'; tenantId?: string };
+        profile?: { tenant_id: string; role: 'owner' | 'staff'; full_name: string | null };
+        tenant?: { id: string; business_name: string; plan: 'trial' | 'basic' | 'pro'; subscription_status: string };
       }>('/api/v1/auth/me');
 
-      if (data && data.profile) {
+      if (data && data.user) {
         setUser({
           id: data.user.id,
-          tenant_id: data.profile.tenant_id,
-          role: data.profile.role,
-          full_name: data.profile.full_name,
+          tenant_id: data.profile?.tenant_id || data.user.tenantId || data.tenant?.id || '',
+          role: data.profile?.role || data.user.role || 'staff',
+          full_name: data.profile?.full_name || data.user.fullName || null,
           email: data.user.email,
           business_name: data.tenant?.business_name,
           plan: data.tenant?.plan,

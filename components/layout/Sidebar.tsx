@@ -94,6 +94,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             const isActive =
               item.href === '/dashboard'
                 ? pathname === '/dashboard' || pathname === '/'
+                : item.href === '/orders'
+                ? pathname === '/orders'
                 : pathname.startsWith(item.href);
 
             return (

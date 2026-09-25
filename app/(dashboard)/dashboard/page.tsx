@@ -75,16 +75,22 @@ export default function DashboardPage() {
   });
 
   // 3. Fetch Products for Low Stock Alert
-  const { data: productsData } = useQuery<ProductItem[]>({
+  const { data: productsData } = useQuery<{ items: ProductItem[] } | ProductItem[]>({
     queryKey: ['dashboard-products'],
-    queryFn: () => fetchApi('/api/v1/products'),
+    queryFn: () => fetchApi('/api/v1/products?limit=100'),
   });
 
-  const lowStockItems = (productsData || []).filter(
+  const productList: ProductItem[] = Array.isArray(productsData)
+    ? productsData
+    : productsData?.items || [];
+
+  const lowStockItems = productList.filter(
     (p) => p.stock_quantity <= p.low_stock_threshold
   );
 
-  const recentOrders = ordersData?.items || [];
+  const recentOrders: OrderItem[] = Array.isArray(ordersData)
+    ? ordersData
+    : ordersData?.items || [];
   const pendingOrdersCount = recentOrders.filter(
     (o) => o.status === 'pending' || o.status === 'flagged'
   ).length;

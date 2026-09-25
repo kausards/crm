@@ -15,8 +15,22 @@ export function successResponse<T>(data: T, status = 200) {
   return NextResponse.json({ success: true, data }, { status });
 }
 
-export function paginatedResponse<T>(data: T[], pagination: { total: number; page: number; limit: number; totalPages: number }, status = 200) {
-  return NextResponse.json({ success: true, data, pagination }, { status });
+export function paginatedResponse<T>(
+  data: T[],
+  pagination: { total: number; page: number; limit: number; totalPages: number },
+  status = 200
+) {
+  return NextResponse.json(
+    {
+      success: true,
+      data: {
+        items: data,
+        pagination,
+      },
+      pagination,
+    },
+    { status }
+  );
 }
 
 export function errorResponse(

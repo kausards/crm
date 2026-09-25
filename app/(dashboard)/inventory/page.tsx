@@ -154,7 +154,7 @@ export default function InventoryPage() {
     });
   };
 
-  const products = data?.items || [];
+  const products: ProductItem[] = Array.isArray(data) ? data : data?.items || [];
   const pagination = data?.pagination || { total: 0, totalPages: 1, page: 1 };
 
   return (

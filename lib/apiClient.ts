@@ -9,7 +9,14 @@ export interface ApiResponse<T = unknown> {
   error?: {
     code: string;
     message: string;
+    fields?: Record<string, string[]>;
     details?: unknown;
+  };
+  pagination?: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
   };
 }
 
@@ -17,13 +24,15 @@ export class ApiError extends Error {
   code: string;
   status: number;
   details?: unknown;
+  fields?: Record<string, string[]>;
 
-  constructor(code: string, message: string, status: number, details?: unknown) {
+  constructor(code: string, message: string, status: number, details?: unknown, fields?: Record<string, string[]>) {
     super(message);
     this.name = 'ApiError';
     this.code = code;
     this.status = status;
     this.details = details;
+    this.fields = fields;
   }
 }
 
@@ -60,12 +69,31 @@ export async function fetchApi<T = unknown>(
   }));
 
   if (!res.ok || !json.success) {
+    let message = json.error?.message || 'Something went wrong';
+    if (json.error?.fields) {
+      const fieldList = Object.entries(json.error.fields)
+        .map(([field, msgs]) => `${field.replace(/_/g, ' ')}: ${msgs.join(', ')}`)
+        .join('; ');
+      if (fieldList) {
+        message = `${message} (${fieldList})`;
+      }
+    }
+
     throw new ApiError(
       json.error?.code || 'ERROR',
-      json.error?.message || 'Something went wrong',
+      message,
       res.status,
-      json.error?.details
+      json.error?.details,
+      json.error?.fields
     );
+  }
+
+  // Handle paginated responses where data was an array but pagination was at root
+  if (json.pagination && Array.isArray(json.data)) {
+    return {
+      items: json.data,
+      pagination: json.pagination,
+    } as unknown as T;
   }
 
   return json.data;

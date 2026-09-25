@@ -40,12 +40,15 @@ export default function NewOrderPage() {
   ]);
 
   // Fetch available products
-  const { data: products, isLoading: productsLoading } = useQuery<ProductOption[]>({
+  const { data: productsData } = useQuery<{ items: ProductOption[] } | ProductOption[]>({
     queryKey: ['products-options'],
-    queryFn: () => fetchApi('/api/v1/products'),
+    queryFn: () => fetchApi('/api/v1/products?limit=100'),
   });
 
-  const productMap = new Map((products || []).map((p) => [p.id, p]));
+  const productList: ProductOption[] = Array.isArray(productsData)
+    ? productsData
+    : productsData?.items || [];
+  const productMap = new Map(productList.map((p) => [p.id, p]));
 
   // Auto calculate totals
   const itemsSubtotal = items.reduce((acc, row) => {
@@ -226,7 +229,7 @@ export default function NewOrderPage() {
                         required
                       >
                         <option value="">Select a product...</option>
-                        {(products || []).map((p) => (
+                        {productList.map((p) => (
                           <option key={p.id} value={p.id}>
                             {p.name} (Stock: {p.stock_quantity}) — {formatBDT(p.sell_price)}
                           </option>

@@ -133,7 +133,7 @@ export default function OrdersPage() {
     },
   });
 
-  const orders = data?.items || [];
+  const orders: OrderRecord[] = Array.isArray(data) ? data : data?.items || [];
   const pagination = data?.pagination || { total: 0, totalPages: 1, page: 1 };
 
   const handleOpenConfirm = (order: OrderRecord) => {
@@ -160,15 +160,17 @@ export default function OrdersPage() {
       o.created_at,
     ]);
 
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
+    link.setAttribute('href', url);
     link.setAttribute('download', `orders_export_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast('Orders exported to CSV', 'success');
+    URL.revokeObjectURL(url);
+    toast('Orders exported to CSV with UTF-8 encoding', 'success');
   };
 
   return (

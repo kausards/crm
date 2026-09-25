@@ -19,6 +19,14 @@ export async function GET() {
         email: auth.email,
         fullName: auth.fullName,
         role: auth.role,
+        tenantId: auth.tenantId,
+      },
+      profile: {
+        id: auth.userId,
+        tenant_id: auth.tenantId,
+        role: auth.role,
+        full_name: auth.fullName,
+        email: auth.email,
       },
       tenant: tenant || {
         id: auth.tenantId,

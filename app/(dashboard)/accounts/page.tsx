@@ -135,7 +135,9 @@ export default function AccountsPage() {
     }
   };
 
-  const expenses = billsData?.items || [];
+  const expenses: BillCostItem[] = Array.isArray(billsData)
+    ? billsData
+    : billsData?.items || [];
 
   return (
     <div className="space-y-6">
