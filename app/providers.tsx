@@ -14,6 +14,7 @@ interface UserProfile {
   business_name?: string;
   plan?: 'trial' | 'basic' | 'pro';
   subscription_status?: string;
+  is_super_admin?: boolean;
 }
 
 interface ToastMessage {
@@ -81,7 +82,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   const refreshUser = async () => {
     try {
       const data = await fetchApi<{
-        user: { id: string; email: string; fullName?: string | null; role?: 'owner' | 'staff'; tenantId?: string };
+        user: { id: string; email: string; fullName?: string | null; role?: 'owner' | 'staff'; tenantId?: string; isSuperAdmin?: boolean };
         profile?: { tenant_id: string; role: 'owner' | 'staff'; full_name: string | null };
         tenant?: { id: string; business_name: string; plan: 'trial' | 'basic' | 'pro'; subscription_status: string };
       }>('/api/v1/auth/me');
@@ -96,6 +97,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
           business_name: data.tenant?.business_name,
           plan: data.tenant?.plan,
           subscription_status: data.tenant?.subscription_status,
+          is_super_admin: Boolean(data.user.isSuperAdmin),
         });
       } else {
         setUser(null);

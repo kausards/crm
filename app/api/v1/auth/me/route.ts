@@ -13,6 +13,14 @@ export async function GET() {
       .eq('id', auth.tenantId)
       .single();
 
+    const superAdminId = process.env.SUPER_ADMIN_USER_ID;
+    const superAdminEmail = (process.env.SUPER_ADMIN_EMAIL || 'kausar.test@crmdemo.com').toLowerCase();
+    const userEmail = (auth.email || '').toLowerCase();
+    const isSuper = Boolean(
+      (superAdminId && auth.userId === superAdminId) ||
+      (userEmail && userEmail === superAdminEmail)
+    );
+
     return successResponse({
       user: {
         id: auth.userId,
@@ -20,6 +28,7 @@ export async function GET() {
         fullName: auth.fullName,
         role: auth.role,
         tenantId: auth.tenantId,
+        isSuperAdmin: isSuper,
       },
       profile: {
         id: auth.userId,

@@ -30,3 +30,7 @@ export const updateOrderStatusSchema = z.object({
   ]),
   notes: z.string().optional(),
 });
+
+export const updateCodCollectedSchema = z.object({
+  cod_collected: z.number().min(0, 'Collected amount cannot be negative'),
+});

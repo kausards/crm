@@ -45,12 +45,18 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#070b14] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <div className="inline-flex w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 items-center justify-center text-emerald-400 text-2xl mb-4">
-          ⚡
+    <div className="min-h-screen bg-[#0B0810] flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Background Glow Halos */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-brand-violet/15 blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full bg-brand-magenta/15 blur-[100px] pointer-events-none" />
+
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center relative z-10">
+        <div className="inline-flex w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-violet to-brand-magenta p-0.5 shadow-glow-violet items-center justify-center mb-4">
+          <div className="w-full h-full bg-[#0B0810] rounded-[14px] flex items-center justify-center text-purple-300 text-2xl font-bold">
+            ⚡
+          </div>
         </div>
-        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+        <h2 className="font-sora text-2xl sm:text-3xl font-bold tracking-tight text-white">
           Sign in to your store
         </h2>
         <p className="mt-2 text-sm text-slate-400">
@@ -58,10 +64,10 @@ export default function LoginPage() {
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4">
-        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl backdrop-blur-md">
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 relative z-10">
+        <div className="bg-[#15121A]/90 border border-white/[0.08] rounded-3xl p-6 sm:p-8 shadow-glow-card backdrop-blur-2xl">
           {error && (
-            <div className="mb-5 p-3 rounded-xl bg-rose-950/60 border border-rose-800/80 text-rose-300 text-xs font-medium">
+            <div className="mb-5 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-medium">
               {error}
             </div>
           )}
@@ -102,7 +108,7 @@ export default function LoginPage() {
             Don&apos;t have an account yet?{' '}
             <Link
               href="/signup"
-              className="text-emerald-400 hover:text-emerald-300 font-semibold underline underline-offset-4"
+              className="text-brand-magenta hover:text-pink-300 font-semibold underline underline-offset-4"
             >
               Register your store
             </Link>
@@ -112,3 +118,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

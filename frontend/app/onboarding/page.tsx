@@ -46,12 +46,16 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#070b14] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-xl text-center mb-8">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold mb-3">
+    <div className="min-h-screen bg-[#0B0810] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Background Glow Halos */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-brand-violet/15 blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full bg-brand-magenta/15 blur-[100px] pointer-events-none" />
+
+      <div className="sm:mx-auto sm:w-full sm:max-w-xl text-center mb-8 relative z-10">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-violet/20 border border-brand-violet/40 text-purple-200 text-xs font-semibold mb-3 shadow-glow-violet">
           Step 2 of 2: Baseline Accounting
         </div>
-        <h1 className="text-3xl font-bold tracking-tight text-white">
+        <h1 className="font-sora text-3xl font-bold tracking-tight text-white">
           Configure Opening Balances
         </h1>
         <p className="mt-2 text-sm text-slate-400">
@@ -59,10 +63,10 @@ export default function OnboardingPage() {
         </p>
       </div>
 
-      <div className="sm:mx-auto sm:w-full sm:max-w-xl">
-        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl backdrop-blur-md">
+      <div className="sm:mx-auto sm:w-full sm:max-w-xl relative z-10">
+        <div className="bg-[#15121A]/90 border border-white/[0.08] rounded-3xl p-6 sm:p-8 shadow-glow-card backdrop-blur-2xl">
           {error && (
-            <div className="mb-6 p-3 rounded-xl bg-rose-950/60 border border-rose-800/80 text-rose-300 text-xs font-medium">
+            <div className="mb-6 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-medium">
               {error}
             </div>
           )}
@@ -119,7 +123,7 @@ export default function OnboardingPage() {
               <button
                 type="button"
                 onClick={() => router.push('/dashboard')}
-                className="text-xs text-slate-400 hover:text-slate-200 transition-colors"
+                className="text-xs text-slate-400 hover:text-white transition-colors"
               >
                 Skip for now
               </button>
@@ -128,6 +132,7 @@ export default function OnboardingPage() {
                 id="onboarding-submit-button"
                 type="submit"
                 variant="primary"
+                size="md"
                 isLoading={loading}
               >
                 Save & Open Dashboard →
@@ -139,3 +144,4 @@ export default function OnboardingPage() {
     </div>
   );
 }
+

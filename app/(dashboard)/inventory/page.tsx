@@ -6,11 +6,11 @@ import {
   Boxes,
   Plus,
   Search,
-  Edit2,
-  Trash2,
   ArrowUpDown,
   AlertTriangle,
   TrendingUp,
+  Trash2,
+  PackageCheck,
 } from 'lucide-react';
 import { fetchApi, formatBDT } from '@/lib/apiClient';
 import { useAuth, useToast } from '@/app/providers';
@@ -81,7 +81,7 @@ export default function InventoryPage() {
       setAddModalOpen(false);
       resetAddForm();
       queryClient.invalidateQueries({ queryKey: ['products'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-products'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
     },
     onError: (err: unknown) => {
       toast(err instanceof Error ? err.message : 'Failed to create product', 'error');
@@ -100,7 +100,7 @@ export default function InventoryPage() {
       setAdjustModalOpen(false);
       setSelectedProduct(null);
       queryClient.invalidateQueries({ queryKey: ['products'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-products'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
     },
     onError: (err: unknown) => {
       toast(err instanceof Error ? err.message : 'Failed to adjust stock', 'error');
@@ -114,6 +114,7 @@ export default function InventoryPage() {
     onSuccess: () => {
       toast('Product archived', 'info');
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
     },
     onError: (err: unknown) => {
       toast(err instanceof Error ? err.message : 'Failed to archive product', 'error');
@@ -160,59 +161,117 @@ export default function InventoryPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-            Inventory & Stock Control
-          </h2>
-          <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
-            Real-time multi-item inventory tracking with immutable stock ledger
+          <div className="flex items-center gap-2">
+            <span className="px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-300 text-[10px] font-mono font-medium border border-violet-500/25">
+              Stock Ledger
+            </span>
+          </div>
+          <h1 className="font-headline font-bold text-2xl md:text-3xl text-white tracking-tight mt-1.5">
+            Products &amp; Inventory
+          </h1>
+          <p className="text-xs text-slate-400 mt-0.5 font-body">
+            Real-time stock valuation, wholesale margins &amp; warehouse allocations
           </p>
         </div>
 
         {isOwner && (
-          <Button variant="primary" size="sm" onClick={() => setAddModalOpen(true)}>
-            <Plus className="w-4 h-4" />
-            <span>Add New Product</span>
-          </Button>
+          <button
+            type="button"
+            onClick={() => setAddModalOpen(true)}
+            className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 text-white text-xs font-semibold rounded-xl shadow-lg shadow-violet-600/30 active:scale-[0.98] transition-all"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Add Product</span>
+          </button>
         )}
       </div>
 
-      {/* Search & Actions Bar */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg flex items-center gap-3">
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+      {/* 4 Metric Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <div className="glass-card p-4 relative overflow-hidden">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-label uppercase tracking-wider text-slate-400 font-semibold">Total SKUs</span>
+            <Boxes className="w-4 h-4 text-violet-400" />
+          </div>
+          <div className="text-2xl font-headline font-bold text-white mt-2 tabular-nums">
+            {pagination.total}
+          </div>
+          <p className="text-[11px] text-slate-500 mt-1 font-body">Active items in catalog</p>
+        </div>
+
+        <div className="glass-card p-4 relative overflow-hidden">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-label uppercase tracking-wider text-slate-400 font-semibold">Inventory Value</span>
+            <TrendingUp className="w-4 h-4 text-emerald-400" />
+          </div>
+          <div className="text-2xl font-headline font-bold text-emerald-400 mt-2 tabular-nums font-mono">
+            {formatBDT(products.reduce((acc, p) => acc + (p.buy_price * p.stock_quantity), 0))}
+          </div>
+          <p className="text-[11px] text-emerald-400/80 mt-1 font-body">Wholesale buy valuation</p>
+        </div>
+
+        <div className="glass-card p-4 relative overflow-hidden">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-label uppercase tracking-wider text-slate-400 font-semibold">Low Stock</span>
+            <AlertTriangle className="w-4 h-4 text-amber-400" />
+          </div>
+          <div className="text-2xl font-headline font-bold text-amber-400 mt-2 tabular-nums">
+            {products.filter((p) => p.stock_quantity <= p.low_stock_threshold && p.stock_quantity > 0).length}
+          </div>
+          <p className="text-[11px] text-amber-400/80 mt-1 font-body">Below safety threshold</p>
+        </div>
+
+        <div className="glass-card p-4 relative overflow-hidden">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-label uppercase tracking-wider text-slate-400 font-semibold">Out of Stock</span>
+            <AlertTriangle className="w-4 h-4 text-rose-400" />
+          </div>
+          <div className="text-2xl font-headline font-bold text-rose-400 mt-2 tabular-nums">
+            {products.filter((p) => p.stock_quantity <= 0).length}
+          </div>
+          <p className="text-[11px] text-rose-400/80 mt-1 font-body">Requires immediate purchase</p>
+        </div>
+      </div>
+
+      {/* Search Ribbon */}
+      <div className="glass-card p-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div className="relative flex-1 max-w-md">
+          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
+            id="catalog-search"
             type="text"
-            placeholder="Search products by title or SKU..."
+            placeholder="Search SKU tag, product title..."
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
               setPage(1);
             }}
-            className="w-full pl-10 pr-4 py-2 bg-slate-950/70 border border-slate-800 rounded-xl text-xs sm:text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="glass-input w-full pl-9 pr-3 py-2 text-xs"
           />
         </div>
+
         {search && (
           <button
             onClick={() => setSearch('')}
-            className="text-xs text-slate-400 hover:text-white px-2 py-1"
+            className="text-xs text-slate-400 hover:text-white px-2 py-1 font-label"
           >
-            Clear
+            Clear filter
           </button>
         )}
       </div>
 
-      {/* Products Table */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+      {/* Products Glass Table */}
+      <div className="glass-card overflow-hidden">
         {isLoading ? (
-          <div className="py-20 text-center text-xs text-slate-500">
-            Loading products...
+          <div className="py-20 text-center text-xs text-slate-500 font-body">
+            Loading products catalog...
           </div>
         ) : products.length === 0 ? (
           <div className="py-20 text-center">
-            <Boxes className="w-12 h-12 text-slate-600 mx-auto mb-2" />
-            <p className="text-sm text-slate-400">No products found in inventory.</p>
+            <Boxes className="w-10 h-10 text-slate-600 mx-auto mb-2" />
+            <p className="text-sm text-slate-400 font-headline font-semibold">No products in inventory</p>
             {isOwner && (
               <Button
                 variant="primary"
@@ -220,54 +279,54 @@ export default function InventoryPage() {
                 className="mt-3"
                 onClick={() => setAddModalOpen(true)}
               >
-                Add Your First Product
+                Add First Product
               </Button>
             )}
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-950/80 border-b border-slate-800 text-slate-400 uppercase font-semibold">
+              <thead className="bg-white/[0.02] border-b border-white/10 text-slate-400 uppercase font-label text-[11px] tracking-wider">
                 <tr>
-                  <th className="py-3 px-4">Product Name</th>
-                  <th className="py-3 px-4">SKU</th>
-                  <th className="py-3 px-4">Wholesale (Buy)</th>
-                  <th className="py-3 px-4">Retail (Sell)</th>
-                  <th className="py-3 px-4">Gross Margin</th>
-                  <th className="py-3 px-4">Stock Level</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
+                  <th className="py-3.5 px-4 font-semibold">Product Name</th>
+                  <th className="py-3.5 px-4 font-semibold">SKU</th>
+                  <th className="py-3.5 px-4 font-semibold">Buy Price</th>
+                  <th className="py-3.5 px-4 font-semibold">Sell Price</th>
+                  <th className="py-3.5 px-4 font-semibold">Margin</th>
+                  <th className="py-3.5 px-4 font-semibold">Stock Qty</th>
+                  <th className="py-3.5 px-4 text-right font-semibold">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-white/[0.05]">
                 {products.map((prod) => {
-                  const isLow = prod.stock_quantity <= prod.low_stock_threshold;
+                  const isLow = prod.stock_quantity <= prod.low_stock_threshold && prod.stock_quantity > 0;
                   const isOutOfStock = prod.stock_quantity <= 0;
                   const unitMargin = prod.sell_price - prod.buy_price;
 
                   return (
                     <tr
                       key={prod.id}
-                      className="hover:bg-slate-800/30 transition-colors"
+                      className="hover:bg-white/[0.02] transition-colors"
                     >
-                      <td className="py-3 px-4 font-semibold text-white">
+                      <td className="py-3.5 px-4 font-semibold text-white">
                         {prod.name}
                       </td>
-                      <td className="py-3 px-4 font-mono text-slate-400">
+                      <td className="py-3.5 px-4 font-mono text-violet-300">
                         {prod.sku || '—'}
                       </td>
-                      <td className="py-3 px-4 text-slate-300">
+                      <td className="py-3.5 px-4 text-slate-400 font-mono">
                         {formatBDT(prod.buy_price)}
                       </td>
-                      <td className="py-3 px-4 font-bold text-white">
+                      <td className="py-3.5 px-4 font-mono font-bold text-white tabular-nums">
                         {formatBDT(prod.sell_price)}
                       </td>
-                      <td className="py-3 px-4 text-emerald-400 font-medium">
+                      <td className="py-3.5 px-4 text-emerald-400 font-mono font-medium">
                         +{formatBDT(unitMargin)}
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-3.5 px-4">
                         <div className="flex items-center gap-2">
                           <span
-                            className={`font-bold ${
+                            className={`font-bold font-mono tabular-nums ${
                               isOutOfStock
                                 ? 'text-rose-400'
                                 : isLow
@@ -275,30 +334,30 @@ export default function InventoryPage() {
                                 : 'text-slate-100'
                             }`}
                           >
-                            {prod.stock_quantity} units
+                            {prod.stock_quantity}
                           </span>
                           {isOutOfStock ? (
-                            <span className="px-1.5 py-0.5 rounded text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-label font-medium bg-rose-500/15 text-rose-300 border border-rose-500/30">
                               Out of Stock
                             </span>
                           ) : isLow ? (
-                            <span className="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-label font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30">
                               Low Stock
                             </span>
                           ) : null}
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
+                      <td className="py-3.5 px-4 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
                           <button
                             onClick={() => {
                               setSelectedProduct(prod);
                               setAdjustModalOpen(true);
                             }}
-                            title="Adjust Stock Quantity"
-                            className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors"
+                            title="Adjust Stock"
+                            className="px-2.5 py-1 bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 border border-white/10 rounded-lg text-xs font-label font-medium flex items-center gap-1 transition-all"
                           >
-                            <ArrowUpDown className="w-3 h-3" />
+                            <ArrowUpDown className="w-3 h-3 text-violet-400" />
                             <span>Adjust</span>
                           </button>
 
@@ -310,7 +369,7 @@ export default function InventoryPage() {
                                 }
                               }}
                               title="Archive Product"
-                              className="p-1 text-slate-500 hover:text-rose-400 hover:bg-slate-800 rounded-md"
+                              className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -327,8 +386,8 @@ export default function InventoryPage() {
 
         {/* Pagination */}
         {pagination.totalPages > 1 && (
-          <div className="flex items-center justify-between p-4 bg-slate-950/60 border-t border-slate-800 text-xs">
-            <span className="text-slate-400">
+          <div className="flex items-center justify-between p-4 bg-white/[0.02] border-t border-white/10 text-xs">
+            <span className="text-slate-400 font-label">
               Page {pagination.page} of {pagination.totalPages} ({pagination.total} products)
             </span>
             <div className="flex items-center gap-2">
@@ -357,7 +416,7 @@ export default function InventoryPage() {
       <Modal
         isOpen={addModalOpen}
         onClose={() => setAddModalOpen(false)}
-        title="Add New Inventory Product"
+        title="Add Inventory Product"
         maxWidth="lg"
       >
         <form onSubmit={handleAddSubmit} className="space-y-4">
@@ -371,7 +430,7 @@ export default function InventoryPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
-              label="SKU / Barcode (Optional)"
+              label="SKU / Barcode"
               placeholder="POLO-BLK-M"
               value={sku}
               onChange={(e) => setSku(e.target.value)}
@@ -381,7 +440,7 @@ export default function InventoryPage() {
               type="number"
               min="0"
               label="Low Stock Threshold"
-              helperText="Alert when inventory drops to or below"
+              helperText="Alerts trigger when quantity ≤ this"
               value={lowStockThreshold}
               onChange={(e) => setLowStockThreshold(Number(e.target.value))}
               required
@@ -393,7 +452,7 @@ export default function InventoryPage() {
               type="number"
               min="0"
               step="1"
-              label="Wholesale Buy Price (৳)"
+              label="Wholesale Buy (৳)"
               placeholder="350"
               value={buyPrice || ''}
               onChange={(e) => setBuyPrice(Number(e.target.value))}
@@ -404,7 +463,7 @@ export default function InventoryPage() {
               type="number"
               min="0"
               step="1"
-              label="Retail Sell Price (৳)"
+              label="Retail Sell (৳)"
               placeholder="650"
               value={sellPrice || ''}
               onChange={(e) => setSellPrice(Number(e.target.value))}
@@ -415,7 +474,7 @@ export default function InventoryPage() {
               type="number"
               min="0"
               step="1"
-              label="Initial Stock Quantity"
+              label="Initial Quantity"
               placeholder="50"
               value={initialStock || ''}
               onChange={(e) => setInitialStock(Number(e.target.value))}
@@ -436,7 +495,7 @@ export default function InventoryPage() {
               variant="primary"
               isLoading={createProductMutation.isPending}
             >
-              Create Product & Initialize Stock
+              Create Product
             </Button>
           </div>
         </form>
@@ -450,8 +509,8 @@ export default function InventoryPage() {
         maxWidth="md"
       >
         <form onSubmit={handleAdjustSubmit} className="space-y-4">
-          <p className="text-xs text-slate-300">
-            Current Stock: <strong className="text-white">{selectedProduct?.stock_quantity} units</strong>. Every adjustment is immutably logged in the stock ledger.
+          <p className="text-xs text-slate-400 font-body">
+            Current Stock: <strong className="text-white font-mono">{selectedProduct?.stock_quantity} units</strong>. Every adjustment is immutably logged.
           </p>
 
           <Select
@@ -459,22 +518,22 @@ export default function InventoryPage() {
             value={adjustDirection}
             onChange={(e) => setAdjustDirection(e.target.value as 'in' | 'out')}
             options={[
-              { value: 'in', label: 'Stock IN (+) — Received shipment or found stock' },
-              { value: 'out', label: 'Stock OUT (-) — Damaged, lost, or manual deduction' },
+              { value: 'in', label: 'Stock IN (+) — Received shipment / found inventory' },
+              { value: 'out', label: 'Stock OUT (-) — Damaged, returned to supplier, or lost' },
             ]}
           />
 
           <Input
             type="number"
             min="1"
-            label="Quantity to Adjust"
+            label="Units to Adjust"
             value={adjustQty}
             onChange={(e) => setAdjustQty(Number(e.target.value))}
             required
           />
 
           <Select
-            label="Reason for Adjustment"
+            label="Reason"
             value={adjustReason}
             onChange={(e) => setAdjustReason(e.target.value)}
             options={[
@@ -498,7 +557,7 @@ export default function InventoryPage() {
               variant="primary"
               isLoading={adjustStockMutation.isPending}
             >
-              Commit Stock Adjustment
+              Commit Adjustment
             </Button>
           </div>
         </form>

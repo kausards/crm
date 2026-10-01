@@ -185,6 +185,7 @@ export type Database = {
           is_flagged: boolean;
           flag_reason: string | null;
           courier_provider: CourierProvider | null;
+          cod_collected: number | null;
           created_at: string;
           updated_at: string;
         };
@@ -202,6 +203,7 @@ export type Database = {
           is_flagged?: boolean;
           flag_reason?: string | null;
           courier_provider?: CourierProvider | null;
+          cod_collected?: number | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -219,6 +221,7 @@ export type Database = {
           is_flagged?: boolean;
           flag_reason?: string | null;
           courier_provider?: CourierProvider | null;
+          cod_collected?: number | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -461,10 +464,44 @@ export type Database = {
         };
         Relationships: GenericRelationship[];
       };
+      customers: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          name: string;
+          phone: string;
+          address: string | null;
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          name: string;
+          phone: string;
+          address?: string | null;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          tenant_id?: string;
+          name?: string;
+          phone?: string;
+          address?: string | null;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: GenericRelationship[];
+      };
       due_ledger: {
         Row: {
           id: string;
           tenant_id: string;
+          customer_id: string | null;
           party_name: string;
           party_phone: string | null;
           type: 'credit' | 'debit';
@@ -476,6 +513,7 @@ export type Database = {
         Insert: {
           id?: string;
           tenant_id: string;
+          customer_id?: string | null;
           party_name: string;
           party_phone?: string | null;
           type: 'credit' | 'debit';
@@ -487,6 +525,7 @@ export type Database = {
         Update: {
           id?: string;
           tenant_id?: string;
+          customer_id?: string | null;
           party_name?: string;
           party_phone?: string | null;
           type?: 'credit' | 'debit';

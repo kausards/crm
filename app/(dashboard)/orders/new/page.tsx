@@ -162,8 +162,8 @@ export default function NewOrderPage() {
         {/* Left Column: Customer & Items */}
         <div className="lg:col-span-2 space-y-6">
           {/* Customer Details Card */}
-          <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-4">
-            <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">
+          <div className="bg-[#15121A] border border-white/[0.08] rounded-2xl p-5 shadow-glow-card space-y-4">
+            <h3 className="font-sora text-sm font-semibold text-slate-300 uppercase tracking-wider">
               Customer Information
             </h3>
 
@@ -195,7 +195,7 @@ export default function NewOrderPage() {
           </div>
 
           {/* Order Items Card */}
-          <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-4">
+          <div className="bg-[#15121A] border border-white/[0.08] rounded-2xl p-5 shadow-glow-card space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">
                 Order Items
@@ -218,14 +218,14 @@ export default function NewOrderPage() {
                 return (
                   <div
                     key={index}
-                    className="p-3 bg-slate-950/70 border border-slate-800 rounded-xl flex flex-col sm:flex-row items-center gap-3"
+                    className="p-3 bg-[#100D15] border border-white/[0.08] rounded-xl flex flex-col sm:flex-row items-center gap-3"
                   >
                     {/* Product Selector */}
                     <div className="w-full sm:flex-1">
                       <select
                         value={row.product_id}
                         onChange={(e) => handleProductChange(index, e.target.value)}
-                        className="w-full px-3 py-2 bg-slate-900 border border-slate-700/80 rounded-lg text-xs sm:text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        className="w-full px-3 py-2 bg-[#100D15] border border-white/10 rounded-xl text-xs sm:text-sm text-slate-100 focus:outline-none focus:ring-1 focus:ring-brand-violet transition-all"
                         required
                       >
                         <option value="">Select a product...</option>
@@ -244,7 +244,7 @@ export default function NewOrderPage() {
                         min="1"
                         value={row.quantity}
                         onChange={(e) => handleQuantityChange(index, parseInt(e.target.value) || 1)}
-                        className="w-full px-2.5 py-2 bg-slate-900 border border-slate-700/80 rounded-lg text-xs sm:text-sm text-center text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        className="w-full px-2.5 py-2 bg-[#100D15] border border-white/10 rounded-xl text-xs sm:text-sm text-center text-slate-100 focus:outline-none focus:ring-1 focus:ring-brand-violet transition-all"
                         placeholder="Qty"
                         required
                       />
@@ -257,7 +257,7 @@ export default function NewOrderPage() {
                         min="0"
                         value={row.sell_price}
                         onChange={(e) => handlePriceChange(index, parseFloat(e.target.value) || 0)}
-                        className="w-full px-2.5 py-2 bg-slate-900 border border-slate-700/80 rounded-lg text-xs sm:text-sm text-right text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        className="w-full px-2.5 py-2 bg-[#100D15] border border-white/10 rounded-xl text-xs sm:text-sm text-right text-slate-100 focus:outline-none focus:ring-1 focus:ring-brand-violet transition-all"
                         placeholder="Price"
                         required
                       />
@@ -287,7 +287,7 @@ export default function NewOrderPage() {
 
         {/* Right Column: Courier & Summary */}
         <div className="space-y-6">
-          <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-4">
+          <div className="bg-[#15121A] border border-white/[0.08] rounded-2xl p-5 shadow-glow-card space-y-4">
             <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">
               Delivery & Courier
             </h3>
@@ -336,7 +336,7 @@ export default function NewOrderPage() {
                 min="0"
                 value={deliveryCharge}
                 onChange={(e) => setDeliveryCharge(Number(e.target.value))}
-                className="w-full px-3 py-2 bg-slate-950/70 border border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full px-3 py-2 bg-[#100D15] border border-white/10 rounded-xl text-sm text-slate-100 focus:outline-none focus:ring-1 focus:ring-brand-violet transition-all"
               />
             </div>
 
@@ -349,13 +349,13 @@ export default function NewOrderPage() {
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Call before delivery, leave with guard, etc."
-                className="w-full px-3 py-2 bg-slate-950/70 border border-slate-800 rounded-xl text-xs sm:text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full px-3 py-2 bg-[#100D15] border border-white/10 rounded-xl text-xs sm:text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-brand-violet transition-all"
               />
             </div>
           </div>
 
           {/* Total & Checkout Card */}
-          <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-4">
+          <div className="bg-[#15121A] border border-white/[0.08] rounded-2xl p-5 shadow-glow-card space-y-4">
             <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">
               Order Pricing
             </h3>

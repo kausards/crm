@@ -39,8 +39,11 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/v1/billing/webhook') ||
     pathname.startsWith('/api/v1/auth/signup');
 
-  // If unauthenticated and trying to access dashboard/protected pages
-  if (!user && !isAuthRoute && !isPublicApi && !pathname.startsWith('/_next') && pathname !== '/favicon.ico') {
+  const isAdminRoute = pathname.startsWith('/admin');
+  const isAdminApi = pathname.startsWith('/api/v1/admin');
+
+  // If unauthenticated and trying to access dashboard/protected pages (excluding standalone admin portal)
+  if (!user && !isAuthRoute && !isPublicApi && !isAdminRoute && !isAdminApi && !pathname.startsWith('/_next') && pathname !== '/favicon.ico') {
     // Only redirect browser pages, not API calls (API calls return 401 JSON)
     if (!pathname.startsWith('/api/')) {
       return NextResponse.redirect(new URL('/login', request.url));

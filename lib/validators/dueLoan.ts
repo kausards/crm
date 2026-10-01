@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 export const createDueSchema = z.object({
+  customer_id: z.string().uuid('Invalid customer ID').optional().nullable(),
   party_name: z.string().min(1, 'Customer/Party name is required').max(100),
   party_phone: z.string().max(20).optional().nullable(),
   type: z.enum(['credit', 'debit']), // credit = customer owes us money, debit = payment received

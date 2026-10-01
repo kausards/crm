@@ -12,7 +12,7 @@ export default function DashboardLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#070b14] flex">
+    <div className="min-h-screen bg-[#0B0810] text-[#e8e0ec] flex">
       {/* Sidebar */}
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
@@ -24,5 +24,6 @@ export default function DashboardLayout({
         </main>
       </div>
     </div>
+
   );
 }

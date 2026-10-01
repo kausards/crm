@@ -162,24 +162,71 @@ export default function InventoryPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+          <h2 className="font-sora text-xl sm:text-2xl font-bold text-white tracking-tight">
             Inventory & Stock Control
           </h2>
           <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
-            Real-time multi-item inventory tracking with immutable stock ledger
+            Real-time multi-item inventory tracking with deterministic stock ledger
           </p>
         </div>
 
         {isOwner && (
-          <Button variant="primary" size="sm" onClick={() => setAddModalOpen(true)}>
+          <Button variant="primary" size="md" onClick={() => setAddModalOpen(true)}>
             <Plus className="w-4 h-4" />
             <span>Add New Product</span>
           </Button>
         )}
       </div>
 
+      {/* Stock Valuation KPI Strip */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="bg-[#15121A] border border-white/[0.08] rounded-2xl p-5 shadow-glow-card flex items-center justify-between">
+          <div>
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">
+              Active Catalog SKUs
+            </span>
+            <span className="font-sora text-2xl font-bold text-white tabular-nums">
+              {pagination.total} Items
+            </span>
+          </div>
+          <div className="p-3 bg-brand-violet/10 border border-brand-violet/20 rounded-xl text-purple-300">
+            <Boxes className="w-5 h-5" />
+          </div>
+        </div>
+
+        <div className="bg-[#15121A] border border-white/[0.08] rounded-2xl p-5 shadow-glow-card flex items-center justify-between">
+          <div>
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">
+              Est. Stock Valuation
+            </span>
+            <span className="font-sora text-2xl font-bold text-white tabular-nums">
+              {formatBDT(
+                products.reduce((acc, p) => acc + (p.buy_price * p.stock_quantity), 0)
+              )}
+            </span>
+          </div>
+          <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400">
+            <TrendingUp className="w-5 h-5" />
+          </div>
+        </div>
+
+        <div className="bg-[#15121A] border border-white/[0.08] rounded-2xl p-5 shadow-glow-card flex items-center justify-between">
+          <div>
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">
+              Critical Low Stock
+            </span>
+            <span className="font-sora text-2xl font-bold text-amber-400 tabular-nums">
+              {products.filter(p => p.stock_quantity <= p.low_stock_threshold).length} SKUs
+            </span>
+          </div>
+          <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-400">
+            <AlertTriangle className="w-5 h-5" />
+          </div>
+        </div>
+      </div>
+
       {/* Search & Actions Bar */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg flex items-center gap-3">
+      <div className="bg-[#15121A] border border-white/[0.08] rounded-2xl p-4 shadow-glow-card flex items-center gap-3">
         <div className="relative flex-1">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
@@ -190,7 +237,7 @@ export default function InventoryPage() {
               setSearch(e.target.value);
               setPage(1);
             }}
-            className="w-full pl-10 pr-4 py-2 bg-slate-950/70 border border-slate-800 rounded-xl text-xs sm:text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-full pl-10 pr-4 py-2 bg-[#100D15] border border-white/10 rounded-xl text-xs sm:text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-brand-violet transition-all"
           />
         </div>
         {search && (
@@ -204,7 +251,7 @@ export default function InventoryPage() {
       </div>
 
       {/* Products Table */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+      <div className="bg-[#15121A] border border-white/[0.08] rounded-2xl shadow-glow-card overflow-hidden">
         {isLoading ? (
           <div className="py-20 text-center text-xs text-slate-500">
             Loading products...
@@ -227,18 +274,18 @@ export default function InventoryPage() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-950/80 border-b border-slate-800 text-slate-400 uppercase font-semibold">
+              <thead className="bg-[#100D15] border-b border-white/[0.08] text-slate-400 uppercase font-semibold">
                 <tr>
-                  <th className="py-3 px-4">Product Name</th>
-                  <th className="py-3 px-4">SKU</th>
-                  <th className="py-3 px-4">Wholesale (Buy)</th>
-                  <th className="py-3 px-4">Retail (Sell)</th>
-                  <th className="py-3 px-4">Gross Margin</th>
-                  <th className="py-3 px-4">Stock Level</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
+                  <th className="py-3.5 px-4">Product Name</th>
+                  <th className="py-3.5 px-4">SKU</th>
+                  <th className="py-3.5 px-4">Wholesale (Buy)</th>
+                  <th className="py-3.5 px-4">Retail (Sell)</th>
+                  <th className="py-3.5 px-4">Gross Margin</th>
+                  <th className="py-3.5 px-4">Stock Level</th>
+                  <th className="py-3.5 px-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-white/[0.06]">
                 {products.map((prod) => {
                   const isLow = prod.stock_quantity <= prod.low_stock_threshold;
                   const isOutOfStock = prod.stock_quantity <= 0;
@@ -247,27 +294,27 @@ export default function InventoryPage() {
                   return (
                     <tr
                       key={prod.id}
-                      className="hover:bg-slate-800/30 transition-colors"
+                      className="hover:bg-white/[0.02] transition-colors"
                     >
-                      <td className="py-3 px-4 font-semibold text-white">
+                      <td className="py-3.5 px-4 font-semibold text-white">
                         {prod.name}
                       </td>
-                      <td className="py-3 px-4 font-mono text-slate-400">
+                      <td className="py-3.5 px-4 font-mono text-purple-300">
                         {prod.sku || '—'}
                       </td>
-                      <td className="py-3 px-4 text-slate-300">
+                      <td className="py-3.5 px-4 text-slate-300">
                         {formatBDT(prod.buy_price)}
                       </td>
-                      <td className="py-3 px-4 font-bold text-white">
+                      <td className="py-3.5 px-4 font-sora font-bold text-white tabular-nums">
                         {formatBDT(prod.sell_price)}
                       </td>
-                      <td className="py-3 px-4 text-emerald-400 font-medium">
+                      <td className="py-3.5 px-4 text-emerald-400 font-medium">
                         +{formatBDT(unitMargin)}
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-3.5 px-4">
                         <div className="flex items-center gap-2">
                           <span
-                            className={`font-bold ${
+                            className={`font-bold font-sora tabular-nums ${
                               isOutOfStock
                                 ? 'text-rose-400'
                                 : isLow
@@ -278,17 +325,17 @@ export default function InventoryPage() {
                             {prod.stock_quantity} units
                           </span>
                           {isOutOfStock ? (
-                            <span className="px-1.5 py-0.5 rounded text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/15 text-rose-300 border border-rose-500/30">
                               Out of Stock
                             </span>
                           ) : isLow ? (
-                            <span className="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30">
                               Low Stock
                             </span>
                           ) : null}
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-3.5 px-4 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => {
@@ -296,9 +343,9 @@ export default function InventoryPage() {
                               setAdjustModalOpen(true);
                             }}
                             title="Adjust Stock Quantity"
-                            className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors"
+                            className="px-2.5 py-1.5 bg-white/[0.05] hover:bg-white/[0.1] text-slate-200 border border-white/10 rounded-xl text-xs font-semibold flex items-center gap-1 transition-all"
                           >
-                            <ArrowUpDown className="w-3 h-3" />
+                            <ArrowUpDown className="w-3 h-3 text-purple-300" />
                             <span>Adjust</span>
                           </button>
 
@@ -310,7 +357,7 @@ export default function InventoryPage() {
                                 }
                               }}
                               title="Archive Product"
-                              className="p-1 text-slate-500 hover:text-rose-400 hover:bg-slate-800 rounded-md"
+                              className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-white/[0.05] rounded-lg transition-colors"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -324,6 +371,7 @@ export default function InventoryPage() {
             </table>
           </div>
         )}
+
 
         {/* Pagination */}
         {pagination.totalPages > 1 && (

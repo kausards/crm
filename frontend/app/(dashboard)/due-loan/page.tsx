@@ -158,23 +158,23 @@ export default function DueLoanPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-            Due & Loan Ledger
+          <h2 className="font-sora text-xl sm:text-2xl font-bold text-white tracking-tight">
+            Customer Due & Loan Ledger
           </h2>
           <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
-            Track customer credit balances (Receivable) and supplier debts / loans (Payable)
+            Track customer credit balances (বাকির খাতা) and supplier debts / loans (ঋণের খাতা)
           </p>
         </div>
 
         <Button
           variant="primary"
-          size="sm"
+          size="md"
           onClick={() => {
             setEntryType(activeTab === 'due' ? 'credit' : 'borrowed');
             setModalOpen(true);
           }}
         >
-          <Plus className="w-3.5 h-3.5" />
+          <Plus className="w-4 h-4" />
           <span>{activeTab === 'due' ? 'Record Customer Due' : 'Record Loan Entry'}</span>
         </Button>
       </div>
@@ -182,50 +182,50 @@ export default function DueLoanPage() {
       {/* Overview Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <StatCard
-          title="Total Receivable (Customer Dues)"
+          title="Total Receivable (Customer Dues • বাকির খাতা)"
           value={summaryLoading ? '...' : formatBDT(summary?.receivable.totalCustomerDue || 0)}
           subtitle="Money customers or dealers currently owe your business"
           icon={<ArrowDownLeft className="w-4 h-4 text-emerald-400" />}
-          className="border-emerald-500/30 bg-gradient-to-b from-slate-900 to-emerald-950/20"
+          className="border-emerald-500/30 bg-gradient-to-b from-[#15121A] to-emerald-500/10"
         />
 
         <StatCard
-          title="Total Payable (Loans & Supplier Dues)"
+          title="Total Payable (Loans & Supplier Dues • ঋণের খাতা)"
           value={summaryLoading ? '...' : formatBDT(summary?.payable.totalLoanPayable || 0)}
           subtitle="Money your business currently owes to suppliers or lenders"
           icon={<ArrowUpRight className="w-4 h-4 text-rose-400" />}
-          className="border-rose-500/30 bg-gradient-to-b from-slate-900 to-rose-950/20"
+          className="border-rose-500/30 bg-gradient-to-b from-[#15121A] to-rose-500/10"
         />
       </div>
 
       {/* Tabs & Search */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div className="bg-[#15121A] border border-white/[0.08] rounded-2xl p-4 shadow-glow-card flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <button
             onClick={() => {
               setActiveTab('due');
               setSearch('');
             }}
-            className={`flex-1 sm:flex-none px-4 py-2 rounded-xl text-xs font-semibold transition-colors ${
+            className={`flex-1 sm:flex-none px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-150 ${
               activeTab === 'due'
-                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                ? 'bg-brand-violet/20 text-purple-200 border border-brand-violet/40 shadow-[0_0_15px_-3px_rgba(139,92,246,0.3)]'
+                : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
             }`}
           >
-            Customer Dues (Receivable)
+            Customer Dues (বাকির খাতা)
           </button>
           <button
             onClick={() => {
               setActiveTab('loan');
               setSearch('');
             }}
-            className={`flex-1 sm:flex-none px-4 py-2 rounded-xl text-xs font-semibold transition-colors ${
+            className={`flex-1 sm:flex-none px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-150 ${
               activeTab === 'loan'
-                ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                ? 'bg-brand-magenta/20 text-pink-200 border border-brand-magenta/40 shadow-[0_0_15px_-3px_rgba(236,72,153,0.3)]'
+                : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
             }`}
           >
-            Loans & Debts (Payable)
+            Loans & Debts (ঋণের খাতা)
           </button>
         </div>
 
@@ -236,13 +236,14 @@ export default function DueLoanPage() {
             placeholder="Search party name..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-1.5 bg-slate-950/70 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-full pl-9 pr-3 py-2 bg-[#100D15] border border-white/10 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-brand-violet transition-all"
           />
         </div>
       </div>
 
       {/* Data Table */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+      <div className="bg-[#15121A] border border-white/[0.08] rounded-2xl shadow-glow-card overflow-hidden">
+
         {activeTab === 'due' ? (
           duesLoading ? (
             <div className="py-20 text-center text-xs text-slate-500">

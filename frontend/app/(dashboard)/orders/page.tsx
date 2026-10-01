@@ -178,22 +178,22 @@ export default function OrdersPage() {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-            Order Management
+          <h2 className="font-sora text-xl sm:text-2xl font-bold text-white tracking-tight">
+            Order Management Pipeline
           </h2>
           <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
-            Manage customer orders, fraud alerts, and courier dispatches
+            Automated courier integration, stock synchronization & fulfillment pipeline
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handleExportCSV}>
+        <div className="flex items-center gap-3">
+          <Button variant="secondary" size="md" onClick={handleExportCSV}>
             <Download className="w-3.5 h-3.5" />
             <span>Export CSV</span>
           </Button>
 
           <Link href="/orders/new">
-            <Button variant="primary" size="sm">
+            <Button variant="primary" size="md">
               <Plus className="w-4 h-4" />
               <span>New Order</span>
             </Button>
@@ -202,9 +202,9 @@ export default function OrdersPage() {
       </div>
 
       {/* Filter Tabs & Search Bar */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg space-y-4">
+      <div className="bg-[#15121A] border border-white/[0.08] rounded-2xl p-4 shadow-glow-card space-y-4">
         {/* Status Tabs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-b border-slate-800/80">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 border-b border-white/[0.08]">
           {STATUS_TABS.map((tab) => {
             const isActive = activeTab === tab.value;
             return (
@@ -214,10 +214,10 @@ export default function OrdersPage() {
                   setActiveTab(tab.value);
                   setPage(1);
                 }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-150 ${
                   isActive
-                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                    ? 'bg-brand-violet/20 text-purple-200 border border-brand-violet/40 shadow-[0_0_15px_-3px_rgba(139,92,246,0.3)]'
+                    : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
                 }`}
               >
                 {tab.label}
@@ -238,7 +238,7 @@ export default function OrdersPage() {
                 setSearchPhone(e.target.value);
                 setPage(1);
               }}
-              className="w-full pl-10 pr-4 py-2 bg-slate-950/70 border border-slate-800 rounded-xl text-xs sm:text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full pl-10 pr-4 py-2 bg-[#100D15] border border-white/10 rounded-xl text-xs sm:text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-brand-violet transition-all"
             />
           </div>
           {searchPhone && (
@@ -253,7 +253,7 @@ export default function OrdersPage() {
       </div>
 
       {/* Orders Table */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+      <div className="bg-[#15121A] border border-white/[0.08] rounded-2xl shadow-glow-card overflow-hidden">
         {isLoading ? (
           <div className="py-20 text-center text-xs text-slate-500">
             Loading orders list...
@@ -261,11 +261,11 @@ export default function OrdersPage() {
         ) : orders.length === 0 ? (
           <div className="py-20 text-center">
             <Truck className="w-12 h-12 text-slate-600 mx-auto mb-2" />
-            <p className="text-sm text-slate-400">No orders found.</p>
+            <p className="text-sm text-slate-400">No orders found in this pipeline.</p>
             {activeTab && (
               <button
                 onClick={() => setActiveTab('')}
-                className="mt-2 text-xs text-emerald-400 hover:underline"
+                className="mt-2 text-xs text-brand-magenta hover:underline"
               >
                 Clear status filter
               </button>
@@ -274,19 +274,19 @@ export default function OrdersPage() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-950/80 border-b border-slate-800 text-slate-400 uppercase font-semibold">
+              <thead className="bg-[#100D15] border-b border-white/[0.08] text-slate-400 uppercase font-semibold">
                 <tr>
-                  <th className="py-3 px-4">Invoice</th>
-                  <th className="py-3 px-4">Customer</th>
-                  <th className="py-3 px-4">Items</th>
-                  <th className="py-3 px-4">Amount / COD</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4">Courier</th>
-                  <th className="py-3 px-4">Date</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
+                  <th className="py-3.5 px-4">Invoice</th>
+                  <th className="py-3.5 px-4">Customer</th>
+                  <th className="py-3.5 px-4">Items</th>
+                  <th className="py-3.5 px-4">Amount / COD</th>
+                  <th className="py-3.5 px-4">Status</th>
+                  <th className="py-3.5 px-4">Courier</th>
+                  <th className="py-3.5 px-4">Date</th>
+                  <th className="py-3.5 px-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-white/[0.06]">
                 {orders.map((order) => {
                   const isConfirmable =
                     order.status === 'pending' ||
@@ -296,8 +296,9 @@ export default function OrdersPage() {
                   return (
                     <tr
                       key={order.id}
-                      className="hover:bg-slate-800/30 transition-colors"
+                      className="hover:bg-white/[0.02] transition-colors"
                     >
+
                       <td className="py-3 px-4 font-mono font-medium text-slate-300">
                         #{order.id.slice(0, 8)}
                         {order.is_flagged && (
