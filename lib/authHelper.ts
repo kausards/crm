@@ -59,6 +59,7 @@ export async function requireAuth(requireOwner = false): Promise<AuthContext> {
     (process.env.SUPER_ADMIN_EMAIL || '').toLowerCase(),
     'admin@nexusflow.com',
     'kausar.test@crmdemo.com',
+    'mdkausar0877@gmail.com',
   ].filter(Boolean);
 
   const isSuperUser = (superAdminId && user.id === superAdminId) ||
@@ -133,6 +134,7 @@ export async function requireSuperAdmin(): Promise<AuthContext> {
       (process.env.SUPER_ADMIN_EMAIL || '').toLowerCase(),
       'admin@nexusflow.com',
       'kausar.test@crmdemo.com',
+      'mdkausar0877@gmail.com',
     ].filter(Boolean);
 
     if (
