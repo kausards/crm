@@ -386,8 +386,8 @@ export default function AdminPage() {
                       <button
                         type="button"
                         onClick={() => {
-                          setAdminEmail('admin@nexusflow.com');
-                          setAdminPassword('AdminPassword2026!');
+                          setAdminEmail('mdkausar0877@gmail.com');
+                          setAdminPassword('Kausar821');
                         }}
                         className="text-[10px] text-brand-magenta hover:underline"
                       >

@@ -57,6 +57,7 @@ export async function POST(req: NextRequest) {
         (process.env.SUPER_ADMIN_EMAIL || '').toLowerCase(),
         'admin@nexusflow.com',
         'kausar.test@crmdemo.com',
+        'mdkausar0877@gmail.com',
       ].filter(Boolean);
 
       const isSuper = (superAdminId && data.user.id === superAdminId) ||
