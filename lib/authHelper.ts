@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 import { UserRole } from '@/types/database.types';
+import { timingSafeCompare } from '@/lib/encryption';
 
 export interface AuthContext {
   userId: string;
@@ -25,25 +26,19 @@ export async function requireAuth(requireOwner = false): Promise<AuthContext> {
   const { data: { user }, error: authErr } = await supabase.auth.getUser();
 
   if (authErr || !user) {
-    // PUBLIC ACCESS / GUEST MODE:
-    // Configurable via env variables with tenant fallback
-    const guestTenantId = process.env.GUEST_TENANT_ID || '6576b9e2-127e-4e4d-9744-db36656a403c';
-    return {
-      userId: process.env.GUEST_USER_ID || '2ffca547-c493-400c-baa0-910634d770e4',
-      tenantId: guestTenantId,
-      role: 'owner' as UserRole,
-      email: process.env.GUEST_USER_EMAIL || 'mdkausar0877@gmail.com',
-      fullName: process.env.GUEST_USER_NAME || 'Md Kausar',
-    };
+    const err = new Error('Unauthorized: Authentication required');
+    (err as unknown as { code: string; status: number }).code = 'UNAUTHORIZED';
+    (err as unknown as { status: number }).status = 401;
+    throw err;
   }
 
-  // Read tenant_id and role from metadata or profile
-  let tenantId = (user.app_metadata?.tenant_id || user.user_metadata?.tenant_id) as string | undefined;
-  let role = (user.app_metadata?.role || user.user_metadata?.role) as UserRole | undefined;
+  // Read tenant_id and role strictly from app_metadata or profiles (never user-editable user_metadata)
+  let tenantId = user.app_metadata?.tenant_id as string | undefined;
+  let role = user.app_metadata?.role as UserRole | undefined;
   let fullName = (user.user_metadata?.full_name || null) as string | null;
 
   if (!tenantId || !role) {
-    // Fetch from profiles table
+    // Fetch verified tenant association from profiles table
     const { data } = await supabase
       .from('profiles')
       .select('tenant_id, role, full_name')
@@ -55,23 +50,17 @@ export async function requireAuth(requireOwner = false): Promise<AuthContext> {
     if (profile) {
       tenantId = profile.tenant_id;
       role = profile.role;
-      fullName = profile.full_name;
+      fullName = profile.full_name || fullName;
     }
   }
 
   const superAdminId = process.env.SUPER_ADMIN_USER_ID;
-  const userEmail = (user.email || '').toLowerCase();
-  const allowedSuperAdminEmails = [
-    (process.env.SUPER_ADMIN_EMAIL || '').toLowerCase(),
-    'admin@nexusflow.com',
-    'kausar.test@crmdemo.com',
-    'mdkausar0877@gmail.com',
-  ].filter(Boolean);
+  const superAdminEmail = (process.env.SUPER_ADMIN_EMAIL || '').toLowerCase().trim();
+  const userEmail = (user.email || '').toLowerCase().trim();
 
-  const isSuperUser = (superAdminId && user.id === superAdminId) ||
-                      allowedSuperAdminEmails.includes(userEmail) ||
-                      user.app_metadata?.is_super_admin === true ||
-                      user.user_metadata?.is_super_admin === true;
+  const isSuperUser = (Boolean(superAdminId) && user.id === superAdminId) ||
+                      (Boolean(superAdminEmail) && userEmail === superAdminEmail) ||
+                      user.app_metadata?.is_super_admin === true;
 
   if (!tenantId) {
     if (isSuperUser) {
@@ -106,24 +95,24 @@ export async function requireAuth(requireOwner = false): Promise<AuthContext> {
 /**
  * Requires super-admin privileges.
  * Checks:
- * 1) Cookie `saas_admin_auth` (master developer key session)
+ * 1) Cookie `saas_admin_auth` compared safely with SUPER_ADMIN_SECRET env variable
  * 2) Supabase user ID matching SUPER_ADMIN_USER_ID
  * 3) Supabase user email matching SUPER_ADMIN_EMAIL
- * 4) Metadata is_super_admin flag
+ * 4) Token claim `app_metadata.is_super_admin`
  */
 export async function requireSuperAdmin(): Promise<AuthContext> {
   // 1. Check if authenticated via master session cookie
   try {
     const cookieStore = await cookies();
     const masterCookie = cookieStore.get('saas_admin_auth')?.value;
-    const expectedSecret = process.env.SUPER_ADMIN_SECRET || 'crm_developer_root_2026';
+    const expectedSecret = process.env.SUPER_ADMIN_SECRET;
 
-    if (masterCookie && masterCookie === expectedSecret) {
+    if (expectedSecret && masterCookie && timingSafeCompare(masterCookie, expectedSecret)) {
       return {
         userId: process.env.SUPER_ADMIN_USER_ID || 'master-developer',
         tenantId: 'platform_master',
         role: 'owner',
-        email: process.env.SUPER_ADMIN_EMAIL || 'kausar.test@crmdemo.com',
+        email: process.env.SUPER_ADMIN_EMAIL || 'admin@nexusflow.internal',
         fullName: 'Master SaaS Developer',
       };
     }
@@ -135,17 +124,12 @@ export async function requireSuperAdmin(): Promise<AuthContext> {
   try {
     const auth = await requireAuth();
     const superAdminId = process.env.SUPER_ADMIN_USER_ID;
-    const userEmail = (auth.email || '').toLowerCase();
-    const allowedSuperAdminEmails = [
-      (process.env.SUPER_ADMIN_EMAIL || '').toLowerCase(),
-      'admin@nexusflow.com',
-      'kausar.test@crmdemo.com',
-      'mdkausar0877@gmail.com',
-    ].filter(Boolean);
+    const superAdminEmail = (process.env.SUPER_ADMIN_EMAIL || '').toLowerCase().trim();
+    const userEmail = (auth.email || '').toLowerCase().trim();
 
     if (
-      (superAdminId && auth.userId === superAdminId) ||
-      allowedSuperAdminEmails.includes(userEmail)
+      (Boolean(superAdminId) && auth.userId === superAdminId) ||
+      (Boolean(superAdminEmail) && userEmail === superAdminEmail)
     ) {
       return auth;
     }
@@ -158,4 +142,3 @@ export async function requireSuperAdmin(): Promise<AuthContext> {
   (err as unknown as { status: number }).status = 403;
   throw err;
 }
-

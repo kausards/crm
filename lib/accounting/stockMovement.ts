@@ -15,7 +15,8 @@ export interface LogStockMovementParams {
 }
 
 /**
- * Deterministically logs a stock movement and updates current product stock quantity
+ * Deterministically and atomically logs a stock movement and updates current product stock quantity.
+ * Uses PostgreSQL RPC adjust_stock_atomic with FOR UPDATE row locking to prevent race conditions.
  */
 export async function logStockMovement({
   supabase,
@@ -30,7 +31,37 @@ export async function logStockMovement({
     throw new Error('Quantity must be greater than 0');
   }
 
-  // 1. Fetch current stock
+  // 1. Attempt atomic update via PostgreSQL RPC with row-level lock
+  try {
+    const { data: newStock, error: rpcErr } = await (supabase.rpc as any)('adjust_stock_atomic', {
+      p_product_id: productId,
+      p_tenant_id: tenantId,
+      p_direction: direction,
+      p_quantity: quantity,
+      p_reason: reason,
+      p_reference_id: referenceId,
+    });
+
+    if (!rpcErr && typeof newStock === 'number') {
+      return newStock;
+    }
+
+    if (rpcErr) {
+      const isMissingFunction =
+        rpcErr.message?.includes('function') &&
+        (rpcErr.message?.includes('does not exist') || rpcErr.message?.includes('not found'));
+
+      if (!isMissingFunction) {
+        throw new Error(rpcErr.message || 'Atomic stock adjustment failed');
+      }
+    }
+  } catch (err: unknown) {
+    if (err instanceof Error && !err.message.includes('function') && !err.message.includes('not found')) {
+      throw err;
+    }
+  }
+
+  // 2. Sequential fallback if RPC is not available in environment
   const { data: product, error: fetchErr } = await supabase
     .from('products')
     .select('id, stock_quantity')
@@ -54,7 +85,7 @@ export async function logStockMovement({
     newStock = currentStock - quantity;
   }
 
-  // 2. Insert immutable stock movement record
+  // Insert immutable stock movement record
   const { error: moveErr } = await supabase.from('stock_movements').insert({
     tenant_id: tenantId,
     product_id: productId,
@@ -68,7 +99,7 @@ export async function logStockMovement({
     throw new Error(`Failed to record stock movement: ${moveErr.message}`);
   }
 
-  // 3. Update product current stock
+  // Update product current stock
   const { error: updateErr } = await supabase
     .from('products')
     .update({

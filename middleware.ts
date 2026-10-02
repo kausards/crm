@@ -30,13 +30,45 @@ export async function middleware(request: NextRequest) {
   );
 
   const { data: { user } } = await supabase.auth.getUser();
-
   const pathname = request.nextUrl.pathname;
-  const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/signup');
 
-  // If someone visits /login or /signup, redirect straight to /dashboard so public visitors enter directly
-  if (isAuthRoute) {
+  const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/signup');
+  const isApiRoute = pathname.startsWith('/api');
+  const isPublicRoute =
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/favicon.ico') ||
+    pathname.startsWith('/orders/public') ||
+    pathname.includes('.');
+
+  // 1. Authenticated user visiting /login or /signup -> redirect to /dashboard
+  if (user && isAuthRoute) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
+  }
+
+  // 2. Unauthenticated user accessing protected dashboard pages or root
+  const protectedPrefixes = [
+    '/dashboard',
+    '/orders',
+    '/inventory',
+    '/customers',
+    '/payroll',
+    '/accounts',
+    '/due-loan',
+    '/courier',
+    '/settings',
+    '/onboarding',
+  ];
+
+  const isProtected =
+    pathname === '/' ||
+    protectedPrefixes.some((prefix) => pathname.startsWith(prefix));
+
+  if (!user && isProtected && !isApiRoute && !isPublicRoute) {
+    const loginUrl = new URL('/login', request.url);
+    if (pathname !== '/') {
+      loginUrl.searchParams.set('next', pathname);
+    }
+    return NextResponse.redirect(loginUrl);
   }
 
   return response;

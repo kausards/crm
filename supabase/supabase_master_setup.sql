@@ -5,11 +5,10 @@
 -- https://supabase.com/dashboard/project/zqpvreqiykymmodtthed/sql
 -- =========================================================================
 
--- 1. Helper function to extract tenant_id from caller's JWT custom claims
-create or replace function auth.tenant_id() returns uuid as $$
+create or replace function public.current_tenant_id() returns uuid as $$
   select coalesce(
     (auth.jwt() -> 'app_metadata' ->> 'tenant_id')::uuid,
-    (auth.jwt() -> 'user_metadata' ->> 'tenant_id')::uuid
+    (select tenant_id from public.profiles where id = auth.uid())
   );
 $$ language sql stable security definer set search_path = public;
 

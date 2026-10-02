@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { orderItemSchema } from '@/lib/validators/order';
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { publicOrderLimiter } from '@/lib/rateLimit';
+import { publicOrderLimiter, getClientIp } from '@/lib/rateLimit';
 import { successResponse, errorResponse, handleApiError } from '@/lib/apiResponse';
 
 const publicOrderSchema = z.object({
@@ -17,7 +17,7 @@ const publicOrderSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0] || '127.0.0.1';
+    const ip = getClientIp(req);
     const limitCheck = await publicOrderLimiter.limit(`public_order_${ip}`);
     if (!limitCheck.success) {
       return errorResponse('RATE_LIMIT_EXCEEDED', 'Too many requests. Please wait a moment before trying again.', 429);

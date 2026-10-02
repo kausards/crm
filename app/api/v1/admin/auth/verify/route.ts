@@ -1,23 +1,28 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { successResponse, errorResponse, handleApiError } from '@/lib/apiResponse';
+import { timingSafeCompare } from '@/lib/encryption';
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { masterKey, email, password } = body;
 
-    const expectedSecret = process.env.SUPER_ADMIN_SECRET || 'crm_developer_root_2026';
-    const superAdminEmail = (process.env.SUPER_ADMIN_EMAIL || 'kausar.test@crmdemo.com').toLowerCase();
+    const expectedSecret = process.env.SUPER_ADMIN_SECRET;
+    const superAdminEmail = (process.env.SUPER_ADMIN_EMAIL || '').toLowerCase().trim();
 
     // 1. Verify via Master Developer Key
     if (masterKey) {
-      if (masterKey.trim() === expectedSecret) {
+      if (!expectedSecret) {
+        return errorResponse('FORBIDDEN', 'Super Admin secret is not configured on the server', 403);
+      }
+
+      if (timingSafeCompare(masterKey.trim(), expectedSecret)) {
         const response = successResponse({
           authenticated: true,
           method: 'master_key',
           user: {
-            email: superAdminEmail,
+            email: superAdminEmail || 'admin@nexusflow.internal',
             fullName: 'Master SaaS Developer',
             role: 'super_admin',
             isSuperAdmin: true,
@@ -30,7 +35,7 @@ export async function POST(req: NextRequest) {
           secure: process.env.NODE_ENV === 'production',
           sameSite: 'lax',
           path: '/',
-          maxAge: 60 * 60 * 24 * 30, // 30 days
+          maxAge: 60 * 60 * 24 * 7, // 7 days
         });
 
         return response;
@@ -51,17 +56,12 @@ export async function POST(req: NextRequest) {
         return errorResponse('UNAUTHORIZED', error?.message || 'Invalid credentials', 401);
       }
 
-      const userEmail = (data.user.email || '').toLowerCase();
+      const userEmail = (data.user.email || '').toLowerCase().trim();
       const superAdminId = process.env.SUPER_ADMIN_USER_ID;
-      const allowedEmails = [
-        (process.env.SUPER_ADMIN_EMAIL || '').toLowerCase(),
-        'admin@nexusflow.com',
-        'kausar.test@crmdemo.com',
-        'mdkausar0877@gmail.com',
-      ].filter(Boolean);
 
-      const isSuper = (superAdminId && data.user.id === superAdminId) ||
-                      allowedEmails.includes(userEmail);
+      const isSuper = (Boolean(superAdminId) && data.user.id === superAdminId) ||
+                      (Boolean(superAdminEmail) && userEmail === superAdminEmail) ||
+                      data.user.app_metadata?.is_super_admin === true;
 
       if (!isSuper) {
         return errorResponse('FORBIDDEN', 'This account is not designated as SaaS Platform Super Admin', 403);
@@ -79,13 +79,15 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      response.cookies.set('saas_admin_auth', expectedSecret, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-        maxAge: 60 * 60 * 24 * 30,
-      });
+      if (expectedSecret) {
+        response.cookies.set('saas_admin_auth', expectedSecret, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          path: '/',
+          maxAge: 60 * 60 * 24 * 7,
+        });
+      }
 
       return response;
     }

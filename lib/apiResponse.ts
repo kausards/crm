@@ -27,7 +27,6 @@ export function paginatedResponse<T>(
         items: data,
         pagination,
       },
-      pagination,
     },
     { status }
   );
@@ -72,8 +71,14 @@ export function handleApiError(err: unknown) {
     return errorResponse('FORBIDDEN', errWithStatus.message || 'Forbidden', 403);
   }
 
-  const message = err instanceof Error ? err.message : 'Internal Server Error';
-  console.error('API Error:', err);
+  console.error('API Internal Error:', err);
 
-  return errorResponse('INTERNAL_ERROR', message, 500);
+  const isProduction = process.env.NODE_ENV === 'production';
+  const safeMessage = isProduction
+    ? 'An internal error occurred. Please try again later.'
+    : err instanceof Error
+    ? err.message
+    : 'Internal Server Error';
+
+  return errorResponse('INTERNAL_ERROR', safeMessage, 500);
 }

@@ -6,6 +6,7 @@ import { successResponse, errorResponse } from '@/lib/apiResponse';
 import { timingSafeCompare, decrypt } from '@/lib/encryption';
 
 const VALID_PROVIDERS = ['steadfast', 'pathao', 'redx'];
+const ALLOWED_SHIPMENT_STATUSES = ['pending', 'in_transit', 'delivered', 'returned', 'cancelled', 'dispatched'];
 
 export async function POST(
   req: NextRequest,
@@ -27,46 +28,26 @@ export async function POST(
       return errorResponse('BAD_REQUEST', 'Malformed JSON payload in webhook body', 400);
     }
 
-    // Provider specific consignment identification
+    // Provider-specific consignment identification
     let consignmentId: string | null = null;
     let courierStatus: string | null = null;
 
     if (provider === 'steadfast') {
-      consignmentId = String(body.consignment_id || body.order_id || '');
-      courierStatus = String(body.status || body.notification_type || '').toLowerCase();
+      consignmentId = String(body.consignment_id || body.order_id || '').trim();
+      courierStatus = String(body.status || body.notification_type || '').toLowerCase().trim();
     } else if (provider === 'pathao') {
-      consignmentId = String(body.consignment_id || '');
-      courierStatus = String(body.order_status || '').toLowerCase();
+      consignmentId = String(body.consignment_id || '').trim();
+      courierStatus = String(body.order_status || '').toLowerCase().trim();
     } else if (provider === 'redx') {
-      consignmentId = String(body.tracking_id || body.parcel_id || '');
-      courierStatus = String(body.status || '').toLowerCase();
+      consignmentId = String(body.tracking_id || body.parcel_id || '').trim();
+      courierStatus = String(body.status || '').toLowerCase().trim();
     }
 
-    if (!consignmentId) {
-      return errorResponse('BAD_REQUEST', 'Missing consignment identification in webhook', 400);
+    if (!consignmentId || !/^[a-zA-Z0-9_\-\.]+$/.test(consignmentId)) {
+      return errorResponse('BAD_REQUEST', 'Missing or invalid consignment identification', 400);
     }
 
-    // Global Webhook authorization check if COURIER_WEBHOOK_SECRET is set
-    const configuredSecret = process.env.COURIER_WEBHOOK_SECRET;
-    const incomingSignature =
-      req.headers.get('x-steadfast-signature') ||
-      req.headers.get('x-pathao-signature') ||
-      req.headers.get('x-webhook-secret') ||
-      req.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ||
-      new URL(req.url).searchParams.get('secret') ||
-      '';
-
-    if (configuredSecret) {
-      const expectedHmac = crypto.createHmac('sha256', configuredSecret).update(rawBody).digest('hex');
-      const isDirectSecretValid = timingSafeCompare(incomingSignature, configuredSecret);
-      const isHmacValid = timingSafeCompare(incomingSignature, expectedHmac);
-
-      if (!isDirectSecretValid && !isHmacValid) {
-        return errorResponse('UNAUTHORIZED', 'Invalid or missing webhook signature/secret', 401);
-      }
-    }
-
-    // 1. Find linked shipment
+    // 1. Find linked shipment first to retrieve tenant context
     const { data: shipment } = await supabaseAdmin
       .from('courier_shipments')
       .select('*, orders(*, order_items(*))')
@@ -81,32 +62,90 @@ export async function POST(
     const order = shipment.orders;
     const tenantId = shipment.tenant_id;
 
-    // 2. Map courier status to order status
+    // 2. Strict Webhook Authentication Check (Mandatory)
+    const configuredSecret = process.env.COURIER_WEBHOOK_SECRET;
+    const incomingSignature =
+      req.headers.get('x-steadfast-signature') ||
+      req.headers.get('x-pathao-signature') ||
+      req.headers.get('x-webhook-secret') ||
+      req.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ||
+      new URL(req.url).searchParams.get('secret') ||
+      '';
+
+    let isAuthorized = false;
+
+    // Check against global webhook secret if configured
+    if (configuredSecret) {
+      const expectedHmac = crypto.createHmac('sha256', configuredSecret).update(rawBody).digest('hex');
+      const isDirectSecretValid = timingSafeCompare(incomingSignature, configuredSecret);
+      const isHmacValid = timingSafeCompare(incomingSignature, expectedHmac);
+      if (isDirectSecretValid || isHmacValid) {
+        isAuthorized = true;
+      }
+    }
+
+    // Also check against tenant's configured courier credentials secret if not authorized yet
+    if (!isAuthorized) {
+      const { data: creds } = await supabaseAdmin
+        .from('courier_credentials')
+        .select('*')
+        .eq('tenant_id', tenantId)
+        .eq('provider', provider)
+        .eq('is_active', true)
+        .single();
+
+      if (creds?.encrypted_api_secret) {
+        try {
+          const tenantSecret = decrypt(creds.encrypted_api_secret);
+          const tenantHmac = crypto.createHmac('sha256', tenantSecret).update(rawBody).digest('hex');
+          if (timingSafeCompare(incomingSignature, tenantSecret) || timingSafeCompare(incomingSignature, tenantHmac)) {
+            isAuthorized = true;
+          }
+        } catch {
+          // Decryption failed or secret invalid
+        }
+      }
+    }
+
+    // If still not authorized, reject with 401 Unauthorized
+    if (!isAuthorized) {
+      return errorResponse('UNAUTHORIZED', 'Invalid or missing webhook signature/secret', 401);
+    }
+
+    // 3. Map courier status to sanitized order status
     const statusText = (courierStatus || '').toLowerCase();
     let mappedStatus: string = order.status;
+    let sanitizedShipmentStatus = 'in_transit';
     let isDelivered = false;
     let isReturned = false;
 
     if (statusText.includes('deliver') || statusText === 'successful') {
       mappedStatus = 'delivered';
+      sanitizedShipmentStatus = 'delivered';
       isDelivered = true;
     } else if (statusText.includes('return') || statusText.includes('cancel') || statusText === 'rto') {
       mappedStatus = 'returned';
+      sanitizedShipmentStatus = 'returned';
       isReturned = true;
-    } else if (statusText.includes('transit') || statusText.includes('shipped')) {
+    } else if (statusText.includes('transit') || statusText.includes('shipped') || statusText.includes('picked')) {
       mappedStatus = 'shipped';
+      sanitizedShipmentStatus = 'in_transit';
     }
 
-    // 3. Update shipment record
+    if (!ALLOWED_SHIPMENT_STATUSES.includes(sanitizedShipmentStatus)) {
+      sanitizedShipmentStatus = 'in_transit';
+    }
+
+    // 4. Update shipment record with sanitized status
     await supabaseAdmin
       .from('courier_shipments')
       .update({
-        status: statusText || 'updated',
+        status: sanitizedShipmentStatus,
         last_synced_at: new Date().toISOString(),
       })
       .eq('id', shipment.id);
 
-    // 4. Update order status if changed
+    // 5. Update order status if changed
     if (order.status !== mappedStatus) {
       await supabaseAdmin
         .from('orders')
@@ -117,33 +156,54 @@ export async function POST(
         .eq('id', order.id);
     }
 
-    // 5. If RETURNED/RTO and not previously recorded as returned:
-    // a) Restore stock deterministically
-    // b) Log return cost into bill_costs (category: 'return_cost')
+    // 6. If RETURNED/RTO and not previously recorded as returned:
+    // a) Restore stock idempotently (check if movements already recorded for this order return)
+    // b) Log return cost idempotently (check if bill_cost already recorded)
     if (isReturned && order.status !== 'returned') {
-      for (const item of order.order_items || []) {
-        await logStockMovement({
-          supabase: supabaseAdmin,
-          tenantId,
-          productId: item.product_id,
-          direction: 'in',
-          quantity: item.quantity,
-          reason: 'order_return',
-          referenceId: order.id,
-        });
+      // Check existing stock return movements for this order
+      const { data: existingMovements } = await supabaseAdmin
+        .from('stock_movements')
+        .select('id')
+        .eq('tenant_id', tenantId)
+        .eq('reason', 'order_return')
+        .eq('reference_id', order.id);
+
+      if (!existingMovements || existingMovements.length === 0) {
+        for (const item of order.order_items || []) {
+          await logStockMovement({
+            supabase: supabaseAdmin,
+            tenantId,
+            productId: item.product_id,
+            direction: 'in',
+            quantity: item.quantity,
+            reason: 'order_return',
+            referenceId: order.id,
+          });
+        }
       }
 
-      // Return cost = delivery charge lost / return penalty
-      const returnCostAmount = Number(order.delivery_charge) || 120; // Default BD courier roundtrip cost if not set
+      // Check existing return cost bill
+      const returnBillName = `Return Cost - Order #${order.id.slice(0, 8)}`;
+      const { data: existingReturnBill } = await supabaseAdmin
+        .from('bill_costs')
+        .select('id')
+        .eq('tenant_id', tenantId)
+        .eq('category', 'return_cost')
+        .eq('name', returnBillName)
+        .maybeSingle();
 
-      await supabaseAdmin.from('bill_costs').insert({
-        tenant_id: tenantId,
-        name: `Return Cost - Order #${order.id.slice(0, 8)}`,
-        amount: returnCostAmount,
-        date: new Date().toISOString().slice(0, 10),
-        category: 'return_cost',
-        is_recurring: false,
-      });
+      if (!existingReturnBill) {
+        const returnCostAmount = Math.max(0, Number(order.delivery_charge) || 120);
+
+        await supabaseAdmin.from('bill_costs').insert({
+          tenant_id: tenantId,
+          name: returnBillName,
+          amount: returnCostAmount,
+          date: new Date().toISOString().slice(0, 10),
+          category: 'return_cost',
+          is_recurring: false,
+        });
+      }
     }
 
     return successResponse({
@@ -156,6 +216,6 @@ export async function POST(
     });
   } catch (err: unknown) {
     console.error('Webhook error:', err);
-    return errorResponse('INTERNAL_ERROR', err instanceof Error ? err.message : 'Unknown webhook error', 500);
+    return errorResponse('INTERNAL_ERROR', 'Failed to process webhook', 500);
   }
 }

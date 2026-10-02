@@ -7,10 +7,10 @@ async function validateSslCommerzTransaction(valId: string, tranId: string, expe
   const isSandbox = process.env.SSLCOMMERZ_IS_SANDBOX !== 'false';
   const isProd = process.env.NODE_ENV === 'production';
 
-  // If mock mode in dev
+  // If mock mode in local development only
   if (!storeId || !storePass) {
-    if (!isProd && valId.startsWith('mock_valid_')) {
-      return { isValid: true, reason: 'Mock validation accepted in non-production' };
+    if (!isProd && process.env.NODE_ENV === 'development' && valId.startsWith('mock_valid_')) {
+      return { isValid: true, reason: 'Mock validation accepted in local development' };
     }
     return { isValid: false, reason: 'SSLCommerz credentials not configured on server' };
   }
@@ -133,22 +133,22 @@ export async function POST(req: NextRequest) {
   }
 }
 
+/**
+ * GET callback is strictly a safe read-and-redirect callback.
+ * Zero state mutations happen in GET requests to prevent CSRF / crawler replay side-effects.
+ */
 export async function GET(req: NextRequest) {
-  // Support GET redirect callbacks from mock or browser redirects
   const { searchParams } = new URL(req.url);
   const tranId = searchParams.get('tran_id');
-  const valId = searchParams.get('val_id') || '';
-  const status = searchParams.get('status');
-
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
-  if (!tranId || !valId) {
+  if (!tranId) {
     return NextResponse.redirect(`${appUrl}/settings?payment=failed`, { status: 302 });
   }
 
   const { data: subscription } = await supabaseAdmin
     .from('subscriptions')
-    .select('*')
+    .select('status')
     .eq('sslcommerz_transaction_id', tranId)
     .single();
 
@@ -160,32 +160,5 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(`${appUrl}/settings?payment=success`, { status: 302 });
   }
 
-  if (status === 'VALID' || status === 'VALIDATED') {
-    const validation = await validateSslCommerzTransaction(valId, tranId, Number(subscription.amount));
-    if (validation.isValid) {
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 30);
-
-      await supabaseAdmin
-        .from('subscriptions')
-        .update({
-          status: 'active',
-          renewed_at: new Date().toISOString(),
-          expires_at: expiresAt.toISOString(),
-        })
-        .eq('id', subscription.id);
-
-      await supabaseAdmin
-        .from('tenants')
-        .update({
-          plan: subscription.plan as 'basic' | 'pro',
-          subscription_status: 'active',
-        })
-        .eq('id', subscription.tenant_id);
-
-      return NextResponse.redirect(`${appUrl}/settings?payment=success`, { status: 302 });
-    }
-  }
-
-  return NextResponse.redirect(`${appUrl}/settings?payment=failed`, { status: 302 });
+  return NextResponse.redirect(`${appUrl}/settings?payment=pending`, { status: 302 });
 }

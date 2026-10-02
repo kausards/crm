@@ -114,13 +114,14 @@ export async function POST(req: NextRequest) {
 
     for (const item of validated.items) {
       const prod = productMap.get(item.product_id)!;
-      itemsTotal += item.quantity * item.sell_price;
+      const unitSellPrice = Number(prod.sell_price);
+      itemsTotal += item.quantity * unitSellPrice;
       orderItemsToInsert.push({
         tenant_id: auth.tenantId,
         product_id: item.product_id,
         quantity: item.quantity,
-        buy_price: Number(prod.buy_price),
-        sell_price: item.sell_price,
+        buy_price: Number(prod.buy_price) || 0,
+        sell_price: unitSellPrice,
       });
     }
 

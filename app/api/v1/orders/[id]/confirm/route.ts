@@ -147,44 +147,67 @@ export async function POST(
       });
     }
 
-    // 5. Deduct stock deterministically for all items in order
-    for (const item of order.order_items || []) {
-      await logStockMovement({
-        supabase,
-        tenantId: auth.tenantId,
-        productId: item.product_id,
-        direction: 'out',
-        quantity: item.quantity,
-        reason: 'order_confirm',
-        referenceId: order.id,
+    // 5. Deduct stock with compensating rollback on failure
+    const deductedItems: Array<{ productId: string; quantity: number }> = [];
+
+    try {
+      for (const item of order.order_items || []) {
+        await logStockMovement({
+          supabase,
+          tenantId: auth.tenantId,
+          productId: item.product_id,
+          direction: 'out',
+          quantity: item.quantity,
+          reason: 'order_confirm',
+          referenceId: order.id,
+        });
+        deductedItems.push({ productId: item.product_id, quantity: item.quantity });
+      }
+
+      // 6. Update order status to 'confirmed'
+      const { data: updatedOrder, error: updateErr } = await supabase
+        .from('orders')
+        .update({
+          status: 'confirmed',
+          courier_provider: chosenProvider,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', order.id)
+        .eq('tenant_id', auth.tenantId)
+        .select('*')
+        .single();
+
+      if (updateErr) {
+        throw new Error(`Failed to update order status: ${updateErr.message}`);
+      }
+
+      return successResponse({
+        order: updatedOrder,
+        courier: {
+          provider: chosenProvider,
+          consignmentId,
+          trackingCode,
+        },
       });
+    } catch (failureErr) {
+      // Rollback deducted stock items to preserve inventory integrity
+      for (const deducted of deductedItems) {
+        try {
+          await logStockMovement({
+            supabase,
+            tenantId: auth.tenantId,
+            productId: deducted.productId,
+            direction: 'in',
+            quantity: deducted.quantity,
+            reason: 'order_confirm_rollback',
+            referenceId: order.id,
+          });
+        } catch (rollbackErr) {
+          console.error('Critical: Failed to rollback stock deduction:', rollbackErr);
+        }
+      }
+      throw failureErr;
     }
-
-    // 6. Update order status to 'confirmed'
-    const { data: updatedOrder, error: updateErr } = await supabase
-      .from('orders')
-      .update({
-        status: 'confirmed',
-        courier_provider: chosenProvider,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', order.id)
-      .eq('tenant_id', auth.tenantId)
-      .select('*')
-      .single();
-
-    if (updateErr) {
-      return errorResponse('INTERNAL_ERROR', 'Failed to update order status', 500);
-    }
-
-    return successResponse({
-      order: updatedOrder,
-      courier: {
-        provider: chosenProvider,
-        consignmentId,
-        trackingCode,
-      },
-    });
   } catch (err) {
     return handleApiError(err);
   }

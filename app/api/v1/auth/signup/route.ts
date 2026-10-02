@@ -2,12 +2,12 @@ import { NextRequest } from 'next/server';
 import { signupSchema } from '@/lib/validators/auth';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
-import { authLimiter } from '@/lib/rateLimit';
+import { authLimiter, getClientIp } from '@/lib/rateLimit';
 import { successResponse, errorResponse, handleApiError } from '@/lib/apiResponse';
 
 export async function POST(req: NextRequest) {
   try {
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0] || '127.0.0.1';
+    const ip = getClientIp(req);
     const limitCheck = await authLimiter.limit(`signup_${ip}`);
     if (!limitCheck.success) {
       return errorResponse('RATE_LIMIT_EXCEEDED', 'Too many requests. Please try again later.', 429);
