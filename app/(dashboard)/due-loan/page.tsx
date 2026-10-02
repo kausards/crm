@@ -18,12 +18,15 @@ import {
   User,
   CreditCard,
   History,
+  Pencil,
+  Trash2,
 } from 'lucide-react';
 import { fetchApi, formatBDT, formatDate } from '@/lib/apiClient';
 import { useToast } from '@/app/providers';
 import { Button } from '@/components/ui/Button';
 import { Input, Select } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
+import { TableSkeleton } from '@/components/ui/TableSkeleton';
 
 interface DueLoanSummary {
   receivable: {
@@ -64,6 +67,7 @@ export default function DueLoanPage() {
 
   const [activeTab, setActiveTab] = useState<'due' | 'loan'>('due');
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
 
   // Form states
@@ -119,6 +123,39 @@ export default function DueLoanPage() {
     },
   });
 
+  // Edit Due Entry Mutation
+  const editDueMutation = useMutation({
+    mutationFn: ({ id, body }: { id: string; body: unknown }) =>
+      fetchApi(`/api/v1/due-loan/due/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(body),
+      }),
+    onSuccess: () => {
+      toast('Customer due entry updated', 'success');
+      setModalOpen(false);
+      resetForm();
+      queryClient.invalidateQueries({ queryKey: ['due-entries'] });
+      queryClient.invalidateQueries({ queryKey: ['due-loan-summary'] });
+    },
+    onError: (err: unknown) => {
+      toast(err instanceof Error ? err.message : 'Failed to update due', 'error');
+    },
+  });
+
+  // Delete Due Entry Mutation
+  const deleteDueMutation = useMutation({
+    mutationFn: (id: string) =>
+      fetchApi(`/api/v1/due-loan/due/${id}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      toast('Customer due entry removed', 'info');
+      queryClient.invalidateQueries({ queryKey: ['due-entries'] });
+      queryClient.invalidateQueries({ queryKey: ['due-loan-summary'] });
+    },
+    onError: (err: unknown) => {
+      toast(err instanceof Error ? err.message : 'Failed to delete due', 'error');
+    },
+  });
+
   // Add Loan Entry Mutation
   const addLoanMutation = useMutation({
     mutationFn: (body: unknown) =>
@@ -138,33 +175,118 @@ export default function DueLoanPage() {
     },
   });
 
+  // Edit Loan Entry Mutation
+  const editLoanMutation = useMutation({
+    mutationFn: ({ id, body }: { id: string; body: unknown }) =>
+      fetchApi(`/api/v1/due-loan/loan/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(body),
+      }),
+    onSuccess: () => {
+      toast('Loan transaction updated', 'success');
+      setModalOpen(false);
+      resetForm();
+      queryClient.invalidateQueries({ queryKey: ['loan-entries'] });
+      queryClient.invalidateQueries({ queryKey: ['due-loan-summary'] });
+    },
+    onError: (err: unknown) => {
+      toast(err instanceof Error ? err.message : 'Failed to update loan', 'error');
+    },
+  });
+
+  // Delete Loan Entry Mutation
+  const deleteLoanMutation = useMutation({
+    mutationFn: (id: string) =>
+      fetchApi(`/api/v1/due-loan/loan/${id}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      toast('Loan record deleted', 'info');
+      queryClient.invalidateQueries({ queryKey: ['loan-entries'] });
+      queryClient.invalidateQueries({ queryKey: ['due-loan-summary'] });
+    },
+    onError: (err: unknown) => {
+      toast(err instanceof Error ? err.message : 'Failed to delete loan', 'error');
+    },
+  });
+
   const resetForm = () => {
+    setEditingId(null);
     setPartyName('');
     setPartyPhone('');
     setAmount(0);
     setNote('');
+    setDate(new Date().toISOString().slice(0, 10));
+  };
+
+  const openEditDue = (item: DueItem) => {
+    setEditingId(item.id);
+    setPartyName(item.party_name);
+    setPartyPhone(item.party_phone || '');
+    setAmount(item.amount);
+    setEntryType(item.type);
+    setNote(item.note || '');
+    setDate(item.date);
+    setModalOpen(true);
+  };
+
+  const openEditLoan = (item: LoanItem) => {
+    setEditingId(item.id);
+    setPartyName(item.party_name);
+    setPartyPhone(item.party_phone || '');
+    setAmount(item.amount);
+    setEntryType(item.type);
+    setNote(item.note || '');
+    setDate(item.date);
+    setModalOpen(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (activeTab === 'due') {
-      addDueMutation.mutate({
-        party_name: partyName,
-        party_phone: partyPhone || undefined,
-        type: entryType,
-        amount: Number(amount),
-        note: note || undefined,
-        date,
-      });
+    if (editingId) {
+      if (activeTab === 'due') {
+        editDueMutation.mutate({
+          id: editingId,
+          body: {
+            party_name: partyName,
+            party_phone: partyPhone || null,
+            type: entryType,
+            amount: Number(amount),
+            note: note || null,
+            date,
+          },
+        });
+      } else {
+        editLoanMutation.mutate({
+          id: editingId,
+          body: {
+            party_name: partyName,
+            party_phone: partyPhone || null,
+            type: entryType,
+            amount: Number(amount),
+            note: note || null,
+            date,
+          },
+        });
+      }
     } else {
-      addLoanMutation.mutate({
-        party_name: partyName,
-        party_phone: partyPhone || undefined,
-        type: entryType,
-        amount: Number(amount),
-        note: note || undefined,
-        date,
-      });
+      if (activeTab === 'due') {
+        addDueMutation.mutate({
+          party_name: partyName,
+          party_phone: partyPhone || undefined,
+          type: entryType,
+          amount: Number(amount),
+          note: note || undefined,
+          date,
+        });
+      } else {
+        addLoanMutation.mutate({
+          party_name: partyName,
+          party_phone: partyPhone || undefined,
+          type: entryType,
+          amount: Number(amount),
+          note: note || undefined,
+          date,
+        });
+      }
     }
   };
 
@@ -374,7 +496,7 @@ export default function DueLoanPage() {
         {activeTab === 'due' ? (
           /* Customer Due Ledger */
           duesLoading ? (
-            <div className="py-20 text-center text-xs text-slate-400">Loading customer dues...</div>
+            <TableSkeleton rows={5} cols={7} />
           ) : (dues?.length || 0) === 0 ? (
             <div className="py-20 text-center text-xs text-slate-500">No customer due entries found</div>
           ) : (
@@ -387,7 +509,8 @@ export default function DueLoanPage() {
                     <th className="py-3 px-4">Type</th>
                     <th className="py-3 px-4">Note</th>
                     <th className="py-3 px-4">Date</th>
-                    <th className="py-3 px-5 text-right">Amount</th>
+                    <th className="py-3 px-4 text-right">Amount</th>
+                    <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/[0.04]">
@@ -414,11 +537,33 @@ export default function DueLoanPage() {
                       <td className="py-3.5 px-4 text-slate-400 max-w-xs truncate">{item.note || '—'}</td>
                       <td className="py-3.5 px-4 font-mono text-slate-400">{formatDate(item.date)}</td>
                       <td
-                        className={`py-3.5 px-5 text-right font-mono font-bold ${
+                        className={`py-3.5 px-4 text-right font-mono font-bold ${
                           item.type === 'credit' ? 'text-amber-400' : 'text-emerald-400'
                         }`}
                       >
                         {formatBDT(item.amount)}
+                      </td>
+                      <td className="py-3.5 px-4 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => openEditDue(item)}
+                            title="Edit Due Entry"
+                            className="p-1 text-slate-400 hover:text-white hover:bg-white/[0.08] rounded transition-colors"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (confirm(`Delete due entry for "${item.party_name}"?`)) {
+                                deleteDueMutation.mutate(item.id);
+                              }
+                            }}
+                            title="Delete Due Entry"
+                            className="p-1 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -429,7 +574,7 @@ export default function DueLoanPage() {
         ) : (
           /* Loan & Borrowings Ledger */
           loansLoading ? (
-            <div className="py-20 text-center text-xs text-slate-400">Loading loans...</div>
+            <TableSkeleton rows={5} cols={7} />
           ) : (loans?.length || 0) === 0 ? (
             <div className="py-20 text-center text-xs text-slate-500">No loan records found</div>
           ) : (
@@ -442,7 +587,8 @@ export default function DueLoanPage() {
                     <th className="py-3 px-4">Type</th>
                     <th className="py-3 px-4">Terms / Note</th>
                     <th className="py-3 px-4">Date</th>
-                    <th className="py-3 px-5 text-right">Amount</th>
+                    <th className="py-3 px-4 text-right">Amount</th>
+                    <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/[0.04]">
@@ -469,11 +615,33 @@ export default function DueLoanPage() {
                       <td className="py-3.5 px-4 text-slate-400 max-w-xs truncate">{item.note || '—'}</td>
                       <td className="py-3.5 px-4 font-mono text-slate-400">{formatDate(item.date)}</td>
                       <td
-                        className={`py-3.5 px-5 text-right font-mono font-bold ${
+                        className={`py-3.5 px-4 text-right font-mono font-bold ${
                           item.type === 'borrowed' ? 'text-rose-400' : 'text-emerald-400'
                         }`}
                       >
                         {formatBDT(item.amount)}
+                      </td>
+                      <td className="py-3.5 px-4 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => openEditLoan(item)}
+                            title="Edit Loan Entry"
+                            className="p-1 text-slate-400 hover:text-white hover:bg-white/[0.08] rounded transition-colors"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (confirm(`Delete loan entry for "${item.party_name}"?`)) {
+                                deleteLoanMutation.mutate(item.id);
+                              }
+                            }}
+                            title="Delete Loan Entry"
+                            className="p-1 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -484,11 +652,22 @@ export default function DueLoanPage() {
         )}
       </div>
 
-      {/* Record Modal */}
+      {/* Record / Edit Modal */}
       <Modal
         isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        title={activeTab === 'due' ? 'Record Customer Due' : 'Record Loan Entry'}
+        onClose={() => {
+          setModalOpen(false);
+          resetForm();
+        }}
+        title={
+          editingId
+            ? activeTab === 'due'
+              ? 'Edit Customer Due Entry'
+              : 'Edit Loan Transaction'
+            : activeTab === 'due'
+            ? 'Record Customer Due'
+            : 'Record Loan Entry'
+        }
         maxWidth="md"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -553,16 +732,29 @@ export default function DueLoanPage() {
           />
 
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/[0.08]">
-            <Button variant="ghost" size="sm" type="button" onClick={() => setModalOpen(false)}>
+            <Button
+              variant="ghost"
+              size="sm"
+              type="button"
+              onClick={() => {
+                setModalOpen(false);
+                resetForm();
+              }}
+            >
               Cancel
             </Button>
             <Button
               variant="primary"
               size="sm"
               type="submit"
-              isLoading={addDueMutation.isPending || addLoanMutation.isPending}
+              isLoading={
+                addDueMutation.isPending ||
+                addLoanMutation.isPending ||
+                editDueMutation.isPending ||
+                editLoanMutation.isPending
+              }
             >
-              Save Entry
+              {editingId ? 'Update Entry' : 'Save Entry'}
             </Button>
           </div>
         </form>

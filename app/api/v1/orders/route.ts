@@ -15,7 +15,10 @@ export async function GET(req: NextRequest) {
     const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20')));
     const status = searchParams.get('status');
-    const phone = searchParams.get('phone');
+    const phone = searchParams.get('phone')?.trim();
+    const search = searchParams.get('search')?.trim();
+    const fromDate = searchParams.get('from');
+    const toDate = searchParams.get('to');
     const flaggedOnly = searchParams.get('flagged') === 'true';
 
     let query = supabase
@@ -29,6 +32,23 @@ export async function GET(req: NextRequest) {
 
     if (phone) {
       query = query.ilike('customer_phone', `%${phone}%`);
+    }
+
+    if (search) {
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(search);
+      if (isUuid) {
+        query = query.or(`id.eq.${search},customer_name.ilike.%${search}%,customer_phone.ilike.%${search}%`);
+      } else {
+        query = query.or(`customer_name.ilike.%${search}%,customer_phone.ilike.%${search}%`);
+      }
+    }
+
+    if (fromDate) {
+      query = query.gte('created_at', `${fromDate}T00:00:00.000Z`);
+    }
+
+    if (toDate) {
+      query = query.lte('created_at', `${toDate}T23:59:59.999Z`);
     }
 
     if (flaggedOnly) {

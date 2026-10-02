@@ -1,8 +1,9 @@
 import { NextRequest } from 'next/server';
+import crypto from 'crypto';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { logStockMovement } from '@/lib/accounting/stockMovement';
 import { successResponse, errorResponse } from '@/lib/apiResponse';
-import { timingSafeCompare } from '@/lib/encryption';
+import { timingSafeCompare, decrypt } from '@/lib/encryption';
 
 const VALID_PROVIDERS = ['steadfast', 'pathao', 'redx'];
 
@@ -17,23 +18,14 @@ export async function POST(
       return errorResponse('BAD_REQUEST', `Unsupported courier provider: ${provider}`, 400);
     }
 
-    // Webhook authorization check if secret is configured
-    const configuredSecret = process.env.COURIER_WEBHOOK_SECRET;
-    if (configuredSecret) {
-      const { searchParams } = new URL(req.url);
-      const incomingSecret =
-        req.headers.get('x-webhook-secret') ||
-        req.headers.get('x-pathao-signature') ||
-        req.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ||
-        searchParams.get('secret') ||
-        '';
-
-      if (!incomingSecret || !timingSafeCompare(incomingSecret, configuredSecret)) {
-        return errorResponse('UNAUTHORIZED', 'Invalid or missing webhook signature/secret', 401);
-      }
+    // Read raw body for HMAC signature verification
+    const rawBody = await req.text();
+    let body: any = {};
+    try {
+      body = JSON.parse(rawBody);
+    } catch {
+      return errorResponse('BAD_REQUEST', 'Malformed JSON payload in webhook body', 400);
     }
-
-    const body = await req.json().catch(() => ({}));
 
     // Provider specific consignment identification
     let consignmentId: string | null = null;
@@ -52,6 +44,26 @@ export async function POST(
 
     if (!consignmentId) {
       return errorResponse('BAD_REQUEST', 'Missing consignment identification in webhook', 400);
+    }
+
+    // Global Webhook authorization check if COURIER_WEBHOOK_SECRET is set
+    const configuredSecret = process.env.COURIER_WEBHOOK_SECRET;
+    const incomingSignature =
+      req.headers.get('x-steadfast-signature') ||
+      req.headers.get('x-pathao-signature') ||
+      req.headers.get('x-webhook-secret') ||
+      req.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ||
+      new URL(req.url).searchParams.get('secret') ||
+      '';
+
+    if (configuredSecret) {
+      const expectedHmac = crypto.createHmac('sha256', configuredSecret).update(rawBody).digest('hex');
+      const isDirectSecretValid = timingSafeCompare(incomingSignature, configuredSecret);
+      const isHmacValid = timingSafeCompare(incomingSignature, expectedHmac);
+
+      if (!isDirectSecretValid && !isHmacValid) {
+        return errorResponse('UNAUTHORIZED', 'Invalid or missing webhook signature/secret', 401);
+      }
     }
 
     // 1. Find linked shipment

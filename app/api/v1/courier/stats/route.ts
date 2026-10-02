@@ -67,6 +67,22 @@ export async function GET(_req: NextRequest) {
       const pDispatched = pOrders.filter((o) =>
         ['shipped', 'delivered', 'returned'].includes(o.status)
       ).length;
+      const pDelivered = pOrders.filter((o) => o.status === 'delivered').length;
+      const pReturned = pOrders.filter((o) => o.status === 'returned').length;
+      const pInTransit = pOrders.filter((o) => o.status === 'shipped').length;
+      const pTerminal = pDelivered + pReturned;
+      const pDeliveryRate =
+        pTerminal > 0
+          ? Math.round((pDelivered / pTerminal) * 1000) / 10
+          : pDispatched > 0
+          ? Math.round((pDelivered / pDispatched) * 1000) / 10
+          : 0;
+      const pReturnedRate =
+        pTerminal > 0
+          ? Math.round((pReturned / pTerminal) * 1000) / 10
+          : pDispatched > 0
+          ? Math.round((pReturned / pDispatched) * 1000) / 10
+          : 0;
       const pCod = pOrders
         .filter((o) => o.status === 'shipped')
         .reduce((sum, o) => sum + (Number(o.cod_amount ?? o.total_amount) || 0), 0);
@@ -76,6 +92,11 @@ export async function GET(_req: NextRequest) {
 
       return {
         dispatched: pDispatched,
+        delivered: pDelivered,
+        returned: pReturned,
+        in_transit: pInTransit,
+        delivery_rate: pDeliveryRate,
+        returned_rate: pReturnedRate,
         cod: pCod,
         is_active: isActive,
       };

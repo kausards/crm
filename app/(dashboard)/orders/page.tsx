@@ -13,6 +13,8 @@ import {
   AlertTriangle,
   Download,
   Filter,
+  Calendar,
+  Eye,
 } from 'lucide-react';
 import { fetchApi, formatBDT, formatDate } from '@/lib/apiClient';
 import { useToast } from '@/app/providers';
@@ -20,6 +22,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Select } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
+import { TableSkeleton } from '@/components/ui/TableSkeleton';
 
 interface OrderItemDetail {
   id: string;
@@ -65,7 +68,9 @@ export default function OrdersPage() {
   const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<string>('');
-  const [searchPhone, setSearchPhone] = useState<string>('');
+  const [search, setSearch] = useState<string>('');
+  const [fromDate, setFromDate] = useState<string>('');
+  const [toDate, setToDate] = useState<string>('');
   const [page, setPage] = useState<number>(1);
   const [selectedOrder, setSelectedOrder] = useState<OrderRecord | null>(null);
   const [confirmModalOpen, setConfirmModalOpen] = useState<boolean>(false);
@@ -76,11 +81,13 @@ export default function OrdersPage() {
     items: OrderRecord[];
     pagination: { total: number; totalPages: number; page: number };
   }>({
-    queryKey: ['orders', activeTab, searchPhone, page],
+    queryKey: ['orders', activeTab, search, fromDate, toDate, page],
     queryFn: () => {
       const params = new URLSearchParams();
       if (activeTab) params.set('status', activeTab);
-      if (searchPhone) params.set('phone', searchPhone);
+      if (search) params.set('search', search);
+      if (fromDate) params.set('from', fromDate);
+      if (toDate) params.set('to', toDate);
       params.set('page', String(page));
       params.set('limit', '20');
       return fetchApi(`/api/v1/orders?${params.toString()}`);
@@ -160,35 +167,31 @@ export default function OrdersPage() {
     setConfirmModalOpen(true);
   };
 
-  const handleExportCSV = () => {
-    if (orders.length === 0) {
-      toast('No orders to export', 'info');
-      return;
-    }
-    const headers = ['Order ID', 'Customer Name', 'Phone', 'Address', 'Status', 'Total', 'COD', 'Courier', 'Date'];
-    const rows = orders.map((o) => [
-      o.id,
-      `"${o.customer_name.replace(/"/g, '""')}"`,
-      `"${o.customer_phone}"`,
-      `"${o.customer_address.replace(/"/g, '""')}"`,
-      o.status,
-      o.total_amount,
-      o.cod_amount,
-      o.courier_provider || '',
-      o.created_at,
-    ]);
+  const handleExportCSV = async () => {
+    try {
+      const params = new URLSearchParams();
+      if (activeTab) params.set('status', activeTab);
+      if (search) params.set('search', search);
+      if (fromDate) params.set('from', fromDate);
+      if (toDate) params.set('to', toDate);
 
-    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `orders_manifest_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    toast('Manifest exported to CSV with UTF-8 encoding', 'success');
+      toast('Preparing full export...', 'info');
+      const res = await fetch(`/api/v1/export/orders?${params.toString()}`);
+      if (!res.ok) throw new Error('Failed to generate export file');
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `orders_manifest_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast('Full orders manifest exported successfully!', 'success');
+    } catch (err: any) {
+      toast(err?.message || 'Export failed', 'error');
+    }
   };
 
   return (
@@ -307,49 +310,118 @@ export default function OrdersPage() {
           })}
         </div>
 
-        {/* Search Ribbon */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2 border-t border-white/[0.06]">
-          <div className="relative flex-1 max-w-md">
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Search phone (+880...), customer name, invoice #..."
-              value={searchPhone}
-              onChange={(e) => {
-                setSearchPhone(e.target.value);
-                setPage(1);
-              }}
-              className="glass-input w-full pl-9 pr-3 py-2 text-xs"
-            />
+        {/* Search & Date Filter Ribbon */}
+        <div className="flex flex-col gap-3 pt-2 border-t border-white/[0.06]">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            <div className="relative flex-1 max-w-md">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search customer name, phone, or order ID..."
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+                className="glass-input w-full pl-9 pr-3 py-2 text-xs"
+              />
+            </div>
+
+            {search && (
+              <button
+                onClick={() => setSearch('')}
+                className="text-xs text-slate-400 hover:text-white px-2 py-1 font-label self-start sm:self-auto"
+              >
+                Clear search
+              </button>
+            )}
           </div>
 
-          {searchPhone && (
+          {/* Date Range Sub-ribbon */}
+          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-white/[0.04]">
+            <span className="flex items-center gap-1 text-[11px] text-slate-400 font-label">
+              <Calendar className="w-3.5 h-3.5 text-violet-400" />
+              <span>Date Filter:</span>
+            </span>
+            <input
+              type="date"
+              value={fromDate}
+              onChange={(e) => {
+                setFromDate(e.target.value);
+                setPage(1);
+              }}
+              className="glass-input text-xs px-2.5 py-1"
+            />
+            <span className="text-slate-500 text-xs">to</span>
+            <input
+              type="date"
+              value={toDate}
+              onChange={(e) => {
+                setToDate(e.target.value);
+                setPage(1);
+              }}
+              className="glass-input text-xs px-2.5 py-1"
+            />
             <button
-              onClick={() => setSearchPhone('')}
-              className="text-xs text-slate-400 hover:text-white px-2 py-1 font-label"
+              onClick={() => {
+                const today = new Date().toISOString().slice(0, 10);
+                setFromDate(today);
+                setToDate(today);
+                setPage(1);
+              }}
+              className="text-xs px-2 py-1 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 rounded-lg text-slate-300 font-label"
             >
-              Clear search
+              Today
             </button>
-          )}
+            <button
+              onClick={() => {
+                const now = new Date();
+                const firstDay = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+                const today = now.toISOString().slice(0, 10);
+                setFromDate(firstDay);
+                setToDate(today);
+                setPage(1);
+              }}
+              className="text-xs px-2 py-1 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 rounded-lg text-slate-300 font-label"
+            >
+              This Month
+            </button>
+            {(fromDate || toDate) && (
+              <button
+                onClick={() => {
+                  setFromDate('');
+                  setToDate('');
+                  setPage(1);
+                }}
+                className="text-xs text-slate-400 hover:text-white font-label ml-1"
+              >
+                Clear Dates
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Orders Glass Table */}
       <div className="glass-card overflow-hidden">
         {isLoading ? (
-          <div className="py-20 text-center text-xs text-slate-500 font-body">
-            Loading orders pipeline...
-          </div>
+          <TableSkeleton rows={8} cols={8} />
         ) : orders.length === 0 ? (
           <div className="py-20 text-center">
             <Truck className="w-10 h-10 text-slate-600 mx-auto mb-2" />
             <p className="text-sm text-slate-400 font-headline font-semibold">No orders in this view</p>
-            {activeTab && (
+            {(activeTab || search || fromDate || toDate) && (
               <button
-                onClick={() => setActiveTab('')}
+                onClick={() => {
+                  setActiveTab('');
+                  setSearch('');
+                  setFromDate('');
+                  setToDate('');
+                  setPage(1);
+                }}
                 className="mt-2 text-xs text-violet-400 hover:underline font-label"
               >
-                Reset filter
+                Reset all filters
               </button>
             )}
           </div>
@@ -380,8 +452,14 @@ export default function OrdersPage() {
                       key={order.id}
                       className="hover:bg-white/[0.02] transition-colors"
                     >
-                      <td className="py-3 px-4 font-mono font-medium text-slate-300">
-                        #{order.id.slice(0, 8)}
+                      <td className="py-3 px-4">
+                        <Link
+                          href={`/orders/${order.id}`}
+                          className="font-mono font-medium text-slate-300 hover:text-violet-400 flex items-center gap-1 group transition-colors"
+                        >
+                          <span>#{order.id.slice(0, 8)}</span>
+                          <Eye className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-violet-400" />
+                        </Link>
                         {order.is_flagged && (
                           <div
                             title={order.flag_reason || 'Risk flagged'}
@@ -446,6 +524,14 @@ export default function OrdersPage() {
 
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
+                          <Link
+                            href={`/orders/${order.id}`}
+                            title="View Order Details"
+                            className="p-1.5 text-slate-400 hover:text-white hover:bg-white/[0.05] rounded-lg transition-colors"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Link>
+
                           {isConfirmable && (
                             <button
                               onClick={() => handleOpenConfirm(order)}

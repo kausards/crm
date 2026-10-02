@@ -15,12 +15,16 @@ import {
   CreditCard,
   Clock,
   XCircle,
+  Pencil,
+  Trash2,
+  UserX,
 } from 'lucide-react';
 import { fetchApi, formatBDT, formatDate } from '@/lib/apiClient';
 import { useToast } from '@/app/providers';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
+import { TableSkeleton } from '@/components/ui/TableSkeleton';
 
 interface EmployeeItem {
   id: string;
@@ -66,6 +70,14 @@ export default function PayrollPage() {
 
   const [addEmployeeOpen, setAddEmployeeOpen] = useState(false);
   const [activeEmployee, setActiveEmployee] = useState<EmployeeItem | null>(null);
+
+  // Form states for Edit Employee
+  const [editEmployeeOpen, setEditEmployeeOpen] = useState(false);
+  const [editingEmployee, setEditingEmployee] = useState<EmployeeItem | null>(null);
+  const [editEmpName, setEditEmpName] = useState('');
+  const [editEmpPhone, setEditEmpPhone] = useState('');
+  const [editEmpSalary, setEditEmpSalary] = useState<number>(25000);
+  const [editEmpDivisor, setEditEmpDivisor] = useState<number>(30);
 
   // Form states for New Employee
   const [empName, setEmpName] = useState('');
@@ -151,6 +163,64 @@ export default function PayrollPage() {
     },
   });
 
+  // Edit Employee Mutation
+  const editEmpMutation = useMutation({
+    mutationFn: ({ id, body }: { id: string; body: unknown }) =>
+      fetchApi(`/api/v1/employees/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(body),
+      }),
+    onSuccess: () => {
+      toast('Staff details updated successfully!', 'success');
+      setEditEmployeeOpen(false);
+      setEditingEmployee(null);
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+      queryClient.invalidateQueries({ queryKey: ['salary-summary'] });
+    },
+    onError: (err: unknown) => {
+      toast(err instanceof Error ? err.message : 'Failed to update employee', 'error');
+    },
+  });
+
+  // Deactivate Employee Mutation
+  const deactivateEmpMutation = useMutation({
+    mutationFn: (id: string) =>
+      fetchApi(`/api/v1/employees/${id}`, {
+        method: 'DELETE',
+      }),
+    onSuccess: () => {
+      toast('Employee deactivated from active payroll directory', 'info');
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+      queryClient.invalidateQueries({ queryKey: ['salary-summary'] });
+    },
+    onError: (err: unknown) => {
+      toast(err instanceof Error ? err.message : 'Failed to deactivate employee', 'error');
+    },
+  });
+
+  const openEditEmpModal = (emp: EmployeeItem) => {
+    setEditingEmployee(emp);
+    setEditEmpName(emp.name);
+    setEditEmpPhone(emp.phone || '');
+    setEditEmpSalary(emp.monthly_salary);
+    setEditEmpDivisor(emp.salary_divisor || 30);
+    setEditEmployeeOpen(true);
+  };
+
+  const handleEditEmpSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingEmployee) return;
+    editEmpMutation.mutate({
+      id: editingEmployee.id,
+      body: {
+        name: editEmpName,
+        phone: editEmpPhone || null,
+        monthly_salary: Number(editEmpSalary),
+        salary_divisor: Number(editEmpDivisor),
+      },
+    });
+  };
+
   const handleDownloadSalaryExcel = async () => {
     setIsExportingSalary(true);
     try {
@@ -195,6 +265,16 @@ export default function PayrollPage() {
   const currentEmp = activeEmployee || (rawEmployees.length > 0 ? rawEmployees[0] : null);
   const totalBaseBudget = rawEmployees.reduce((sum, e) => sum + (e.monthly_salary || 0), 0);
   const netDisbursable = salarySummary?.total_disbursed ?? 0;
+
+  // Attendance history query for current employee in selected month
+  const { data: attendanceHistoryData } = useQuery<{
+    month: string;
+    records: Array<{ date: string; status: 'present' | 'absent' | 'half' }>;
+  }>({
+    queryKey: ['attendance-history', currentEmp?.id, selectedMonth],
+    queryFn: () => fetchApi(`/api/v1/salary/${currentEmp!.id}/attendance?month=${selectedMonth}`),
+    enabled: Boolean(currentEmp),
+  });
 
   return (
     <div className="space-y-6">
@@ -331,7 +411,7 @@ export default function PayrollPage() {
 
           <div className="overflow-x-auto">
             {isLoading ? (
-              <div className="py-16 text-center text-xs text-slate-500">Loading directory...</div>
+              <TableSkeleton rows={5} cols={4} />
             ) : filteredEmployees.length === 0 ? (
               <div className="py-16 text-center text-xs text-slate-500">
                 No employees found. Enroll staff above.
@@ -343,7 +423,7 @@ export default function PayrollPage() {
                     <th className="py-3 px-3.5 font-semibold">Staff Member</th>
                     <th className="py-3 px-3 font-semibold">Base Salary</th>
                     <th className="py-3 px-3 font-semibold">Divisor</th>
-                    <th className="py-3 px-3 text-right font-semibold">Status</th>
+                    <th className="py-3 px-3 text-right font-semibold">Status & Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/[0.04]">
@@ -379,15 +459,41 @@ export default function PayrollPage() {
                           {emp.salary_divisor}d
                         </td>
                         <td className="py-3 px-3 text-right">
-                          {isPaid ? (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-label font-medium bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                              Paid
-                            </span>
-                          ) : (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-label font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30">
-                              Pending
-                            </span>
-                          )}
+                          <div className="flex items-center justify-end gap-1.5">
+                            {isPaid ? (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-label font-medium bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                Paid
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-label font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                                Pending
+                              </span>
+                            )}
+
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openEditEmpModal(emp);
+                              }}
+                              title="Edit Staff Member"
+                              className="p-1 text-slate-400 hover:text-white hover:bg-white/[0.08] rounded transition-colors"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (confirm(`Deactivate employee "${emp.name}"?`)) {
+                                  deactivateEmpMutation.mutate(emp.id);
+                                }
+                              }}
+                              title="Deactivate Staff Member"
+                              className="p-1 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded transition-colors"
+                            >
+                              <UserX className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -460,6 +566,86 @@ export default function PayrollPage() {
                     <XCircle className="w-3.5 h-3.5" />
                     <span>Absent</span>
                   </button>
+                </div>
+              </div>
+
+              {/* Attendance History Calendar Grid */}
+              <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/10 space-y-3">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-semibold text-white font-label flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-violet-400" />
+                    <span>{selectedMonth} Attendance Calendar</span>
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-mono">
+                    {attendanceHistoryData?.records?.length || 0} logged
+                  </span>
+                </div>
+
+                {/* Day of Week Headers */}
+                <div className="grid grid-cols-7 gap-1 text-center text-[10px] text-slate-400 font-label uppercase">
+                  <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+                </div>
+
+                {/* Days Grid */}
+                <div className="grid grid-cols-7 gap-1">
+                  {(() => {
+                    const [y, m] = selectedMonth.split('-').map(Number);
+                    const daysCount = new Date(y, m, 0).getDate();
+                    const firstDay = new Date(y, m - 1, 1).getDay();
+                    const offset = (firstDay + 6) % 7;
+                    const items = [];
+
+                    for (let i = 0; i < offset; i++) {
+                      items.push(<div key={`empty-${i}`} className="h-7 rounded bg-transparent" />);
+                    }
+
+                    for (let d = 1; d <= daysCount; d++) {
+                      const dStr = `${selectedMonth}-${String(d).padStart(2, '0')}`;
+                      const rec = attendanceHistoryData?.records?.find((r) => r.date === dStr);
+                      const isToday = dStr === new Date().toISOString().slice(0, 10);
+                      const isSelectedDay = dStr === selectedDate;
+
+                      let cellColor = 'bg-white/[0.03] text-slate-500 border-white/[0.06] hover:border-white/20';
+                      if (rec?.status === 'present') {
+                        cellColor = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-bold';
+                      } else if (rec?.status === 'half') {
+                        cellColor = 'bg-amber-500/20 text-amber-300 border-amber-500/40 font-bold';
+                      } else if (rec?.status === 'absent') {
+                        cellColor = 'bg-rose-500/20 text-rose-300 border-rose-500/40 font-bold';
+                      }
+
+                      items.push(
+                        <button
+                          key={d}
+                          type="button"
+                          onClick={() => setSelectedDate(dStr)}
+                          title={`${dStr}: ${rec?.status || 'No entry'}`}
+                          className={`h-7 rounded flex items-center justify-center text-[11px] font-mono border transition-all ${cellColor} ${
+                            isSelectedDay ? 'ring-2 ring-violet-500 shadow-sm' : ''
+                          } ${isToday ? 'underline underline-offset-2' : ''}`}
+                        >
+                          {d}
+                        </button>
+                      );
+                    }
+                    return items;
+                  })()}
+                </div>
+
+                {/* Legend & Summary */}
+                <div className="flex items-center justify-between text-[10px] text-slate-400 pt-2 border-t border-white/[0.06]">
+                  <span className="flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                    <span>Present ({(attendanceHistoryData?.records || []).filter(r => r.status === 'present').length})</span>
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-amber-400" />
+                    <span>Half ({(attendanceHistoryData?.records || []).filter(r => r.status === 'half').length})</span>
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-rose-400" />
+                    <span>Absent ({(attendanceHistoryData?.records || []).filter(r => r.status === 'absent').length})</span>
+                  </span>
                 </div>
               </div>
 
@@ -586,6 +772,68 @@ export default function PayrollPage() {
               isLoading={createEmpMutation.isPending}
             >
               Enroll Staff
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Edit Employee Modal */}
+      <Modal
+        isOpen={editEmployeeOpen}
+        onClose={() => setEditEmployeeOpen(false)}
+        title="Edit Staff Member"
+        maxWidth="md"
+      >
+        <form onSubmit={handleEditEmpSubmit} className="space-y-4">
+          <Input
+            label="Staff Full Name"
+            placeholder="e.g. Tariqul Islam"
+            value={editEmpName}
+            onChange={(e) => setEditEmpName(e.target.value)}
+            required
+          />
+
+          <Input
+            label="Phone Number"
+            placeholder="017xxxxxxxx"
+            value={editEmpPhone}
+            onChange={(e) => setEditEmpPhone(e.target.value)}
+          />
+
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              type="number"
+              min="1"
+              label="Monthly Base (৳)"
+              value={editEmpSalary || ''}
+              onChange={(e) => setEditEmpSalary(Number(e.target.value))}
+              required
+            />
+            <Input
+              type="number"
+              min="20"
+              max="31"
+              label="Divisor (Days/Mo)"
+              value={editEmpDivisor}
+              onChange={(e) => setEditEmpDivisor(Number(e.target.value))}
+              required
+            />
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setEditEmployeeOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              isLoading={editEmpMutation.isPending}
+            >
+              Save Changes
             </Button>
           </div>
         </form>

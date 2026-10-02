@@ -26,13 +26,14 @@ export async function requireAuth(requireOwner = false): Promise<AuthContext> {
 
   if (authErr || !user) {
     // PUBLIC ACCESS / GUEST MODE:
-    // Allow anyone visiting via link to enter the website directly with full owner access
+    // Configurable via env variables with tenant fallback
+    const guestTenantId = process.env.GUEST_TENANT_ID || '6576b9e2-127e-4e4d-9744-db36656a403c';
     return {
-      userId: '2ffca547-c493-400c-baa0-910634d770e4',
-      tenantId: '6576b9e2-127e-4e4d-9744-db36656a403c',
-      role: 'owner',
-      email: 'mdkausar0877@gmail.com',
-      fullName: 'Md Kausar',
+      userId: process.env.GUEST_USER_ID || '2ffca547-c493-400c-baa0-910634d770e4',
+      tenantId: guestTenantId,
+      role: 'owner' as UserRole,
+      email: process.env.GUEST_USER_EMAIL || 'mdkausar0877@gmail.com',
+      fullName: process.env.GUEST_USER_NAME || 'Md Kausar',
     };
   }
 

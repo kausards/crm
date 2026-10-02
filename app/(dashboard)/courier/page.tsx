@@ -29,6 +29,17 @@ interface CourierCredRow {
   created_at: string;
 }
 
+interface CourierProviderStats {
+  dispatched: number;
+  delivered?: number;
+  returned?: number;
+  in_transit?: number;
+  delivery_rate?: number;
+  returned_rate?: number;
+  cod: number;
+  is_active: boolean;
+}
+
 interface CourierStats {
   total_dispatched: number;
   cod_in_transit: number;
@@ -39,9 +50,9 @@ interface CourierStats {
   rto_loss: number;
   last_synced_at: string | null;
   providers: {
-    steadfast: { dispatched: number; cod: number; is_active: boolean };
-    pathao: { dispatched: number; cod: number; is_active: boolean };
-    redx: { dispatched: number; cod: number; is_active: boolean };
+    steadfast: CourierProviderStats;
+    pathao: CourierProviderStats;
+    redx: CourierProviderStats;
   };
 }
 
@@ -427,44 +438,67 @@ export default function CourierPage() {
         </div>
 
         <div className="space-y-4">
-          {/* Steadfast */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold text-white">Steadfast Courier</span>
-              <span className="font-mono text-emerald-400 font-medium">88% Delivered (8% Returned)</span>
-            </div>
-            <div className="w-full h-2.5 bg-white/[0.05] rounded-full overflow-hidden flex border border-white/[0.06]">
-              <div className="h-full bg-emerald-500 rounded-l-full" style={{ width: '88%' }} />
-              <div className="h-full bg-rose-500" style={{ width: '8%' }} />
-              <div className="h-full bg-slate-600 rounded-r-full" style={{ width: '4%' }} />
-            </div>
-          </div>
+          {[
+            { id: 'steadfast' as const, name: 'Steadfast Courier' },
+            { id: 'pathao' as const, name: 'Pathao Courier' },
+            { id: 'redx' as const, name: 'RedX Logistics' },
+          ].map((provider) => {
+            const pData = stats?.providers?.[provider.id];
+            const dispatched = pData?.dispatched ?? 0;
+            const delivered = pData?.delivered ?? 0;
+            const returned = pData?.returned ?? 0;
+            const inTransit = pData?.in_transit ?? 0;
+            const delRate = pData?.delivery_rate ?? 0;
+            const retRate = pData?.returned_rate ?? 0;
+            const inTransitRate = Math.max(0, 100 - delRate - retRate);
 
-          {/* Pathao */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold text-white">Pathao Courier</span>
-              <span className="font-mono text-emerald-400 font-medium">82% Delivered (14% Returned)</span>
-            </div>
-            <div className="w-full h-2.5 bg-white/[0.05] rounded-full overflow-hidden flex border border-white/[0.06]">
-              <div className="h-full bg-emerald-500 rounded-l-full" style={{ width: '82%' }} />
-              <div className="h-full bg-rose-500" style={{ width: '14%' }} />
-              <div className="h-full bg-slate-600 rounded-r-full" style={{ width: '4%' }} />
-            </div>
-          </div>
-
-          {/* RedX */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold text-white">RedX Logistics</span>
-              <span className="font-mono text-emerald-400 font-medium">79% Delivered (15% Returned)</span>
-            </div>
-            <div className="w-full h-2.5 bg-white/[0.05] rounded-full overflow-hidden flex border border-white/[0.06]">
-              <div className="h-full bg-emerald-500 rounded-l-full" style={{ width: '79%' }} />
-              <div className="h-full bg-rose-500" style={{ width: '15%' }} />
-              <div className="h-full bg-slate-600 rounded-r-full" style={{ width: '6%' }} />
-            </div>
-          </div>
+            return (
+              <div key={provider.id} className="space-y-1.5">
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-white">{provider.name}</span>
+                    <span className="text-[10px] text-slate-500 font-mono">
+                      ({dispatched} {dispatched === 1 ? 'parcel' : 'parcels'} total)
+                    </span>
+                  </div>
+                  <span className="font-mono text-emerald-400 font-medium">
+                    {dispatched === 0
+                      ? 'No parcels dispatched yet'
+                      : `${delRate}% Delivered (${retRate}% Returned · ${inTransit} in transit)`}
+                  </span>
+                </div>
+                <div className="w-full h-2.5 bg-white/[0.05] rounded-full overflow-hidden flex border border-white/[0.06]">
+                  {dispatched === 0 ? (
+                    <div className="h-full w-full bg-white/[0.02]" />
+                  ) : (
+                    <>
+                      {delRate > 0 && (
+                        <div
+                          className="h-full bg-emerald-500 transition-all duration-500"
+                          style={{ width: `${delRate}%` }}
+                          title={`Delivered: ${delivered} (${delRate}%)`}
+                        />
+                      )}
+                      {retRate > 0 && (
+                        <div
+                          className="h-full bg-rose-500 transition-all duration-500"
+                          style={{ width: `${retRate}%` }}
+                          title={`Returned: ${returned} (${retRate}%)`}
+                        />
+                      )}
+                      {inTransitRate > 0 && (
+                        <div
+                          className="h-full bg-slate-600 transition-all duration-500"
+                          style={{ width: `${inTransitRate}%` }}
+                          title={`In Transit: ${inTransit}`}
+                        />
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 

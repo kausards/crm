@@ -7,11 +7,18 @@ export async function GET() {
     const auth = await requireAuth();
     const supabase = await createClient();
 
-    const { data: tenant } = await supabase
-      .from('tenants')
-      .select('id, business_name, plan, subscription_status, created_at')
-      .eq('id', auth.tenantId)
-      .single();
+    const [{ data: tenant }, { data: profileRow }] = await Promise.all([
+      supabase
+        .from('tenants')
+        .select('id, business_name, plan, subscription_status, created_at')
+        .eq('id', auth.tenantId)
+        .maybeSingle(),
+      supabase
+        .from('profiles')
+        .select('id, tenant_id, role, full_name, email')
+        .eq('id', auth.userId)
+        .maybeSingle(),
+    ]);
 
     const superAdminId = process.env.SUPER_ADMIN_USER_ID;
     const superAdminEmail = (process.env.SUPER_ADMIN_EMAIL || 'kausar.test@crmdemo.com').toLowerCase();
@@ -21,11 +28,13 @@ export async function GET() {
       (userEmail && userEmail === superAdminEmail)
     );
 
+    const effectiveName = profileRow?.full_name || auth.fullName || 'Merchant';
+
     return successResponse({
       user: {
         id: auth.userId,
         email: auth.email,
-        fullName: auth.fullName,
+        fullName: effectiveName,
         role: auth.role,
         tenantId: auth.tenantId,
         isSuperAdmin: isSuper,
@@ -34,13 +43,13 @@ export async function GET() {
         id: auth.userId,
         tenant_id: auth.tenantId,
         role: auth.role,
-        full_name: auth.fullName,
+        full_name: effectiveName,
         email: auth.email,
       },
       tenant: tenant || {
         id: auth.tenantId,
-        business_name: 'My Business',
-        plan: 'trial',
+        business_name: 'NexusFlow Store',
+        plan: 'pro',
         subscription_status: 'active',
       },
     });

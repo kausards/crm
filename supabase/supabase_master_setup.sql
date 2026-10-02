@@ -286,12 +286,35 @@ create policy "salary_runs_owner_only" on public.salary_runs
     tenant_id = auth.tenant_id() and auth.is_owner()
   );
 
+-- 11. Customers Table
+create table if not exists public.customers (
+  id uuid primary key default gen_random_uuid(),
+  tenant_id uuid not null references public.tenants(id) on delete cascade,
+  name text not null,
+  phone text not null,
+  address text,
+  notes text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  unique(tenant_id, phone)
+);
+alter table public.customers enable row level security;
+
+drop policy if exists "customers_tenant_all" on public.customers;
+create policy "customers_tenant_all" on public.customers
+  for all using (tenant_id = auth.tenant_id())
+  with check (tenant_id = auth.tenant_id());
+
+create index if not exists idx_customers_tenant on public.customers(tenant_id);
+create index if not exists idx_customers_phone on public.customers(tenant_id, phone);
+
 -- 12. Due Ledger (receivable) & Loan Ledger (payable) - OWNER ONLY
 create table if not exists public.due_ledger (
   id uuid primary key default gen_random_uuid(),
   tenant_id uuid not null references public.tenants(id) on delete cascade,
   party_name text not null,
   party_phone text,
+  customer_id uuid references public.customers(id) on delete set null,
   type text not null check (type in ('credit', 'debit')),
   amount numeric(12,2) not null check (amount > 0),
   note text,

@@ -1,11 +1,10 @@
 import { NextRequest } from 'next/server';
 import { requireAuth } from '@/lib/authHelper';
 import { createClient } from '@/lib/supabase/server';
-import { updateCustomerSchema } from '@/lib/validators/customer';
 import { successResponse, errorResponse, handleApiError } from '@/lib/apiResponse';
 
 export async function GET(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -24,24 +23,24 @@ export async function GET(
       return errorResponse('NOT_FOUND', 'Customer not found', 404);
     }
 
-    // Get current due
+    // Calculate due
     const { data: dues } = await supabase
       .from('due_ledger')
       .select('type, amount')
-      .eq('tenant_id', auth.tenantId)
-      .eq('customer_id', id);
+      .eq('customer_id', id)
+      .eq('tenant_id', auth.tenantId);
 
-    let totalDue = 0;
+    let currentDue = 0;
     for (const d of dues || []) {
       const amt = Number(d.amount) || 0;
-      if (d.type === 'credit') totalDue += amt;
-      else totalDue -= amt;
+      if (d.type === 'credit') currentDue += amt;
+      else currentDue -= amt;
     }
 
     return successResponse({
       customer: {
         ...customer,
-        current_due: Math.round(totalDue * 100) / 100,
+        current_due: Math.round(currentDue * 100) / 100,
       },
     });
   } catch (err) {
@@ -57,54 +56,74 @@ export async function PATCH(
     const auth = await requireAuth();
     const { id } = await params;
     const body = await req.json();
-    const validated = updateCustomerSchema.parse(body);
-
     const supabase = await createClient();
 
-    // If phone is changing, check uniqueness for tenant
-    if (validated.phone) {
-      const { data: existing } = await supabase
+    // Check customer exists
+    const { data: existing, error: existErr } = await supabase
+      .from('customers')
+      .select('id, phone')
+      .eq('id', id)
+      .eq('tenant_id', auth.tenantId)
+      .single();
+
+    if (existErr || !existing) {
+      return errorResponse('NOT_FOUND', 'Customer not found', 404);
+    }
+
+    // If phone is updated, ensure uniqueness
+    if (body.phone && body.phone !== existing.phone) {
+      const { data: duplicate } = await supabase
         .from('customers')
         .select('id')
         .eq('tenant_id', auth.tenantId)
-        .eq('phone', validated.phone)
+        .eq('phone', body.phone)
         .neq('id', id)
         .maybeSingle();
 
-      if (existing) {
-        return errorResponse('CONFLICT', `Phone number ${validated.phone} is already in use by another customer`, 409);
+      if (duplicate) {
+        return errorResponse('CONFLICT', 'Another customer with this phone number already exists', 409);
       }
     }
 
-    const { data: updated, error } = await supabase
+    const updates: Record<string, unknown> = {};
+    if (body.name !== undefined) updates.name = body.name.trim();
+    if (body.phone !== undefined) updates.phone = body.phone.trim();
+    if (body.address !== undefined) updates.address = body.address ? body.address.trim() : null;
+    if (body.notes !== undefined) updates.notes = body.notes ? body.notes.trim() : null;
+
+    const { data: updated, error: updateErr } = await supabase
       .from('customers')
-      .update({
-        ...validated,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updates)
       .eq('id', id)
       .eq('tenant_id', auth.tenantId)
       .select('*')
       .single();
 
-    if (error || !updated) {
-      return errorResponse('NOT_FOUND', 'Customer not found or update failed', 404);
-    }
+    if (updateErr) throw updateErr;
 
-    return successResponse(updated);
+    return successResponse({ customer: updated });
   } catch (err) {
     return handleApiError(err);
   }
 }
 
+export const PUT = PATCH;
+
 export async function DELETE(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const auth = await requireAuth(true); // Owner only
+    const auth = await requireAuth();
     const { id } = await params;
     const supabase = await createClient();
+
+    // Unlink any due ledger entries before deleting customer to prevent FK violation
+    await supabase
+      .from('due_ledger')
+      .update({ customer_id: null })
+      .eq('customer_id', id)
+      .eq('tenant_id', auth.tenantId);
 
     const { error } = await supabase
       .from('customers')
@@ -112,11 +131,9 @@ export async function DELETE(
       .eq('id', id)
       .eq('tenant_id', auth.tenantId);
 
-    if (error) {
-      return errorResponse('NOT_FOUND', 'Customer not found or delete failed', 404);
-    }
+    if (error) throw error;
 
-    return successResponse({ message: 'Customer deleted successfully' });
+    return successResponse({ deleted: true, id });
   } catch (err) {
     return handleApiError(err);
   }

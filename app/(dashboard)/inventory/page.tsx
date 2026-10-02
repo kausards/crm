@@ -11,12 +11,15 @@ import {
   TrendingUp,
   Trash2,
   PackageCheck,
+  Pencil,
+  History,
 } from 'lucide-react';
-import { fetchApi, formatBDT } from '@/lib/apiClient';
+import { fetchApi, formatBDT, formatDate } from '@/lib/apiClient';
 import { useAuth, useToast } from '@/app/providers';
 import { Button } from '@/components/ui/Button';
 import { Input, Select } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
+import { TableSkeleton } from '@/components/ui/TableSkeleton';
 
 interface ProductItem {
   id: string;
@@ -40,6 +43,19 @@ export default function InventoryPage() {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [adjustModalOpen, setAdjustModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<ProductItem | null>(null);
+
+  // Edit product state
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<ProductItem | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editSku, setEditSku] = useState('');
+  const [editBuyPrice, setEditBuyPrice] = useState<number>(0);
+  const [editSellPrice, setEditSellPrice] = useState<number>(0);
+  const [editLowStockThreshold, setEditLowStockThreshold] = useState<number>(5);
+
+  // History modal state
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
+  const [historyProduct, setHistoryProduct] = useState<ProductItem | null>(null);
 
   // Form states for Add Product
   const [name, setName] = useState('');
@@ -120,6 +136,64 @@ export default function InventoryPage() {
       toast(err instanceof Error ? err.message : 'Failed to archive product', 'error');
     },
   });
+
+  // Edit product mutation
+  const editProductMutation = useMutation({
+    mutationFn: ({ id, body }: { id: string; body: unknown }) =>
+      fetchApi(`/api/v1/products/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(body),
+      }),
+    onSuccess: () => {
+      toast('Product specifications updated successfully!', 'success');
+      setEditModalOpen(false);
+      setEditingProduct(null);
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+    onError: (err: unknown) => {
+      toast(err instanceof Error ? err.message : 'Failed to update product', 'error');
+    },
+  });
+
+  // Query stock movements history
+  const { data: movementsData, isLoading: movementsLoading } = useQuery<{
+    movements: Array<{
+      id: string;
+      direction: string;
+      quantity: number;
+      reason: string;
+      created_at: string;
+    }>;
+  }>({
+    queryKey: ['stock-movements', historyProduct?.id],
+    queryFn: () => fetchApi(`/api/v1/products/${historyProduct!.id}/movements`),
+    enabled: Boolean(historyProduct && historyModalOpen),
+  });
+
+  const openEditModal = (prod: ProductItem) => {
+    setEditingProduct(prod);
+    setEditName(prod.name);
+    setEditSku(prod.sku || '');
+    setEditBuyPrice(prod.buy_price);
+    setSellPrice(prod.sell_price);
+    setEditLowStockThreshold(prod.low_stock_threshold);
+    setEditModalOpen(true);
+  };
+
+  const handleEditSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProduct) return;
+    editProductMutation.mutate({
+      id: editingProduct.id,
+      body: {
+        name: editName,
+        sku: editSku || null,
+        buy_price: Number(editBuyPrice),
+        sell_price: Number(editSellPrice),
+        low_stock_threshold: Number(editLowStockThreshold),
+      },
+    });
+  };
 
   const resetAddForm = () => {
     setName('');
@@ -265,9 +339,7 @@ export default function InventoryPage() {
       {/* Products Glass Table */}
       <div className="glass-card overflow-hidden">
         {isLoading ? (
-          <div className="py-20 text-center text-xs text-slate-500 font-body">
-            Loading products catalog...
-          </div>
+          <TableSkeleton rows={6} cols={7} />
         ) : products.length === 0 ? (
           <div className="py-20 text-center">
             <Boxes className="w-10 h-10 text-slate-600 mx-auto mb-2" />
@@ -349,16 +421,37 @@ export default function InventoryPage() {
                       </td>
                       <td className="py-3.5 px-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
+                          {isOwner && (
+                            <button
+                              onClick={() => openEditModal(prod)}
+                              title="Edit Product Details"
+                              className="p-1.5 text-slate-400 hover:text-white hover:bg-white/[0.08] rounded-lg transition-colors"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+
                           <button
                             onClick={() => {
                               setSelectedProduct(prod);
                               setAdjustModalOpen(true);
                             }}
                             title="Adjust Stock"
-                            className="px-2.5 py-1 bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 border border-white/10 rounded-lg text-xs font-label font-medium flex items-center gap-1 transition-all"
+                            className="px-2 py-1 bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 border border-white/10 rounded-lg text-xs font-label font-medium flex items-center gap-1 transition-all"
                           >
                             <ArrowUpDown className="w-3 h-3 text-violet-400" />
                             <span>Adjust</span>
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              setHistoryProduct(prod);
+                              setHistoryModalOpen(true);
+                            }}
+                            title="View Stock Movements History"
+                            className="p-1.5 text-slate-400 hover:text-cyan-300 hover:bg-white/[0.08] rounded-lg transition-colors"
+                          >
+                            <History className="w-3.5 h-3.5" />
                           </button>
 
                           {isOwner && (
@@ -561,6 +654,154 @@ export default function InventoryPage() {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      {/* Edit Product Modal */}
+      <Modal
+        isOpen={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        title="Edit Product Details"
+        maxWidth="lg"
+      >
+        <form onSubmit={handleEditSubmit} className="space-y-4">
+          <Input
+            label="Product Title"
+            placeholder="e.g. Premium Cotton Polo Shirt"
+            value={editName}
+            onChange={(e) => setEditName(e.target.value)}
+            required
+          />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input
+              label="SKU / Barcode"
+              placeholder="POLO-BLK-M"
+              value={editSku}
+              onChange={(e) => setEditSku(e.target.value)}
+            />
+
+            <Input
+              type="number"
+              min="0"
+              label="Low Stock Threshold"
+              helperText="Alert triggers when quantity ≤ this"
+              value={editLowStockThreshold}
+              onChange={(e) => setEditLowStockThreshold(Number(e.target.value))}
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input
+              type="number"
+              min="0"
+              step="any"
+              label="Wholesale Buy Price (৳)"
+              value={editBuyPrice || ''}
+              onChange={(e) => setEditBuyPrice(Number(e.target.value))}
+              required
+            />
+
+            <Input
+              type="number"
+              min="0"
+              step="any"
+              label="Retail Sell Price (৳)"
+              value={editSellPrice || ''}
+              onChange={(e) => setEditSellPrice(Number(e.target.value))}
+              required
+            />
+          </div>
+
+          <p className="text-xs text-slate-400 font-body">
+            Note: To change inventory count, please use the dedicated <strong className="text-violet-400 font-semibold">Adjust</strong> button to maintain an immutable audit trail.
+          </p>
+
+          <div className="flex items-center justify-end gap-3 pt-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setEditModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              isLoading={editProductMutation.isPending}
+            >
+              Save Changes
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Stock Movement History Modal */}
+      <Modal
+        isOpen={historyModalOpen}
+        onClose={() => setHistoryModalOpen(false)}
+        title={`Stock Ledger History — ${historyProduct?.name}`}
+        maxWidth="lg"
+      >
+        <div className="space-y-3">
+          <div className="flex items-center justify-between text-xs text-slate-400 border-b border-white/[0.08] pb-2">
+            <span>SKU: <strong className="text-white font-mono">{historyProduct?.sku || 'None'}</strong></span>
+            <span>Current Balance: <strong className="text-emerald-400 font-mono text-sm">{historyProduct?.stock_quantity} units</strong></span>
+          </div>
+
+          <div className="overflow-x-auto max-h-[380px] overflow-y-auto">
+            {movementsLoading ? (
+              <TableSkeleton rows={4} cols={4} />
+            ) : (!movementsData?.movements || movementsData.movements.length === 0) ? (
+              <div className="py-12 text-center text-xs text-slate-500">
+                No stock movement transactions recorded yet for this product.
+              </div>
+            ) : (
+              <table className="w-full text-left text-xs">
+                <thead className="bg-white/[0.02] border-b border-white/10 text-slate-400 uppercase font-label text-[10px] tracking-wider sticky top-0 bg-[#0d1117]">
+                  <tr>
+                    <th className="py-2.5 px-3">Date</th>
+                    <th className="py-2.5 px-3">Direction</th>
+                    <th className="py-2.5 px-3 text-right">Units</th>
+                    <th className="py-2.5 px-3">Reason / Context</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/[0.05]">
+                  {movementsData.movements.map((m) => (
+                    <tr key={m.id} className="hover:bg-white/[0.02]">
+                      <td className="py-2.5 px-3 font-mono text-slate-400 text-[11px]">
+                        {formatDate(m.created_at)}
+                      </td>
+                      <td className="py-2.5 px-3">
+                        {m.direction === 'in' ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
+                            ▲ IN
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/15 text-rose-400 border border-rose-500/25">
+                            ▼ OUT
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-2.5 px-3 text-right font-mono font-bold text-white text-xs">
+                        {m.quantity}
+                      </td>
+                      <td className="py-2.5 px-3 text-slate-300 capitalize text-[11px]">
+                        {m.reason.replace(/_/g, ' ')}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          <div className="flex justify-end pt-3 border-t border-white/[0.06]">
+            <Button variant="outline" size="sm" onClick={() => setHistoryModalOpen(false)}>
+              Close
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

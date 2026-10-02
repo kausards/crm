@@ -3,17 +3,36 @@ import { requireAuth } from '@/lib/authHelper';
 import { createClient } from '@/lib/supabase/server';
 import { successResponse, handleApiError } from '@/lib/apiResponse';
 
+function getBangladeshTodayRange(dateParam: string | null): { bdDate: string; startIso: string; endIso: string } {
+  const bdOffsetMs = 6 * 60 * 60 * 1000;
+  let bdDate: string;
+  if (dateParam) {
+    bdDate = dateParam;
+  } else {
+    const nowUtc = new Date();
+    const bdNow = new Date(nowUtc.getTime() + bdOffsetMs);
+    bdDate = bdNow.toISOString().slice(0, 10);
+  }
+
+  const [year, month, day] = bdDate.split('-').map(Number);
+  const bdMidnightUtcMs = Date.UTC(year, month - 1, day, 0, 0, 0, 0) - bdOffsetMs;
+  const bdEndUtcMs = Date.UTC(year, month - 1, day, 23, 59, 59, 999) - bdOffsetMs;
+
+  return {
+    bdDate,
+    startIso: new Date(bdMidnightUtcMs).toISOString(),
+    endIso: new Date(bdEndUtcMs).toISOString(),
+  };
+}
+
 export async function GET(req: NextRequest) {
   try {
     const auth = await requireAuth();
     const supabase = await createClient();
 
     const { searchParams } = new URL(req.url);
-    const dateParam = searchParams.get('date'); // optional YYYY-MM-DD
-    
-    const targetDate = dateParam || new Date().toISOString().slice(0, 10);
-    const startIso = `${targetDate}T00:00:00.000Z`;
-    const endIso = `${targetDate}T23:59:59.999Z`;
+    const { bdDate, startIso, endIso } = getBangladeshTodayRange(searchParams.get('date'));
+    const targetDate = bdDate;
 
     // 1. Fetch today's orders with items for sales & profit calculation
     const { data: todayOrders, error: ordersErr } = await supabase

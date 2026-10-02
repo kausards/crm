@@ -43,3 +43,34 @@ export async function POST(
     return handleApiError(err);
   }
 }
+
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ employeeId: string }> }
+) {
+  try {
+    const auth = await requireAuth(true); // Owner only
+    const { employeeId } = await params;
+    const { searchParams } = new URL(req.url);
+    const month = searchParams.get('month') || new Date().toISOString().slice(0, 7);
+    const supabase = await createClient();
+
+    const { data, error } = await supabase
+      .from('attendance')
+      .select('date, status')
+      .eq('employee_id', employeeId)
+      .eq('tenant_id', auth.tenantId)
+      .gte('date', `${month}-01`)
+      .lte('date', `${month}-31`)
+      .order('date', { ascending: true });
+
+    if (error) {
+      return errorResponse('INTERNAL_ERROR', error.message, 500);
+    }
+
+    return successResponse({ month, records: data || [] });
+  } catch (err) {
+    return handleApiError(err);
+  }
+}
+

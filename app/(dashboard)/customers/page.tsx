@@ -2,12 +2,13 @@
 
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Users, Plus, Search, Phone, MapPin, BookOpen } from 'lucide-react';
+import { Users, Plus, Search, Phone, MapPin, BookOpen, Edit2, Trash2 } from 'lucide-react';
 import { fetchApi, formatBDT, formatDate } from '@/lib/apiClient';
 import { useToast } from '@/app/providers';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
+import { TableSkeleton } from '@/components/ui/TableSkeleton';
 
 interface CustomerItem {
   id: string;
@@ -26,6 +27,8 @@ export default function CustomersPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState<CustomerItem | null>(null);
 
   // Form states
   const [custName, setCustName] = useState('');
@@ -68,6 +71,68 @@ export default function CustomersPage() {
       toast(err instanceof Error ? err.message : 'Failed to add customer', 'error');
     },
   });
+
+  // Edit customer mutation
+  const editMutation = useMutation({
+    mutationFn: ({ id, body }: { id: string; body: unknown }) =>
+      fetchApi(`/api/v1/customers/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(body),
+      }),
+    onSuccess: () => {
+      toast('Customer profile updated!', 'success');
+      setEditModalOpen(false);
+      setEditingCustomer(null);
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+    },
+    onError: (err: unknown) => {
+      toast(err instanceof Error ? err.message : 'Failed to update customer', 'error');
+    },
+  });
+
+  // Delete customer mutation
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) =>
+      fetchApi(`/api/v1/customers/${id}`, {
+        method: 'DELETE',
+      }),
+    onSuccess: () => {
+      toast('Customer record deleted', 'success');
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+    },
+    onError: (err: unknown) => {
+      toast(err instanceof Error ? err.message : 'Failed to delete customer', 'error');
+    },
+  });
+
+  const handleOpenEdit = (c: CustomerItem) => {
+    setEditingCustomer(c);
+    setCustName(c.name);
+    setCustPhone(c.phone);
+    setCustAddress(c.address || '');
+    setCustNotes(c.notes || '');
+    setEditModalOpen(true);
+  };
+
+  const handleEditSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingCustomer) return;
+    editMutation.mutate({
+      id: editingCustomer.id,
+      body: {
+        name: custName,
+        phone: custPhone,
+        address: custAddress || undefined,
+        notes: custNotes || undefined,
+      },
+    });
+  };
+
+  const handleDelete = (c: CustomerItem) => {
+    if (confirm(`Are you sure you want to delete customer "${c.name}"?`)) {
+      deleteMutation.mutate(c.id);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -175,8 +240,8 @@ export default function CustomersPage() {
       {/* Customers Glass Table */}
       <div className="glass-card overflow-hidden">
         {isLoading ? (
-          <div className="py-20 text-center text-xs text-slate-500 font-body">
-            Loading customers directory...
+          <div className="p-4">
+            <TableSkeleton rows={6} cols={7} />
           </div>
         ) : customers.length === 0 ? (
           <div className="py-20 text-center">
@@ -197,6 +262,7 @@ export default function CustomersPage() {
                   <th className="py-3.5 px-4 font-semibold">Internal Notes</th>
                   <th className="py-3.5 px-4 font-semibold">Joined Date</th>
                   <th className="py-3.5 px-4 text-right font-semibold">Due Balance</th>
+                  <th className="py-3.5 px-4 text-right font-semibold">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/[0.05]">
@@ -243,6 +309,27 @@ export default function CustomersPage() {
                           ? `${formatBDT(Math.abs(c.current_due))} advance`
                           : 'Settled'}
                       </span>
+                    </td>
+                    <td className="py-3.5 px-4 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEdit(c)}
+                          className="p-1.5 text-slate-400 hover:text-white hover:bg-white/[0.06] rounded-lg transition-colors"
+                          title="Edit Customer"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(c)}
+                          disabled={deleteMutation.isPending}
+                          className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
+                          title="Delete Customer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -331,6 +418,69 @@ export default function CustomersPage() {
               isLoading={createMutation.isPending}
             >
               Save Record
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Edit Customer Modal */}
+      <Modal
+        isOpen={editModalOpen}
+        onClose={() => {
+          setEditModalOpen(false);
+          setEditingCustomer(null);
+        }}
+        title="Edit Customer Profile"
+        maxWidth="md"
+      >
+        <form onSubmit={handleEditSubmit} className="space-y-4">
+          <Input
+            label="Full Name"
+            placeholder="e.g. Rahim Uddin"
+            value={custName}
+            onChange={(e) => setCustName(e.target.value)}
+            required
+          />
+
+          <Input
+            label="Phone Number"
+            placeholder="017xxxxxxxx"
+            value={custPhone}
+            onChange={(e) => setCustPhone(e.target.value)}
+            required
+          />
+
+          <Input
+            label="Delivery Address"
+            placeholder="House 12, Road 4, Mirpur, Dhaka"
+            value={custAddress}
+            onChange={(e) => setCustAddress(e.target.value)}
+          />
+
+          <Input
+            label="Internal Notes"
+            placeholder="e.g. Preferred delivery time, repeat buyer"
+            value={custNotes}
+            onChange={(e) => setCustNotes(e.target.value)}
+          />
+
+          <div className="flex items-center justify-end gap-3 pt-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setEditModalOpen(false);
+                setEditingCustomer(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              isLoading={editMutation.isPending}
+            >
+              Update Profile
             </Button>
           </div>
         </form>

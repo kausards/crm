@@ -64,6 +64,22 @@ interface DashboardStats {
   recent_orders: RecentOrder[];
 }
 
+interface ChartPoint {
+  date: string;
+  revenue: number;
+  profit: number;
+  orders_count: number;
+}
+
+interface ChartResponse {
+  from: string;
+  to: string;
+  total_revenue: number;
+  total_profit: number;
+  total_orders: number;
+  data: ChartPoint[];
+}
+
 export default function DashboardPage() {
   const { user } = useAuth();
   const isOwner = user?.role === 'owner';
@@ -81,8 +97,26 @@ export default function DashboardPage() {
     enabled: isOwner,
   });
 
+  const { data: chartResponse, isLoading: chartLoading } = useQuery<ChartResponse>({
+    queryKey: ['dashboard-chart', chartTimeframe],
+    queryFn: () => {
+      const today = new Date().toISOString().slice(0, 10);
+      let days = 30;
+      if (chartTimeframe === '7D') days = 7;
+      else if (chartTimeframe === '30D') days = 30;
+      else if (chartTimeframe === '90D') days = 90;
+      else if (chartTimeframe === 'YTD') {
+        const fromYtd = `${new Date().getFullYear()}-01-01`;
+        return fetchApi(`/api/v1/dashboard/chart?from=${fromYtd}&to=${today}`);
+      }
+      const from = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+      return fetchApi(`/api/v1/dashboard/chart?from=${from}&to=${today}`);
+    },
+  });
+
   const metrics = stats?.metrics;
   const recentOrders = stats?.recent_orders || [];
+  const chartData = chartResponse?.data || [];
 
   return (
     <div className="space-y-6">
@@ -269,68 +303,158 @@ export default function DashboardPage() {
 
           {/* SVG Chart Canvas */}
           <div className="relative w-full h-64 pt-4">
-            <svg className="w-full h-full" fill="none" preserveAspectRatio="none" viewBox="0 0 700 200">
-              <defs>
-                <linearGradient id="violetChartFill" x1="0" x2="0" y1="0" y2="1">
-                  <stop offset="0%" stopColor="#8B5CF6" stopOpacity="0.25" />
-                  <stop offset="100%" stopColor="#8B5CF6" stopOpacity="0.0" />
-                </linearGradient>
-                <linearGradient id="emeraldChartFill" x1="0" x2="0" y1="0" y2="1">
-                  <stop offset="0%" stopColor="#10B981" stopOpacity="0.18" />
-                  <stop offset="100%" stopColor="#10B981" stopOpacity="0.0" />
-                </linearGradient>
-              </defs>
+            {chartLoading ? (
+              <div className="h-full flex items-center justify-center text-xs text-slate-500 font-mono">
+                Calculating revenue telemetry...
+              </div>
+            ) : chartData.length === 0 ? (
+              <div className="h-full flex items-center justify-center text-xs text-slate-500 font-mono">
+                No transaction data in this timeframe
+              </div>
+            ) : (() => {
+              const maxVal = Math.max(
+                ...chartData.map((d) => Math.max(d.revenue, d.profit, 0)),
+                1000
+              );
+              const numPoints = chartData.length;
+              const svgWidth = 700;
+              const svgHeight = 200;
+              const paddingX = 25;
+              const paddingBottom = 25;
+              const paddingTop = 25;
+              const availableHeight = svgHeight - paddingTop - paddingBottom;
+              const baselineY = paddingTop + availableHeight;
 
-              {/* Grid lines */}
-              {[40, 80, 120, 160].map((y) => (
-                <line key={y} stroke="rgba(255,255,255,0.05)" strokeWidth="1" strokeDasharray="3 3" x1="0" x2="700" y1={y} y2={y} />
-              ))}
+              const points = chartData.map((d, i) => {
+                const x =
+                  numPoints > 1
+                    ? paddingX + (i / (numPoints - 1)) * (svgWidth - 2 * paddingX)
+                    : svgWidth / 2;
+                const yRev = paddingTop + availableHeight * (1 - Math.max(0, d.revenue) / maxVal);
+                const yProfit = paddingTop + availableHeight * (1 - Math.max(0, d.profit) / maxVal);
+                return { x, yRev, yProfit, d };
+              });
 
-              {/* Profit area */}
-              <path d="M0,160 Q60,145 120,150 T240,128 T360,115 T476,68 T580,98 T700,75 L700,195 L0,195 Z" fill="url(#emeraldChartFill)" />
-              <path d="M0,160 Q60,145 120,150 T240,128 T360,115 T476,68 T580,98 T700,75" fill="none" stroke="#10B981" strokeWidth="2" strokeLinecap="round" />
+              const revPolyline = points.map((p) => `${p.x.toFixed(1)},${p.yRev.toFixed(1)}`).join(' ');
+              const profitPolyline = points.map((p) => `${p.x.toFixed(1)},${p.yProfit.toFixed(1)}`).join(' ');
 
-              {/* Revenue area */}
-              <path d="M0,120 Q60,98 120,104 T240,82 T360,66 T476,24 T580,52 T700,35 L700,195 L0,195 Z" fill="url(#violetChartFill)" />
-              <path d="M0,120 Q60,98 120,104 T240,82 T360,66 T476,24 T580,52 T700,35" fill="none" stroke="#8B5CF6" strokeWidth="2.5" strokeLinecap="round" />
+              const firstX = points[0]?.x ?? paddingX;
+              const lastX = points[points.length - 1]?.x ?? (svgWidth - paddingX);
 
-              {/* Focus points */}
-              <circle cx="476" cy="24" fill="#8B5CF6" r="4.5" stroke="#070709" strokeWidth="2" />
-              <circle cx="476" cy="68" fill="#10B981" r="4" stroke="#070709" strokeWidth="2" />
-            </svg>
+              const revPolygon = `${firstX},${baselineY} ${revPolyline} ${lastX},${baselineY}`;
+              const profitPolygon = `${firstX},${baselineY} ${profitPolyline} ${lastX},${baselineY}`;
 
-            {/* X Labels */}
-            <div className="flex justify-between px-1 pt-2 text-[11px] text-slate-500 font-mono">
-              <span>Day 1</span>
-              <span>Day 6</span>
-              <span>Day 12</span>
-              <span>Day 18</span>
-              <span className="text-violet-400 font-semibold">Day 24 (Peak)</span>
-              <span>Day 30</span>
-            </div>
+              const peakPoint = chartData.reduce(
+                (max, cur) => (cur.revenue > (max?.revenue || 0) ? cur : max),
+                chartData[0]
+              );
+              const peakCoord = points.find((p) => p.d.date === peakPoint?.date);
+
+              // 5 milestone indices for X-axis labels
+              const labelIndices = [
+                0,
+                Math.floor((numPoints - 1) * 0.25),
+                Math.floor((numPoints - 1) * 0.5),
+                Math.floor((numPoints - 1) * 0.75),
+                numPoints - 1,
+              ].filter((idx, pos, arr) => arr.indexOf(idx) === pos && idx >= 0 && idx < numPoints);
+
+              return (
+                <>
+                  <svg className="w-full h-full" fill="none" preserveAspectRatio="none" viewBox="0 0 700 200">
+                    <defs>
+                      <linearGradient id="violetChartFill" x1="0" x2="0" y1="0" y2="1">
+                        <stop offset="0%" stopColor="#8B5CF6" stopOpacity="0.28" />
+                        <stop offset="100%" stopColor="#8B5CF6" stopOpacity="0.0" />
+                      </linearGradient>
+                      <linearGradient id="emeraldChartFill" x1="0" x2="0" y1="0" y2="1">
+                        <stop offset="0%" stopColor="#10B981" stopOpacity="0.22" />
+                        <stop offset="100%" stopColor="#10B981" stopOpacity="0.0" />
+                      </linearGradient>
+                    </defs>
+
+                    {/* Grid lines */}
+                    {[40, 80, 120, 160].map((y) => (
+                      <line key={y} stroke="rgba(255,255,255,0.05)" strokeWidth="1" strokeDasharray="3 3" x1="0" x2="700" y1={y} y2={y} />
+                    ))}
+
+                    {/* Profit Area & Line */}
+                    <polygon points={profitPolygon} fill="url(#emeraldChartFill)" />
+                    <polyline points={profitPolyline} fill="none" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+
+                    {/* Revenue Area & Line */}
+                    <polygon points={revPolygon} fill="url(#violetChartFill)" />
+                    <polyline points={revPolyline} fill="none" stroke="#8B5CF6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+
+                    {/* Focus Points for Peak */}
+                    {peakCoord && (
+                      <g>
+                        <circle cx={peakCoord.x} cy={peakCoord.yRev} fill="#8B5CF6" r="5" stroke="#070709" strokeWidth="2">
+                          <title>Peak Revenue: ৳{peakPoint?.revenue.toLocaleString()} on {peakPoint?.date}</title>
+                        </circle>
+                        <circle cx={peakCoord.x} cy={peakCoord.yProfit} fill="#10B981" r="4" stroke="#070709" strokeWidth="2">
+                          <title>Peak Day Profit: ৳{peakPoint?.profit.toLocaleString()}</title>
+                        </circle>
+                      </g>
+                    )}
+                  </svg>
+
+                  {/* X Labels */}
+                  <div className="flex justify-between px-2 pt-2 text-[11px] text-slate-500 font-mono">
+                    {labelIndices.map((idx) => {
+                      const item = chartData[idx];
+                      if (!item) return null;
+                      const dateObj = new Date(item.date);
+                      const formatted = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+                      const isPeak = item.date === peakPoint?.date;
+                      return (
+                        <span key={item.date} className={isPeak ? 'text-violet-400 font-semibold' : ''}>
+                          {formatted} {isPeak ? '(Peak)' : ''}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </>
+              );
+            })()}
           </div>
 
           {/* Chart summary metrics */}
-          <div className="mt-4 pt-4 border-t border-white/10 grid grid-cols-3 gap-4">
-            <div>
-              <div className="text-[11px] font-label text-slate-400 uppercase tracking-wider">Avg Daily Sales</div>
-              <div className="text-sm font-headline font-bold text-white mt-0.5 tabular-nums">
-                {statsLoading ? '—' : formatBDT(metrics?.today_sales || 120000)}
+          {(() => {
+            const numDays = chartData.length || 1;
+            const avgDailySales = chartResponse?.total_revenue ? Math.round(chartResponse.total_revenue / numDays) : (metrics?.today_sales || 0);
+            const avgDailyOrders = chartResponse?.total_orders ? Math.round(chartResponse.total_orders / numDays) : (metrics?.today_orders_count || 0);
+            const peakPoint = chartData.reduce(
+              (max, cur) => (cur.revenue > (max?.revenue || 0) ? cur : max),
+              chartData[0]
+            );
+            const peakDateFormatted = peakPoint
+              ? new Date(peakPoint.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+              : '—';
+
+            return (
+              <div className="mt-4 pt-4 border-t border-white/10 grid grid-cols-3 gap-4">
+                <div>
+                  <div className="text-[11px] font-label text-slate-400 uppercase tracking-wider">Avg Daily Sales</div>
+                  <div className="text-sm font-headline font-bold text-white mt-0.5 tabular-nums">
+                    {chartLoading ? '—' : formatBDT(avgDailySales)}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[11px] font-label text-slate-400 uppercase tracking-wider">Avg Daily Orders</div>
+                  <div className="text-sm font-headline font-bold text-emerald-400 mt-0.5 tabular-nums">
+                    {chartLoading ? '—' : `${avgDailyOrders} orders / day`}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[11px] font-label text-slate-400 uppercase tracking-wider">Peak Sales Day</div>
+                  <div className="text-sm font-headline font-bold text-violet-300 mt-0.5 tabular-nums">
+                    {peakPoint && peakPoint.revenue > 0 ? `${peakDateFormatted} (${formatBDT(peakPoint.revenue)})` : '—'}
+                  </div>
+                </div>
               </div>
-            </div>
-            <div>
-              <div className="text-[11px] font-label text-slate-400 uppercase tracking-wider">Courier SLA</div>
-              <div className="text-sm font-headline font-bold text-emerald-400 mt-0.5 tabular-nums">
-                98.6% on-time
-              </div>
-            </div>
-            <div>
-              <div className="text-[11px] font-label text-slate-400 uppercase tracking-wider">Inventory Turns</div>
-              <div className="text-sm font-headline font-bold text-violet-300 mt-0.5 tabular-nums">
-                3.2× Monthly
-              </div>
-            </div>
-          </div>
+            );
+          })()}
         </div>
 
         {/* Recent Orders Glass Table */}

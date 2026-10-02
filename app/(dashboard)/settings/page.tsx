@@ -17,6 +17,7 @@ import {
   KeyRound,
   ExternalLink,
   Zap,
+  Edit2,
 } from 'lucide-react';
 import { fetchApi, formatBDT } from '@/lib/apiClient';
 import { useAuth, useToast } from '@/app/providers';
@@ -31,11 +32,37 @@ function SettingsContent() {
   const { toast } = useToast();
   const isOwner = user?.role === 'owner';
 
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [fullNameInput, setFullNameInput] = useState('');
+  const [bizNameInput, setBizNameInput] = useState('');
+
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [inviteFullName, setInviteFullName] = useState('');
   const [inviteEmail, setInviteEmail] = useState('');
   const [invitedResult, setInvitedResult] = useState<{ email: string; tempPassword: string } | null>(null);
   const [copiedPass, setCopiedPass] = useState(false);
+
+  const handleOpenProfileModal = () => {
+    setFullNameInput(user?.full_name || '');
+    setBizNameInput(user?.business_name || '');
+    setProfileModalOpen(true);
+  };
+
+  const updateProfileMutation = useMutation({
+    mutationFn: (body: { full_name?: string; business_name?: string }) =>
+      fetchApi('/api/v1/auth/profile', {
+        method: 'PATCH',
+        body: JSON.stringify(body),
+      }),
+    onSuccess: () => {
+      toast('Profile & Business details updated!', 'success');
+      setProfileModalOpen(false);
+      refreshUser();
+    },
+    onError: (err: unknown) => {
+      toast(err instanceof Error ? err.message : 'Failed to update profile', 'error');
+    },
+  });
 
   useEffect(() => {
     if (paymentStatus === 'success') {
@@ -165,9 +192,19 @@ function SettingsContent() {
               Store Profile
             </h3>
           </div>
-          <span className="badge-cyan text-[10px] font-semibold">
-            Multi-Tenant Isolated
-          </span>
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={handleOpenProfileModal}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-xs font-label text-slate-200 transition-all hover:text-white"
+            >
+              <Edit2 className="w-3.5 h-3.5 text-purple-300" />
+              <span>Edit Profile</span>
+            </button>
+            <span className="badge-cyan text-[10px] font-semibold">
+              Multi-Tenant Isolated
+            </span>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
@@ -487,6 +524,83 @@ function SettingsContent() {
             </div>
           </form>
         )}
+      </Modal>
+
+      {/* Edit Profile & Business Modal */}
+      <Modal
+        isOpen={profileModalOpen}
+        onClose={() => setProfileModalOpen(false)}
+        title="Edit Store Profile & Identity"
+        maxWidth="md"
+      >
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            updateProfileMutation.mutate({
+              full_name: fullNameInput,
+              business_name: isOwner ? bizNameInput : undefined,
+            });
+          }}
+          className="space-y-4"
+        >
+          <Input
+            label="Full Name (Account Owner)"
+            placeholder="e.g. Md Kausar"
+            value={fullNameInput}
+            onChange={(e) => setFullNameInput(e.target.value)}
+            required
+          />
+
+          {isOwner ? (
+            <Input
+              label="Business / Store Name"
+              placeholder="e.g. Apex Retail Ltd"
+              value={bizNameInput}
+              onChange={(e) => setBizNameInput(e.target.value)}
+              required
+            />
+          ) : (
+            <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-slate-400">
+              <span className="text-slate-500 block text-[11px] mb-0.5">Business Name</span>
+              <span className="font-semibold text-white">{user?.business_name}</span>
+              <span className="block text-[10px] text-slate-500 mt-1">
+                Only account owners can change store branding.
+              </span>
+            </div>
+          )}
+
+          <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-slate-400 space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500">Registered Email:</span>
+              <span className="font-mono text-slate-300">{user?.email}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500">Tenant Workspace ID:</span>
+              <span className="font-mono text-slate-400 text-[11px] truncate max-w-[200px]">
+                {user?.tenant_id}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/[0.08]">
+            <Button
+              variant="ghost"
+              size="sm"
+              type="button"
+              onClick={() => setProfileModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              type="submit"
+              isLoading={updateProfileMutation.isPending}
+            >
+              Save Changes
+            </Button>
+          </div>
+        </form>
       </Modal>
     </div>
   );
