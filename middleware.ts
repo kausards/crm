@@ -33,26 +33,10 @@ export async function middleware(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
   const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/signup');
-  const isPublicApi = pathname.startsWith('/api/health') ||
-    pathname.startsWith('/api/v1/orders/public') ||
-    pathname.startsWith('/api/v1/courier/webhook') ||
-    pathname.startsWith('/api/v1/billing/webhook') ||
-    pathname.startsWith('/api/v1/auth/signup');
 
-  const isAdminRoute = pathname.startsWith('/admin');
-  const isAdminApi = pathname.startsWith('/api/v1/admin');
-
-  // If unauthenticated and trying to access dashboard/protected pages (excluding standalone admin portal)
-  if (!user && !isAuthRoute && !isPublicApi && !isAdminRoute && !isAdminApi && !pathname.startsWith('/_next') && pathname !== '/favicon.ico') {
-    // Only redirect browser pages, not API calls (API calls return 401 JSON)
-    if (!pathname.startsWith('/api/')) {
-      return NextResponse.redirect(new URL('/login', request.url));
-    }
-  }
-
-  // If already logged in and visiting login or signup page
-  if (user && isAuthRoute) {
-    return NextResponse.redirect(new URL('/', request.url));
+  // If someone visits /login or /signup, redirect straight to /dashboard so public visitors enter directly
+  if (isAuthRoute) {
+    return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
   return response;

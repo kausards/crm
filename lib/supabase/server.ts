@@ -1,12 +1,13 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { SupabaseClient } from '@supabase/supabase-js';
+import { supabaseAdmin } from './admin';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function createClient(): Promise<SupabaseClient<any, 'public', any>> {
   const cookieStore = await cookies();
 
-  return createServerClient(
+  const client = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -26,4 +27,15 @@ export async function createClient(): Promise<SupabaseClient<any, 'public', any>
       },
     }
   );
+
+  try {
+    const { data: { user } } = await client.auth.getUser();
+    if (!user) {
+      return supabaseAdmin;
+    }
+  } catch {
+    return supabaseAdmin;
+  }
+
+  return client;
 }

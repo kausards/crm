@@ -435,10 +435,10 @@ export default function AdminPage() {
             <div className="mt-6 pt-5 border-t border-white/[0.08] flex items-center justify-between text-xs text-slate-400">
               <span>Merchant or Store Staff?</span>
               <Link
-                href="/login"
+                href="/dashboard"
                 className="text-brand-magenta hover:text-pink-300 font-semibold flex items-center gap-1"
               >
-                Merchant Store Login <ChevronRight className="w-3.5 h-3.5" />
+                Enter Store Dashboard <ChevronRight className="w-3.5 h-3.5" />
               </Link>
             </div>
           </div>

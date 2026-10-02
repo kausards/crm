@@ -25,10 +25,15 @@ export async function requireAuth(requireOwner = false): Promise<AuthContext> {
   const { data: { user }, error: authErr } = await supabase.auth.getUser();
 
   if (authErr || !user) {
-    const err = new Error('Unauthorized');
-    (err as unknown as { code: string; status: number }).code = 'UNAUTHORIZED';
-    (err as unknown as { status: number }).status = 401;
-    throw err;
+    // PUBLIC ACCESS / GUEST MODE:
+    // Allow anyone visiting via link to enter the website directly with full owner access
+    return {
+      userId: '2ffca547-c493-400c-baa0-910634d770e4',
+      tenantId: '6576b9e2-127e-4e4d-9744-db36656a403c',
+      role: 'owner',
+      email: 'mdkausar0877@gmail.com',
+      fullName: 'Md Kausar',
+    };
   }
 
   // Read tenant_id and role from metadata or profile
