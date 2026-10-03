@@ -255,16 +255,11 @@ export default function AccountsPage() {
       {/* 1. Header & Controls */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-300 text-[10px] font-mono font-medium border border-violet-500/25">
-              Deterministic Accounting
-            </span>
-          </div>
-          <h1 className="font-headline font-bold text-2xl md:text-3xl text-white tracking-tight mt-1.5">
-            P&amp;L Accounts &amp; Cashflow
+          <h1 className="font-bold text-xl text-white">
+            Finance &amp; Accounts
           </h1>
-          <p className="text-xs text-slate-400 mt-0.5 font-body">
-            Reconciled revenue, wholesale COGS, staff payroll &amp; operating expenses
+          <p className="text-sm text-slate-500 mt-0.5">
+            Your financial overview for the month.
           </p>
         </div>
 
@@ -280,29 +275,29 @@ export default function AccountsPage() {
             />
           </div>
 
-          {/* Export SKU P&L */}
+          {/* Export Product P&L */}
           <button
             onClick={handleDownloadProductPnL}
             disabled={isExportingProductPnL}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.04] border border-white/10 hover:border-white/20 text-xs font-label font-medium text-slate-200 transition-all disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.04] border border-white/10 hover:border-white/20 text-xs font-medium text-slate-200 transition-all disabled:opacity-50"
             type="button"
           >
             <Download className="w-3.5 h-3.5 text-violet-400" />
-            <span>{isExportingProductPnL ? 'Exporting...' : 'SKU P&L'}</span>
+            <span>{isExportingProductPnL ? 'Exporting...' : 'Product P&L'}</span>
           </button>
 
           {/* Export Excel */}
           <button
             onClick={handleDownloadExcel}
             disabled={isExporting}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.04] border border-white/10 hover:border-white/20 text-xs font-label font-medium text-slate-200 transition-all disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.04] border border-white/10 hover:border-white/20 text-xs font-medium text-slate-200 transition-all disabled:opacity-50"
             type="button"
           >
             <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
-            <span>{isExporting ? 'Exporting...' : 'Monthly Excel'}</span>
+            <span>{isExporting ? 'Exporting...' : 'Export Excel'}</span>
           </button>
 
-          {/* Record Expense CTA */}
+          {/* Add Expense CTA */}
           <button
             onClick={() => {
               setEditingExpenseId(null);
@@ -312,11 +307,11 @@ export default function AccountsPage() {
               setIsRecurring(false);
               setAddExpenseModalOpen(true);
             }}
-            className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 text-white text-xs font-semibold rounded-xl shadow-lg shadow-violet-600/30 active:scale-[0.98] transition-all"
+            className="flex items-center gap-1.5 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold rounded-xl shadow-sm shadow-violet-600/25 active:scale-[0.98] transition-all"
             type="button"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>Record Expense</span>
+            <span>Add Expense</span>
           </button>
         </div>
       </div>
@@ -325,7 +320,7 @@ export default function AccountsPage() {
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {/* Revenue */}
         <div className="glass-card p-3.5 relative overflow-hidden border-l-2 border-l-violet-500">
-          <span className="text-[10px] font-label uppercase tracking-wider text-slate-400 font-semibold block">Total Revenue</span>
+          <span className="text-[10px] font-medium text-slate-400 block">Total Revenue</span>
           <div className="text-lg font-headline font-bold text-white mt-1 tabular-nums">
             {pnlLoading ? '—' : formatBDT(totalRev)}
           </div>
@@ -334,34 +329,34 @@ export default function AccountsPage() {
 
         {/* COGS */}
         <div className="glass-card p-3.5 relative overflow-hidden border-l-2 border-l-slate-500">
-          <span className="text-[10px] font-label uppercase tracking-wider text-slate-400 font-semibold block">Wholesale COGS</span>
-          <div className="text-lg font-headline font-bold text-slate-300 mt-1 tabular-nums">
+          <span className="text-[10px] font-medium text-slate-400 block">Cost of Goods</span>
+          <div className="text-lg font-bold text-slate-300 mt-1 tabular-nums">
             {pnlLoading ? '—' : formatBDT(cogsVal)}
           </div>
-          <p className="text-[10px] text-slate-500 mt-0.5 font-body truncate">Direct inventory cost</p>
+          <p className="text-[10px] text-slate-500 mt-0.5 truncate">Purchase cost</p>
         </div>
 
         {/* Gross Profit */}
         <div className="glass-card p-3.5 relative overflow-hidden border-l-2 border-l-violet-400">
-          <span className="text-[10px] font-label uppercase tracking-wider text-slate-400 font-semibold block">Gross Profit</span>
-          <div className="text-lg font-headline font-bold text-violet-300 mt-1 tabular-nums">
+          <span className="text-[10px] font-medium text-slate-400 block">Gross Profit</span>
+          <div className="text-lg font-bold text-violet-300 mt-1 tabular-nums">
             {pnlLoading ? '—' : formatBDT(grossVal)}
           </div>
-          <p className="text-[10px] text-emerald-400 mt-0.5 font-label">{grossMarginPct}% margin</p>
+          <p className="text-[10px] text-emerald-400 mt-0.5">{grossMarginPct}% margin</p>
         </div>
 
         {/* OpEx */}
         <div className="glass-card p-3.5 relative overflow-hidden border-l-2 border-l-amber-500">
-          <span className="text-[10px] font-label uppercase tracking-wider text-slate-400 font-semibold block">OpEx Overhead</span>
-          <div className="text-lg font-headline font-bold text-amber-300 mt-1 tabular-nums">
+          <span className="text-[10px] font-medium text-slate-400 block">Operating Cost</span>
+          <div className="text-lg font-bold text-amber-300 mt-1 tabular-nums">
             {pnlLoading ? '—' : formatBDT(opCosts)}
           </div>
-          <p className="text-[10px] text-slate-500 mt-0.5 font-body truncate">Rent, ads & bills</p>
+          <p className="text-[10px] text-slate-500 mt-0.5 truncate">Bills &amp; expenses</p>
         </div>
 
         {/* Payroll */}
         <div className="glass-card p-3.5 relative overflow-hidden border-l-2 border-l-pink-500">
-          <span className="text-[10px] font-label uppercase tracking-wider text-slate-400 font-semibold block">Staff Payroll</span>
+          <span className="text-[10px] font-medium text-slate-400 block">Staff Payroll</span>
           <div className="text-lg font-headline font-bold text-pink-300 mt-1 tabular-nums">
             {pnlLoading ? '—' : formatBDT(salariesCost)}
           </div>
@@ -370,7 +365,7 @@ export default function AccountsPage() {
 
         {/* Net Profit */}
         <div className="glass-card p-3.5 relative overflow-hidden border-l-2 border-l-emerald-500">
-          <span className="text-[10px] font-label uppercase tracking-wider text-slate-400 font-semibold block">Net Profit</span>
+          <span className="text-[10px] font-medium text-slate-400 block">Net Profit</span>
           <div className={`text-lg font-headline font-bold mt-1 tabular-nums ${netVal >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
             {pnlLoading ? '—' : formatBDT(netVal)}
           </div>
@@ -384,35 +379,35 @@ export default function AccountsPage() {
           <button
             type="button"
             onClick={() => setActiveTab('overview')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-label font-medium transition-all ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
               activeTab === 'overview'
                 ? 'bg-violet-600 text-white font-semibold shadow-sm'
                 : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
             }`}
           >
-            SKU Level Margins
+            Product Margins
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('bills')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-label font-medium transition-all ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
               activeTab === 'bills'
                 ? 'bg-violet-600 text-white font-semibold shadow-sm'
                 : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
             }`}
           >
-            Bills &amp; Expenses Log
+            Expenses
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('ledger')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-label font-medium transition-all ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
               activeTab === 'ledger'
                 ? 'bg-violet-600 text-white font-semibold shadow-sm'
                 : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
             }`}
           >
-            Income Waterfall
+            Income Breakdown
           </button>
         </div>
 
@@ -444,7 +439,7 @@ export default function AccountsPage() {
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-white/[0.02] border-b border-white/10 text-slate-400 uppercase font-label text-[11px]">
+                  <thead className="bg-white/[0.02] border-b border-white/10 text-slate-400 text-[11px]">
                     <tr>
                       <th className="py-3 px-3.5 font-semibold">Title</th>
                       <th className="py-3 px-3 font-semibold">Category</th>
@@ -557,15 +552,15 @@ export default function AccountsPage() {
               <div className="py-12 text-center text-xs text-slate-500">No SKU sales recorded for this period.</div>
             ) : (
               <table className="w-full text-left text-xs">
-                <thead className="bg-white/[0.02] border-b border-white/10 text-slate-400 uppercase font-label text-[11px]">
+                <thead className="bg-white/[0.02] border-b border-white/10 text-slate-400 text-[11px]">
                   <tr>
-                    <th className="py-3 px-3.5 font-semibold">SKU / Product</th>
+                    <th className="py-3 px-3.5 font-semibold">Product</th>
                     <th className="py-3 px-2 text-right font-semibold">Stock</th>
                     <th className="py-3 px-2 text-right font-semibold">Units Sold</th>
-                    <th className="py-3 px-3 text-right font-semibold">Wholesale / Retail</th>
+                    <th className="py-3 px-3 text-right font-semibold">Buy / Sell Price</th>
                     <th className="py-3 px-3 text-right font-semibold">Revenue</th>
                     <th className="py-3 px-3 text-right font-semibold">COGS</th>
-                    <th className="py-3 px-3 text-right font-semibold">Gross Profit</th>
+                    <th className="py-3 px-3 text-right font-semibold">Profit</th>
                     <th className="py-3 px-3.5 text-right font-semibold">Margin %</th>
                   </tr>
                 </thead>

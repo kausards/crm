@@ -17,7 +17,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/inventory': 'Products',
   '/customers': 'Customers',
   '/courier': 'Courier Tracker',
-  '/accounts': 'Accounts',
+  '/accounts': 'Finance',
   '/payroll': 'Payroll',
   '/due-loan': 'Due & Loan',
   '/settings': 'Settings',

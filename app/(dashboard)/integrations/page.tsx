@@ -341,20 +341,11 @@ document.getElementById('nexusflow-checkout-form').addEventListener('submit', as
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-[11px] font-mono uppercase tracking-wider text-emerald-300 font-semibold">
-              Live Storefront Ingestion
-            </span>
-          </div>
-          <h1 className="font-headline text-2xl sm:text-3xl font-bold text-white tracking-tight flex items-center gap-3">
-            <span>Website & Store Integration</span>
-            <span className="badge-purple text-xs font-semibold px-2 py-0.5">
-              Multi-Channel
-            </span>
+          <h1 className="font-bold text-xl text-white">
+            Website &amp; Store
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Connect your WooCommerce website (via Consumer Key/Secret or Webhook), custom landing page, or Shopify storefront to automatically receive customer orders directly inside NexusFlow CRM.
+          <p className="text-sm text-slate-500 mt-0.5">
+            Connect your store to automatically receive orders.
           </p>
         </div>
 
@@ -416,7 +407,7 @@ document.getElementById('nexusflow-checkout-form').addEventListener('submit', as
                 </p>
                 <p className="text-[11px] text-slate-500 mt-1">
                   {wooStatus?.isConnected
-                    ? 'WooCommerce REST API connected & verified'
+                    ? 'Connected'
                     : integration?.websiteUrl
                     ? 'Orders from this domain are accepted'
                     : 'Click below to attach your online shop domain'}
@@ -443,10 +434,9 @@ document.getElementById('nexusflow-checkout-form').addEventListener('submit', as
         <div className="glass-card p-5 rounded-2xl flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-semibold">
-                Store Tenant ID
+              <span className="text-xs font-medium text-slate-400">
+                Tenant ID
               </span>
-              <span className="badge-purple text-[10px] font-bold">Required</span>
             </div>
             <div className="p-2.5 rounded-xl bg-black/50 border border-white/[0.06] font-mono text-xs text-violet-300 break-all select-all">
               {tenantId}
@@ -473,10 +463,9 @@ document.getElementById('nexusflow-checkout-form').addEventListener('submit', as
         <div className="glass-card p-5 rounded-2xl flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-semibold">
-                Order Webhook / API URL
+              <span className="text-xs font-medium text-slate-400">
+                Webhook URL
               </span>
-              <span className="badge-cyan text-[10px] font-bold">POST</span>
             </div>
             <div className="p-2.5 rounded-xl bg-black/50 border border-white/[0.06] font-mono text-xs text-cyan-300 break-all select-all">
               {publicWebhookUrl}
@@ -567,7 +556,7 @@ document.getElementById('nexusflow-checkout-form').addEventListener('submit', as
                   </div>
                   <div>
                     <h3 className="text-base font-bold text-white flex items-center gap-2">
-                      <span>Method 1: Connect via Consumer Key & Consumer Secret (REST API)</span>
+                      <span>Option 1 — WooCommerce API</span>
                       <span className="badge-purple text-[10px]">Recommended</span>
                     </h3>
                     <p className="text-xs text-slate-400 mt-0.5">
@@ -751,8 +740,7 @@ document.getElementById('nexusflow-checkout-form').addEventListener('submit', as
             <div className="space-y-4 pt-2 border-t border-white/[0.08]">
               <div>
                 <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <span>Method 2: Real-Time Webhook (Instant Order Push)</span>
-                  <span className="badge-cyan text-[10px]">Zero Delay</span>
+                  <span>Option 2 — Webhook (Real-time)</span>
                 </h3>
                 <p className="text-xs text-slate-400 mt-1">
                   Optional: Whenever a customer places an order on your WooCommerce checkout, WordPress instantly notifies NexusFlow CRM in real-time.

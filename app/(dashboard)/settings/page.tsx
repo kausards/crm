@@ -143,17 +143,11 @@ function SettingsContent() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-brand-violet animate-pulse" />
-            <span className="text-[11px] font-mono uppercase tracking-wider text-purple-300 font-semibold">
-              Organization & Access
-            </span>
-          </div>
-          <h1 className="font-headline text-2xl sm:text-3xl font-bold text-white tracking-tight">
-            Settings & Team
+          <h1 className="font-bold text-xl text-white">
+            Settings
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Manage organization profile, team members, and your cloud subscription.
+          <p className="text-sm text-slate-500 mt-0.5">
+            Your account, team, and billing settings.
           </p>
         </div>
 
@@ -203,14 +197,11 @@ function SettingsContent() {
             <button
               type="button"
               onClick={handleOpenProfileModal}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-xs font-label text-slate-200 transition-all hover:text-white"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-xs font-medium text-slate-200 transition-all hover:text-white"
             >
               <Edit2 className="w-3.5 h-3.5 text-purple-300" />
               <span>Edit Profile</span>
             </button>
-            <span className="badge-cyan text-[10px] font-semibold">
-              Multi-Tenant Isolated
-            </span>
           </div>
         </div>
 
@@ -226,8 +217,8 @@ function SettingsContent() {
           </div>
 
           <div className="p-4 rounded-xl bg-black/40 border border-white/[0.06]">
-            <span className="text-slate-400 block mb-1 text-[11px]">Primary Account</span>
-            <span className="font-headline font-bold text-white text-base">
+            <span className="text-slate-400 block mb-1 text-[11px]">Owner</span>
+            <span className="font-bold text-white text-base">
               {user?.full_name || 'Admin'}
             </span>
             <span className="text-slate-400 block text-[11px] truncate mt-1 font-mono">
@@ -259,12 +250,11 @@ function SettingsContent() {
               <Globe className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-headline text-base font-semibold text-white tracking-wide flex items-center gap-2">
-                <span>Website & Storefront Integration</span>
-                <span className="badge-purple text-[10px] font-semibold">Live Ingestion</span>
+              <h3 className="text-base font-semibold text-white flex items-center gap-2">
+                <span>Website &amp; Store</span>
               </h3>
               <p className="text-xs text-slate-400 mt-0.5">
-                Connect your WooCommerce site, custom landing page, or Shopify store to receive live orders directly.
+                Connect your store to receive orders directly.
               </p>
             </div>
           </div>
@@ -321,7 +311,7 @@ function SettingsContent() {
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>Steadfast auto-dispatch gateway</span>
+                  <span>Auto-dispatch (Steadfast)</span>
                 </li>
                 <li className="flex items-center gap-2 text-slate-500">
                   <X className="w-4 h-4 shrink-0" />
@@ -368,15 +358,15 @@ function SettingsContent() {
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>Multi-Carrier Auto Sync (Steadfast + Pathao + RedX)</span>
+                  <span>Multi-courier sync</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>Fraud Shield with phone return blacklist</span>
+                  <span>Fraud protection</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>Daily automated DB snapshots & priority support</span>
+                  <span>Daily backups &amp; priority support</span>
                 </li>
               </ul>
             </div>
@@ -429,12 +419,12 @@ function SettingsContent() {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="border-b border-white/[0.06] text-slate-400 uppercase font-mono text-[10px] tracking-wider bg-white/[0.01]">
-                <th className="py-3 px-4">User Name</th>
-                <th className="py-3 px-4">Email</th>
-                <th className="py-3 px-4">Role</th>
-                <th className="py-3 px-4">Permissions Scope</th>
-                <th className="py-3 px-4 text-right">Status</th>
+              <tr className="border-b border-white/[0.06] text-slate-400 font-medium text-xs bg-white/[0.01]">
+                <th className="py-3 px-4 font-semibold">Name</th>
+                <th className="py-3 px-4 font-semibold">Email</th>
+                <th className="py-3 px-4 font-semibold">Role</th>
+                <th className="py-3 px-4 font-semibold">Access Level</th>
+                <th className="py-3 px-4 text-right font-semibold">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/[0.04]">

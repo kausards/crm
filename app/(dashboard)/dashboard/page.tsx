@@ -155,7 +155,7 @@ export default function DashboardPage() {
         {/* Today's Revenue */}
         <div className="glass-card p-5 hover:-translate-y-0.5 transition-all duration-200">
           <div className="flex items-start justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            <p className="text-xs font-medium text-slate-400">
               Today&apos;s Revenue
             </p>
             <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/12 text-emerald-400 border border-emerald-500/25">
@@ -175,7 +175,7 @@ export default function DashboardPage() {
         {/* Today's Orders */}
         <div className="glass-card p-5 hover:-translate-y-0.5 transition-all duration-200">
           <div className="flex items-start justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            <p className="text-xs font-medium text-slate-400">
               Orders
             </p>
           </div>
@@ -194,8 +194,8 @@ export default function DashboardPage() {
         {/* Gross Profit */}
         <div className="glass-card p-5 hover:-translate-y-0.5 transition-all duration-200">
           <div className="flex items-start justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Gross Profit (30d)
+            <p className="text-xs font-medium text-slate-400">
+              Gross Profit
             </p>
             {pnl && (
               <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/12 text-emerald-400 border border-emerald-500/25">
@@ -216,7 +216,7 @@ export default function DashboardPage() {
         {/* Low Stock */}
         <div className="glass-card p-5 hover:-translate-y-0.5 transition-all duration-200">
           <div className="flex items-start justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            <p className="text-xs font-medium text-slate-400">
               Low Stock
             </p>
             <span
@@ -420,19 +420,19 @@ export default function DashboardPage() {
             return (
               <div className="mt-4 pt-4 border-t border-white/[0.08] grid grid-cols-3 gap-4">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Avg Daily Sales</p>
+                  <p className="text-[11px] font-medium text-slate-400">Avg Daily Sales</p>
                   <p className="text-sm font-bold text-white mt-1 tabular-nums">
                     {chartLoading ? '—' : formatBDT(avgDailySales)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Avg Daily Orders</p>
+                  <p className="text-[11px] font-medium text-slate-400">Avg Daily Orders</p>
                   <p className="text-sm font-bold text-emerald-400 mt-1 tabular-nums">
                     {chartLoading ? '—' : `${avgDailyOrders}/day`}
                   </p>
                 </div>
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Peak Day</p>
+                  <p className="text-[11px] font-medium text-slate-400">Peak Day</p>
                   <p className="text-sm font-bold text-violet-300 mt-1 tabular-nums">
                     {peakPoint && peakPoint.revenue > 0 ? `${peakDateFormatted}` : '—'}
                   </p>
@@ -521,7 +521,7 @@ export default function DashboardPage() {
             href="/orders"
             className="mt-4 w-full py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] hover:border-violet-500/30 hover:bg-violet-500/08 text-slate-300 text-xs font-medium transition-all flex items-center justify-center gap-1.5"
           >
-            <span>Manage All Orders</span>
+            <span>View All Orders</span>
             <ExternalLink className="w-3 h-3 text-slate-500" />
           </Link>
         </div>

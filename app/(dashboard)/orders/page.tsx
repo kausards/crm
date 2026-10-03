@@ -421,7 +421,7 @@ export default function OrdersPage() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-white/[0.02] border-b border-white/10 text-slate-400 uppercase font-label text-[11px] tracking-wider">
+              <thead className="bg-white/[0.02] border-b border-white/10 text-slate-400 text-[11px]">
                 <tr>
                   <th className="py-3.5 px-4 font-semibold">Invoice</th>
                   <th className="py-3.5 px-4 font-semibold">Customer</th>

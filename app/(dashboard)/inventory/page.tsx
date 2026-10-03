@@ -358,14 +358,14 @@ export default function InventoryPage() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-white/[0.02] border-b border-white/10 text-slate-400 uppercase font-label text-[11px] tracking-wider">
+              <thead className="bg-white/[0.02] border-b border-white/10 text-slate-400 text-[11px]">
                 <tr>
                   <th className="py-3.5 px-4 font-semibold">Product Name</th>
                   <th className="py-3.5 px-4 font-semibold">SKU</th>
                   <th className="py-3.5 px-4 font-semibold">Buy Price</th>
                   <th className="py-3.5 px-4 font-semibold">Sell Price</th>
                   <th className="py-3.5 px-4 font-semibold">Margin</th>
-                  <th className="py-3.5 px-4 font-semibold">Stock Qty</th>
+                  <th className="py-3.5 px-4 font-semibold">Stock</th>
                   <th className="py-3.5 px-4 text-right font-semibold">Actions</th>
                 </tr>
               </thead>

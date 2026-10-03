@@ -281,16 +281,11 @@ export default function PayrollPage() {
       {/* 1. Header & Controls */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-300 text-[10px] font-mono font-medium border border-violet-500/25">
-              Payroll Engine
-            </span>
-          </div>
-          <h1 className="font-headline font-bold text-2xl md:text-3xl text-white tracking-tight mt-1.5">
-            Salary &amp; Attendance
+          <h1 className="font-bold text-xl text-white">
+            Salary &amp; Payroll
           </h1>
-          <p className="text-xs text-slate-400 mt-0.5 font-body">
-            Automated attendance deduction, per-day salary divisor &amp; digital disbursement
+          <p className="text-sm text-slate-500 mt-0.5">
+            Manage staff salaries and attendance.
           </p>
         </div>
 
@@ -328,55 +323,55 @@ export default function PayrollPage() {
 
       {/* 2. 4 Summary Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-        <div className="glass-card p-4 relative overflow-hidden border-l-2 border-l-violet-500">
+        <div className="glass-card p-4 border-l-2 border-l-violet-500">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-label uppercase tracking-wider text-slate-400 font-semibold">Base Payroll Budget</span>
+            <span className="text-xs font-medium text-slate-400">Total Budget</span>
             <Users className="w-4 h-4 text-violet-400" />
           </div>
-          <div className="text-2xl font-headline font-bold text-white mt-2 tabular-nums">
+          <div className="text-2xl font-bold text-white mt-2 tabular-nums">
             {formatBDT(salarySummary?.total_base_budget ?? totalBaseBudget)}
           </div>
-          <p className="text-[11px] text-slate-500 mt-1 font-body">
-            {salarySummary?.total_employees ?? rawEmployees.length} enrolled staff
+          <p className="text-[11px] text-slate-500 mt-1">
+            {salarySummary?.total_employees ?? rawEmployees.length} staff enrolled
           </p>
         </div>
 
-        <div className="glass-card p-4 relative overflow-hidden border-l-2 border-l-emerald-500">
+        <div className="glass-card p-4 border-l-2 border-l-emerald-500">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-label uppercase tracking-wider text-slate-400 font-semibold">Net Disbursed</span>
+            <span className="text-xs font-medium text-slate-400">Paid Out</span>
             <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           </div>
-          <div className="text-2xl font-headline font-bold text-emerald-400 mt-2 tabular-nums font-mono">
+          <div className="text-2xl font-bold text-emerald-400 mt-2 tabular-nums font-mono">
             {formatBDT(netDisbursable)}
           </div>
-          <p className="text-[11px] text-emerald-400/80 mt-1 font-body">
-            {salarySummary?.paid_count ?? 0} staff disbursed this month
+          <p className="text-[11px] text-emerald-400/80 mt-1">
+            {salarySummary?.paid_count ?? 0} disbursed this month
           </p>
         </div>
 
-        <div className="glass-card p-4 relative overflow-hidden border-l-2 border-l-rose-500">
+        <div className="glass-card p-4 border-l-2 border-l-rose-500">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-label uppercase tracking-wider text-slate-400 font-semibold">Absence Deductions</span>
+            <span className="text-xs font-medium text-slate-400">Deductions</span>
             <TrendingDown className="w-4 h-4 text-rose-400" />
           </div>
-          <div className="text-2xl font-headline font-bold text-rose-400 mt-2 tabular-nums font-mono">
+          <div className="text-2xl font-bold text-rose-400 mt-2 tabular-nums font-mono">
             {formatBDT(salarySummary?.total_deductions ?? 0)}
           </div>
-          <p className="text-[11px] text-rose-400/80 mt-1 font-body">
-            {salarySummary?.cumulative_unpaid_days ?? 0} cumulative leave days
+          <p className="text-[11px] text-rose-400/80 mt-1">
+            {salarySummary?.cumulative_unpaid_days ?? 0} leave days
           </p>
         </div>
 
-        <div className="glass-card p-4 relative overflow-hidden border-l-2 border-l-amber-500">
+        <div className="glass-card p-4 border-l-2 border-l-amber-500">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-label uppercase tracking-wider text-slate-400 font-semibold">Pending Approval</span>
+            <span className="text-xs font-medium text-slate-400">Pending</span>
             <Clock className="w-4 h-4 text-amber-400" />
           </div>
-          <div className="text-2xl font-headline font-bold text-amber-400 mt-2 tabular-nums">
+          <div className="text-2xl font-bold text-amber-400 mt-2 tabular-nums">
             {salarySummary?.pending_count ?? rawEmployees.length} Staff
           </div>
-          <p className="text-[11px] text-amber-400/80 mt-1 font-body">
-            Awaiting month-end run
+          <p className="text-[11px] text-amber-400/80 mt-1">
+            Awaiting approval
           </p>
         </div>
       </div>

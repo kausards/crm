@@ -153,16 +153,11 @@ export default function CustomersPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-300 text-[10px] font-mono font-medium border border-violet-500/25">
-              Customer Dossier
-            </span>
-          </div>
-          <h1 className="font-headline font-bold text-2xl md:text-3xl text-white tracking-tight mt-1.5">
-            Customer CRM
+          <h1 className="font-bold text-xl text-white">
+            Customers
           </h1>
-          <p className="text-xs text-slate-400 mt-0.5 font-body">
-            Direct customer directory, purchase telemetry &amp; credit ledger
+          <p className="text-sm text-slate-500 mt-0.5">
+            Manage your customer directory, orders, and balances.
           </p>
         </div>
 
@@ -180,35 +175,35 @@ export default function CustomersPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
         <div className="glass-card p-4 relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-label uppercase tracking-wider text-slate-400 font-semibold">Total Customers</span>
+            <span className="text-xs font-medium text-slate-400">Total Customers</span>
             <Users className="w-4 h-4 text-violet-400" />
           </div>
-          <div className="text-2xl font-headline font-bold text-white mt-2 tabular-nums">
+          <div className="text-2xl font-bold text-white mt-2 tabular-nums">
             {pagination.total}
           </div>
-          <p className="text-[11px] text-slate-500 mt-1 font-body">Registered client records</p>
+          <p className="text-[11px] text-slate-500 mt-1">Total registered</p>
         </div>
 
         <div className="glass-card p-4 relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-label uppercase tracking-wider text-slate-400 font-semibold">Outstanding Dues</span>
+            <span className="text-xs font-medium text-slate-400">Outstanding Dues</span>
             <BookOpen className="w-4 h-4 text-rose-400" />
           </div>
-          <div className="text-2xl font-headline font-bold text-rose-400 mt-2 tabular-nums font-mono">
+          <div className="text-2xl font-bold text-rose-400 mt-2 tabular-nums font-mono">
             {formatBDT(totalDue)}
           </div>
-          <p className="text-[11px] text-rose-400/80 mt-1 font-body">Uncollected credit balance</p>
+          <p className="text-[11px] text-rose-400/80 mt-1">Total unpaid balance</p>
         </div>
 
         <div className="glass-card p-4 relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-label uppercase tracking-wider text-slate-400 font-semibold">Active Debtors</span>
+            <span className="text-xs font-medium text-slate-400">Customers with Due</span>
             <Phone className="w-4 h-4 text-amber-400" />
           </div>
-          <div className="text-2xl font-headline font-bold text-amber-400 mt-2 tabular-nums">
+          <div className="text-2xl font-bold text-amber-400 mt-2 tabular-nums">
             {customers.filter((c) => c.current_due > 0).length}
           </div>
-          <p className="text-[11px] text-amber-400/80 mt-1 font-body">Customers with active ledger dues</p>
+          <p className="text-[11px] text-amber-400/80 mt-1">With pending dues</p>
         </div>
       </div>
 
@@ -254,7 +249,7 @@ export default function CustomersPage() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-white/[0.02] border-b border-white/10 text-slate-400 uppercase font-label text-[11px] tracking-wider">
+              <thead className="bg-white/[0.02] border-b border-white/10 text-slate-400 text-[11px]">
                 <tr>
                   <th className="py-3.5 px-4 font-semibold">Name</th>
                   <th className="py-3.5 px-4 font-semibold">Phone</th>
