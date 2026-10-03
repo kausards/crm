@@ -8,7 +8,7 @@ import { fetchApi } from '@/lib/apiClient';
 interface UserProfile {
   id: string;
   tenant_id: string;
-  role: 'owner' | 'staff';
+  role: 'owner' | 'staff' | 'super_admin' | 'admin' | string;
   full_name: string | null;
   email: string | null;
   business_name?: string;
@@ -82,22 +82,22 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   const refreshUser = async () => {
     try {
       const data = await fetchApi<{
-        user: { id: string; email: string; fullName?: string | null; role?: 'owner' | 'staff'; tenantId?: string; isSuperAdmin?: boolean };
-        profile?: { tenant_id: string; role: 'owner' | 'staff'; full_name: string | null };
+        user: { id: string; email: string; fullName?: string | null; role?: string; tenantId?: string; isSuperAdmin?: boolean };
+        profile?: { tenant_id: string; role: string; full_name: string | null };
         tenant?: { id: string; business_name: string; plan: 'trial' | 'basic' | 'pro'; subscription_status: string };
       }>('/api/v1/auth/me');
 
       if (data && data.user) {
         setUser({
           id: data.user.id,
-          tenant_id: data.profile?.tenant_id || data.user.tenantId || data.tenant?.id || '6576b9e2-127e-4e4d-9744-db36656a403c',
-          role: data.profile?.role || data.user.role || 'owner',
+          tenant_id: data.profile?.tenant_id || data.user.tenantId || data.tenant?.id || '5cfe174a-505f-4422-9b37-801a238cdd22',
+          role: data.profile?.role || data.user.role || 'super_admin',
           full_name: data.profile?.full_name || data.user.fullName || 'Md Kausar',
           email: data.user.email || 'mdkausar0877@gmail.com',
-          business_name: data.tenant?.business_name || 'Deshi Fashion Ltd',
+          business_name: data.tenant?.business_name || 'nai',
           plan: data.tenant?.plan || 'pro',
           subscription_status: data.tenant?.subscription_status || 'active',
-          is_super_admin: Boolean(data.user.isSuperAdmin),
+          is_super_admin: Boolean(data.user.isSuperAdmin || data.profile?.role === 'super_admin' || data.user.role === 'super_admin'),
         });
       } else {
         setUser({

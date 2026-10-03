@@ -17,7 +17,7 @@ export type OrderStatus =
   | 'returned'
   | 'cancelled';
 
-export type UserRole = 'owner' | 'staff';
+export type UserRole = 'owner' | 'staff' | 'super_admin' | 'admin';
 export type CourierProvider = 'steadfast' | 'pathao' | 'redx';
 
 export type GenericRelationship = {

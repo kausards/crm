@@ -60,7 +60,10 @@ export async function requireAuth(requireOwner = false): Promise<AuthContext> {
 
   const isSuperUser = (Boolean(superAdminId) && user.id === superAdminId) ||
                       (Boolean(superAdminEmail) && userEmail === superAdminEmail) ||
-                      user.app_metadata?.is_super_admin === true;
+                      user.app_metadata?.is_super_admin === true ||
+                      user.app_metadata?.role === 'super_admin' ||
+                      (role as string) === 'super_admin' ||
+                      (role as string) === 'admin';
 
   if (!tenantId) {
     if (isSuperUser) {
@@ -76,7 +79,7 @@ export async function requireAuth(requireOwner = false): Promise<AuthContext> {
 
   const effectiveRole = role || 'staff';
 
-  if (requireOwner && effectiveRole !== 'owner') {
+  if (requireOwner && effectiveRole !== 'owner' && !isSuperUser && (effectiveRole as string) !== 'super_admin' && (effectiveRole as string) !== 'admin') {
     const err = new Error('Forbidden: Owner privileges required');
     (err as unknown as { code: string; status: number }).code = 'FORBIDDEN';
     (err as unknown as { status: number }).status = 403;

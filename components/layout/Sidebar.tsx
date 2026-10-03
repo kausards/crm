@@ -15,6 +15,7 @@ import {
   ChevronRight,
   UserCheck,
   Zap,
+  Globe,
 } from 'lucide-react';
 import { useAuth } from '@/app/providers';
 
@@ -60,7 +61,13 @@ function NavItem({
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
-  const isOwner = user?.role === 'owner';
+  const isSuperOrOwner =
+    !user?.role ||
+    user?.role === 'owner' ||
+    user?.role === 'super_admin' ||
+    user?.role === 'admin' ||
+    Boolean((user as any)?.is_super_admin);
+  const canAccessFinance = isSuperOrOwner || user?.role !== 'staff';
 
   const isAccountsActive =
     pathname.startsWith('/accounts') ||
@@ -147,7 +154,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             />
 
             {/* Accounts & Finance Collapsible */}
-            {isOwner && (
+            {canAccessFinance && (
               <div className="pt-2">
                 <button
                   type="button"
@@ -210,6 +217,20 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 }
               />
             </div>
+
+            {/* Website & Integrations */}
+            <NavItem
+              href="/integrations"
+              icon={Globe}
+              label="Website & Store"
+              active={pathname.startsWith('/integrations')}
+              onClick={onClose}
+              badge={
+                <span className="flex items-center gap-1 bg-violet-500/15 px-1.5 py-0.5 rounded text-[10px] text-violet-300 border border-violet-500/20 font-label">
+                  <span>Connect</span>
+                </span>
+              }
+            />
 
             <NavItem
               href="/settings"

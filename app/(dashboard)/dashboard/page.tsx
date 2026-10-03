@@ -82,7 +82,12 @@ interface ChartResponse {
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const isOwner = user?.role === 'owner';
+  const isOwner =
+    !user?.role ||
+    user?.role === 'owner' ||
+    user?.role === 'super_admin' ||
+    user?.role === 'admin' ||
+    Boolean((user as any)?.is_super_admin);
   const [chartTimeframe, setChartTimeframe] = useState<'7D' | '30D' | '90D' | 'YTD'>('30D');
 
   const { data: stats, isLoading: statsLoading } = useQuery<DashboardStats>({

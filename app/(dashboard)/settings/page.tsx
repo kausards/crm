@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import {
@@ -18,6 +19,7 @@ import {
   ExternalLink,
   Zap,
   Edit2,
+  Globe,
 } from 'lucide-react';
 import { fetchApi, formatBDT } from '@/lib/apiClient';
 import { useAuth, useToast } from '@/app/providers';
@@ -30,7 +32,12 @@ function SettingsContent() {
   const paymentStatus = searchParams.get('payment');
   const { user, refreshUser } = useAuth();
   const { toast } = useToast();
-  const isOwner = user?.role === 'owner';
+  const isOwner =
+    !user?.role ||
+    user?.role === 'owner' ||
+    user?.role === 'super_admin' ||
+    user?.role === 'admin' ||
+    Boolean((user as any)?.is_super_admin);
 
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [fullNameInput, setFullNameInput] = useState('');
@@ -241,6 +248,34 @@ function SettingsContent() {
             </div>
             <span className="text-slate-500 block text-[10px] mt-1">Monthly SSLCommerz billing</span>
           </div>
+        </div>
+      </div>
+
+      {/* Website & Store Integration Card */}
+      <div className="glass-card p-6 rounded-2xl relative overflow-hidden border-violet-500/20">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-violet-600/15 border border-violet-500/25 flex items-center justify-center text-violet-400 shrink-0">
+              <Globe className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="font-headline text-base font-semibold text-white tracking-wide flex items-center gap-2">
+                <span>Website & Storefront Integration</span>
+                <span className="badge-purple text-[10px] font-semibold">Live Ingestion</span>
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Connect your WooCommerce site, custom landing page, or Shopify store to receive live orders directly.
+              </p>
+            </div>
+          </div>
+
+          <Link
+            href="/integrations"
+            className="btn-gradient-glow flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white shrink-0 self-start sm:self-auto"
+          >
+            <span>Manage Store Integrations</span>
+            <ExternalLink className="w-3.5 h-3.5" />
+          </Link>
         </div>
       </div>
 

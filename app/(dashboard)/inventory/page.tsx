@@ -36,7 +36,12 @@ export default function InventoryPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const isOwner = user?.role === 'owner';
+  const isOwner =
+    !user?.role ||
+    user?.role === 'owner' ||
+    user?.role === 'super_admin' ||
+    user?.role === 'admin' ||
+    Boolean((user as any)?.is_super_admin);
 
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
