@@ -13,6 +13,13 @@ import {
   ShoppingBag,
   ArrowRight,
   CheckCircle2,
+  Key,
+  RefreshCw,
+  Download,
+  Eye,
+  EyeOff,
+  Unlink,
+  ExternalLink,
 } from 'lucide-react';
 import { fetchApi, formatBDT } from '@/lib/apiClient';
 import { useAuth, useToast } from '@/app/providers';
@@ -29,6 +36,13 @@ interface IntegrationData {
   status: string;
 }
 
+interface WooCommerceStatus {
+  isConnected: boolean;
+  storeUrl: string;
+  hasCredentials: boolean;
+  lastSyncedAt: string | null;
+}
+
 export default function IntegrationsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -40,6 +54,12 @@ export default function IntegrationsPage() {
   // Store Website URL input state
   const [websiteInput, setWebsiteInput] = useState('');
   const [isEditingWebsite, setIsEditingWebsite] = useState(false);
+
+  // WooCommerce REST API Key/Secret state
+  const [wooUrl, setWooUrl] = useState('');
+  const [wooConsumerKey, setWooConsumerKey] = useState('');
+  const [wooConsumerSecret, setWooConsumerSecret] = useState('');
+  const [showSecret, setShowSecret] = useState(false);
 
   // Test Order state
   const [testName, setTestName] = useState('Md Sakib (Test Website Order)');
@@ -55,11 +75,22 @@ export default function IntegrationsPage() {
     queryFn: () => fetchApi('/api/v1/store/integrations'),
   });
 
+  const { data: wooStatus, refetch: refetchWoo } = useQuery<WooCommerceStatus>({
+    queryKey: ['woocommerce-status'],
+    queryFn: () => fetchApi('/api/v1/store/woocommerce'),
+  });
+
   React.useEffect(() => {
     if (integration?.websiteUrl && !websiteInput) {
       setWebsiteInput(integration.websiteUrl);
     }
   }, [integration?.websiteUrl, websiteInput]);
+
+  React.useEffect(() => {
+    if (wooStatus?.storeUrl && !wooUrl) {
+      setWooUrl(wooStatus.storeUrl);
+    }
+  }, [wooStatus?.storeUrl, wooUrl]);
 
   const updateIntegrationMutation = useMutation({
     mutationFn: (body: { website_url?: string; regenerate_key?: boolean }) =>
@@ -74,6 +105,77 @@ export default function IntegrationsPage() {
     },
     onError: (err: unknown) => {
       toast(err instanceof Error ? err.message : 'Failed to update settings', 'error');
+    },
+  });
+
+  // WooCommerce Connect Mutation
+  const connectWooMutation = useMutation({
+    mutationFn: (body: { store_url: string; consumer_key: string; consumer_secret: string }) =>
+      fetchApi('/api/v1/store/woocommerce/connect', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
+    onSuccess: (data: unknown) => {
+      const msg = (data as { message?: string })?.message || 'WooCommerce connected successfully!';
+      toast(msg, 'success');
+      setWooConsumerKey('');
+      setWooConsumerSecret('');
+      refetchWoo();
+      queryClient.invalidateQueries({ queryKey: ['store-integrations'] });
+    },
+    onError: (err: unknown) => {
+      toast(err instanceof Error ? err.message : 'Failed to connect WooCommerce store', 'error');
+    },
+  });
+
+  // Sync Orders Mutation
+  const syncOrdersMutation = useMutation({
+    mutationFn: () =>
+      fetchApi<{ message: string; importedCount: number; skippedCount: number }>('/api/v1/store/woocommerce/sync-orders', {
+        method: 'POST',
+      }),
+    onSuccess: (data) => {
+      toast(data?.message || 'Orders synced from WooCommerce!', 'success');
+      refetchWoo();
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['store-integrations'] });
+    },
+    onError: (err: unknown) => {
+      toast(err instanceof Error ? err.message : 'Failed to sync orders', 'error');
+    },
+  });
+
+  // Sync Products Mutation
+  const syncProductsMutation = useMutation({
+    mutationFn: () =>
+      fetchApi<{ message: string; importedCount: number; updatedCount: number }>('/api/v1/store/woocommerce/sync-products', {
+        method: 'POST',
+      }),
+    onSuccess: (data) => {
+      toast(data?.message || 'Products synced from WooCommerce!', 'success');
+      refetchWoo();
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+    onError: (err: unknown) => {
+      toast(err instanceof Error ? err.message : 'Failed to sync products', 'error');
+    },
+  });
+
+  // Disconnect Mutation
+  const disconnectWooMutation = useMutation({
+    mutationFn: () =>
+      fetchApi('/api/v1/store/woocommerce', {
+        method: 'DELETE',
+      }),
+    onSuccess: () => {
+      toast('WooCommerce store disconnected', 'info');
+      setWooConsumerKey('');
+      setWooConsumerSecret('');
+      refetchWoo();
+      queryClient.invalidateQueries({ queryKey: ['store-integrations'] });
+    },
+    onError: (err: unknown) => {
+      toast(err instanceof Error ? err.message : 'Failed to disconnect', 'error');
     },
   });
 
@@ -106,6 +208,19 @@ export default function IntegrationsPage() {
     setCopiedField(field);
     toast(`${field} copied to clipboard!`, 'info');
     setTimeout(() => setCopiedField(null), 2500);
+  };
+
+  const handleConnectWooSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!wooUrl || !wooConsumerKey || !wooConsumerSecret) {
+      toast('Please enter Store URL, Consumer Key, and Consumer Secret', 'error');
+      return;
+    }
+    connectWooMutation.mutate({
+      store_url: wooUrl,
+      consumer_key: wooConsumerKey,
+      consumer_secret: wooConsumerSecret,
+    });
   };
 
   const handleTestOrderSubmit = (e: React.FormEvent) => {
@@ -189,8 +304,8 @@ document.getElementById('nexusflow-checkout-form').addEventListener('submit', as
     notes: 'Order placed from Website Landing Page',
     items: [
       {
-        name: "Website Product", // আপনার পণ্যের নাম দিন
-        sell_price: 1200,         // পণ্যের বিক্রয় মূল্য দিন
+        name: "Website Product",
+        sell_price: 1200,
         quantity: 1
       }
     ]
@@ -239,7 +354,7 @@ document.getElementById('nexusflow-checkout-form').addEventListener('submit', as
             </span>
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            Connect your WooCommerce website, custom landing page, or Shopify storefront to automatically receive customer orders directly inside NexusFlow CRM.
+            Connect your WooCommerce website (via Consumer Key/Secret or Webhook), custom landing page, or Shopify storefront to automatically receive customer orders directly inside NexusFlow CRM.
           </p>
         </div>
 
@@ -263,7 +378,7 @@ document.getElementById('nexusflow-checkout-form').addEventListener('submit', as
                 Store Website
               </span>
               <span className="badge-green text-[10px] font-semibold">
-                {integration?.websiteUrl ? 'Connected' : 'Setup Required'}
+                {integration?.websiteUrl || wooStatus?.isConnected ? 'Connected' : 'Setup Required'}
               </span>
             </div>
 
@@ -297,10 +412,12 @@ document.getElementById('nexusflow-checkout-form').addEventListener('submit', as
             ) : (
               <div>
                 <p className="font-headline font-bold text-base text-white truncate mt-1">
-                  {integration?.websiteUrl || 'No domain linked yet'}
+                  {wooStatus?.storeUrl || integration?.websiteUrl || 'No domain linked yet'}
                 </p>
                 <p className="text-[11px] text-slate-500 mt-1">
-                  {integration?.websiteUrl
+                  {wooStatus?.isConnected
+                    ? 'WooCommerce REST API connected & verified'
+                    : integration?.websiteUrl
                     ? 'Orders from this domain are accepted'
                     : 'Click below to attach your online shop domain'}
                 </p>
@@ -311,12 +428,12 @@ document.getElementById('nexusflow-checkout-form').addEventListener('submit', as
           {!isEditingWebsite && (
             <button
               onClick={() => {
-                setWebsiteInput(integration?.websiteUrl || '');
+                setWebsiteInput(wooStatus?.storeUrl || integration?.websiteUrl || '');
                 setIsEditingWebsite(true);
               }}
               className="mt-4 text-left text-xs text-violet-400 hover:text-violet-300 font-semibold flex items-center gap-1"
             >
-              <span>{integration?.websiteUrl ? 'Change Website URL' : '+ Add Store Website'}</span>
+              <span>{integration?.websiteUrl || wooStatus?.storeUrl ? 'Change Website URL' : '+ Add Store Website'}</span>
               <ArrowRight className="w-3 h-3" />
             </button>
           )}
@@ -395,7 +512,10 @@ document.getElementById('nexusflow-checkout-form').addEventListener('submit', as
             }`}
           >
             <ShoppingBag className="w-3.5 h-3.5" />
-            <span>WooCommerce (WordPress)</span>
+            <span>WooCommerce (Key & Secret / Webhook)</span>
+            {wooStatus?.isConnected && (
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            )}
           </button>
 
           <button
@@ -435,92 +555,284 @@ document.getElementById('nexusflow-checkout-form').addEventListener('submit', as
           </button>
         </div>
 
-        {/* Tab 1: WooCommerce Instructions */}
+        {/* Tab 1: WooCommerce Integration (Method 1: Consumer Key/Secret + Method 2: Webhook) */}
         {activeTab === 'woo' && (
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <span>Connect WooCommerce Store via Webhook</span>
-                <span className="badge-purple text-[10px]">No Plugin Required</span>
-              </h3>
-              <p className="text-xs text-slate-400 mt-1">
-                You can connect your WordPress / WooCommerce store in under 2 minutes using WooCommerce&apos;s built-in Webhook engine.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="p-4 rounded-xl bg-black/40 border border-white/[0.06] space-y-2">
-                <div className="w-6 h-6 rounded-full bg-violet-600/20 text-violet-400 font-bold flex items-center justify-center text-xs">
-                  1
-                </div>
-                <h4 className="text-xs font-semibold text-white">Go to Settings</h4>
-                <p className="text-[11px] text-slate-400">
-                  Login to your WordPress Admin. Click on <strong>WooCommerce</strong> &rarr; <strong>Settings</strong> &rarr; <strong>Advanced</strong> tab.
-                </p>
-              </div>
-
-              <div className="p-4 rounded-xl bg-black/40 border border-white/[0.06] space-y-2">
-                <div className="w-6 h-6 rounded-full bg-violet-600/20 text-violet-400 font-bold flex items-center justify-center text-xs">
-                  2
-                </div>
-                <h4 className="text-xs font-semibold text-white">Add Webhook</h4>
-                <p className="text-[11px] text-slate-400">
-                  Click on the <strong>Webhooks</strong> link at the top, then click the blue <strong>&quot;Add Webhook&quot;</strong> button.
-                </p>
-              </div>
-
-              <div className="p-4 rounded-xl bg-black/40 border border-white/[0.06] space-y-2">
-                <div className="w-6 h-6 rounded-full bg-violet-600/20 text-violet-400 font-bold flex items-center justify-center text-xs">
-                  3
-                </div>
-                <h4 className="text-xs font-semibold text-white">Enter Values</h4>
-                <p className="text-[11px] text-slate-400">
-                  Topic: <strong>Order created</strong><br />
-                  Delivery URL: <strong>(Copy from box below)</strong><br />
-                  Status: <strong>Active</strong>
-                </p>
-              </div>
-
-              <div className="p-4 rounded-xl bg-black/40 border border-white/[0.06] space-y-2">
-                <div className="w-6 h-6 rounded-full bg-emerald-600/20 text-emerald-400 font-bold flex items-center justify-center text-xs">
-                  4
-                </div>
-                <h4 className="text-xs font-semibold text-white">Save & Done</h4>
-                <p className="text-[11px] text-slate-400">
-                  Click <strong>Save Webhook</strong>. All new customer orders will now immediately sync to NexusFlow CRM!
-                </p>
-              </div>
-            </div>
-
-            {/* Quick Webhook Values Box */}
-            <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.08] space-y-3">
-              <h4 className="text-xs font-semibold text-slate-200">Values to paste into WooCommerce Webhook settings:</h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                <div>
-                  <span className="text-[11px] text-slate-400 block mb-1">Delivery URL</span>
-                  <div className="flex items-center gap-2 bg-black/60 p-2.5 rounded-lg border border-white/10 font-mono text-cyan-300 text-xs">
-                    <span className="truncate flex-1">{publicWebhookUrl}</span>
-                    <button
-                      onClick={() => copyToClipboard(publicWebhookUrl, 'Delivery URL')}
-                      className="p-1 hover:text-white"
-                      title="Copy"
-                    >
-                      {copiedField === 'Delivery URL' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                    </button>
+          <div className="space-y-8">
+            {/* METHOD 1: Direct Consumer Key & Consumer Secret Connection */}
+            <div className="p-6 rounded-2xl bg-white/[0.02] border border-violet-500/25 relative overflow-hidden">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-violet-600/20 border border-violet-500/30 flex items-center justify-center text-violet-400">
+                    <Key className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-white flex items-center gap-2">
+                      <span>Method 1: Connect via Consumer Key & Consumer Secret (REST API)</span>
+                      <span className="badge-purple text-[10px]">Recommended</span>
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      Direct 2-way connection. Fetch orders and import your WooCommerce product catalog directly into NexusFlow CRM.
+                    </p>
                   </div>
                 </div>
 
-                <div>
-                  <span className="text-[11px] text-slate-400 block mb-1">Secret / Tenant ID</span>
-                  <div className="flex items-center gap-2 bg-black/60 p-2.5 rounded-lg border border-white/10 font-mono text-violet-300 text-xs">
-                    <span className="truncate flex-1">{tenantId}</span>
-                    <button
-                      onClick={() => copyToClipboard(tenantId, 'Secret')}
-                      className="p-1 hover:text-white"
-                      title="Copy"
+                {wooStatus?.isConnected && (
+                  <span className="badge-green text-xs font-semibold flex items-center gap-1.5 px-3 py-1">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span>Store Connected</span>
+                  </span>
+                )}
+              </div>
+
+              {wooStatus?.isConnected ? (
+                /* Connected State Dashboard */
+                <div className="space-y-5 pt-2">
+                  <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                    <div className="flex items-center gap-3">
+                      <CheckCircle2 className="w-6 h-6 text-emerald-400 shrink-0" />
+                      <div>
+                        <p className="font-semibold text-white text-sm">
+                          {wooStatus.storeUrl}
+                        </p>
+                        <p className="text-emerald-300 text-[11px] mt-0.5">
+                          REST API credentials encrypted at rest. Status: <strong>Authorized</strong>
+                        </p>
+                        <p className="text-slate-400 text-[10px] mt-1">
+                          Last synchronized: {wooStatus.lastSyncedAt ? new Date(wooStatus.lastSyncedAt).toLocaleString() : 'Not synced yet'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <a
+                        href={wooStatus.storeUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-3 py-1.5 bg-white/[0.05] hover:bg-white/[0.1] rounded-lg text-slate-200 text-xs flex items-center gap-1"
+                      >
+                        <span>Visit Store</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                      <button
+                        onClick={() => {
+                          if (confirm('Are you sure you want to disconnect this WooCommerce store?')) {
+                            disconnectWooMutation.mutate();
+                          }
+                        }}
+                        disabled={disconnectWooMutation.isPending}
+                        className="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 rounded-lg text-xs flex items-center gap-1 transition"
+                      >
+                        <Unlink className="w-3 h-3" />
+                        <span>Disconnect</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Actions: Sync Orders & Import Products */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="p-4 rounded-xl bg-black/40 border border-white/[0.06] flex flex-col justify-between">
+                      <div>
+                        <h4 className="text-xs font-semibold text-white flex items-center gap-1.5 mb-1">
+                          <RefreshCw className="w-3.5 h-3.5 text-violet-400" />
+                          <span>Sync Recent Orders</span>
+                        </h4>
+                        <p className="text-[11px] text-slate-400">
+                          Pulls all recent Pending & Processing orders from WooCommerce and imports them into your NexusFlow CRM Orders list.
+                        </p>
+                      </div>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        className="mt-4 w-full"
+                        onClick={() => syncOrdersMutation.mutate()}
+                        isLoading={syncOrdersMutation.isPending}
+                      >
+                        <RefreshCw className="w-3.5 h-3.5 mr-2" />
+                        <span>Sync Orders Now</span>
+                      </Button>
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-black/40 border border-white/[0.06] flex flex-col justify-between">
+                      <div>
+                        <h4 className="text-xs font-semibold text-white flex items-center gap-1.5 mb-1">
+                          <Download className="w-3.5 h-3.5 text-cyan-400" />
+                          <span>Import Product Catalog</span>
+                        </h4>
+                        <p className="text-[11px] text-slate-400">
+                          Imports your products, SKUs, and stock quantities from WooCommerce into your NexusFlow CRM Products catalog.
+                        </p>
+                      </div>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="mt-4 w-full text-cyan-300 border-cyan-500/30 hover:bg-cyan-500/10"
+                        onClick={() => syncProductsMutation.mutate()}
+                        isLoading={syncProductsMutation.isPending}
+                      >
+                        <Download className="w-3.5 h-3.5 mr-2" />
+                        <span>Import Products Catalog</span>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* Connect Form */
+                <form onSubmit={handleConnectWooSubmit} className="space-y-4 pt-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="sm:col-span-3">
+                      <Input
+                        label="WooCommerce Store Website URL"
+                        placeholder="https://yourstore.com"
+                        value={wooUrl}
+                        onChange={(e) => setWooUrl(e.target.value)}
+                        required
+                      />
+                    </div>
+
+                    <div className="sm:col-span-3 sm:grid sm:grid-cols-2 gap-4">
+                      <Input
+                        label="Consumer Key"
+                        placeholder="ck_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                        value={wooConsumerKey}
+                        onChange={(e) => setWooConsumerKey(e.target.value)}
+                        required
+                      />
+
+                      <div className="relative">
+                        <Input
+                          label="Consumer Secret"
+                          type={showSecret ? 'text' : 'password'}
+                          placeholder="cs_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                          value={wooConsumerSecret}
+                          onChange={(e) => setWooConsumerSecret(e.target.value)}
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowSecret(!showSecret)}
+                          className="absolute right-3 top-8 text-slate-400 hover:text-white"
+                          title={showSecret ? 'Hide' : 'Show'}
+                        >
+                          {showSecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Step-by-step Help Box */}
+                  <div className="p-4 rounded-xl bg-black/50 border border-white/[0.08] text-xs space-y-2">
+                    <p className="font-semibold text-violet-300">
+                      💡 How to get Consumer Key & Consumer Secret in WordPress:
+                    </p>
+                    <ol className="list-decimal list-inside space-y-1 text-slate-400 text-[11px] leading-relaxed">
+                      <li>Go to your WordPress Admin dashboard &rarr; <strong>WooCommerce</strong> &rarr; <strong>Settings</strong></li>
+                      <li>Click the <strong>Advanced</strong> tab &rarr; <strong>REST API</strong></li>
+                      <li>Click the <strong>Add key</strong> button</li>
+                      <li>Set Description: <strong className="text-white">NexusFlow CRM</strong>, and Permissions: <strong className="text-emerald-400">Read/Write</strong></li>
+                      <li>Click <strong>Generate API key</strong> &rarr; Copy the Consumer Key and Consumer Secret and paste them above!</li>
+                    </ol>
+                  </div>
+
+                  <div className="pt-2">
+                    <Button
+                      variant="primary"
+                      type="submit"
+                      isLoading={connectWooMutation.isPending}
                     >
-                      {copiedField === 'Secret' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                    </button>
+                      <Key className="w-4 h-4 mr-2" />
+                      <span>Connect & Verify WooCommerce Store</span>
+                    </Button>
+                  </div>
+                </form>
+              )}
+            </div>
+
+            {/* METHOD 2: Real-Time Webhook Instructions (Optional) */}
+            <div className="space-y-4 pt-2 border-t border-white/[0.08]">
+              <div>
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  <span>Method 2: Real-Time Webhook (Instant Order Push)</span>
+                  <span className="badge-cyan text-[10px]">Zero Delay</span>
+                </h3>
+                <p className="text-xs text-slate-400 mt-1">
+                  Optional: Whenever a customer places an order on your WooCommerce checkout, WordPress instantly notifies NexusFlow CRM in real-time.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="p-4 rounded-xl bg-black/40 border border-white/[0.06] space-y-2">
+                  <div className="w-6 h-6 rounded-full bg-violet-600/20 text-violet-400 font-bold flex items-center justify-center text-xs">
+                    1
+                  </div>
+                  <h4 className="text-xs font-semibold text-white">Go to Settings</h4>
+                  <p className="text-[11px] text-slate-400">
+                    In WordPress Admin: <strong>WooCommerce</strong> &rarr; <strong>Settings</strong> &rarr; <strong>Advanced</strong> &rarr; <strong>Webhooks</strong>.
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-xl bg-black/40 border border-white/[0.06] space-y-2">
+                  <div className="w-6 h-6 rounded-full bg-violet-600/20 text-violet-400 font-bold flex items-center justify-center text-xs">
+                    2
+                  </div>
+                  <h4 className="text-xs font-semibold text-white">Add Webhook</h4>
+                  <p className="text-[11px] text-slate-400">
+                    Click blue <strong>&quot;Add Webhook&quot;</strong> button. Set Name: <strong>NexusFlow Sync</strong>.
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-xl bg-black/40 border border-white/[0.06] space-y-2">
+                  <div className="w-6 h-6 rounded-full bg-violet-600/20 text-violet-400 font-bold flex items-center justify-center text-xs">
+                    3
+                  </div>
+                  <h4 className="text-xs font-semibold text-white">Enter Values</h4>
+                  <p className="text-[11px] text-slate-400">
+                    Topic: <strong>Order created</strong><br />
+                    Delivery URL: <strong>(Copy box below)</strong><br />
+                    Status: <strong>Active</strong>
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-xl bg-black/40 border border-white/[0.06] space-y-2">
+                  <div className="w-6 h-6 rounded-full bg-emerald-600/20 text-emerald-400 font-bold flex items-center justify-center text-xs">
+                    4
+                  </div>
+                  <h4 className="text-xs font-semibold text-white">Save & Done</h4>
+                  <p className="text-[11px] text-slate-400">
+                    Click <strong>Save Webhook</strong>. Orders will now push automatically to your CRM!
+                  </p>
+                </div>
+              </div>
+
+              {/* Quick Webhook Values Box */}
+              <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.08] space-y-3">
+                <h4 className="text-xs font-semibold text-slate-200">Values to paste into WooCommerce Webhook settings:</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <span className="text-[11px] text-slate-400 block mb-1">Delivery URL</span>
+                    <div className="flex items-center gap-2 bg-black/60 p-2.5 rounded-lg border border-white/10 font-mono text-cyan-300 text-xs">
+                      <span className="truncate flex-1">{publicWebhookUrl}</span>
+                      <button
+                        onClick={() => copyToClipboard(publicWebhookUrl, 'Delivery URL')}
+                        className="p-1 hover:text-white"
+                        title="Copy"
+                      >
+                        {copiedField === 'Delivery URL' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-[11px] text-slate-400 block mb-1">Secret / Tenant ID</span>
+                    <div className="flex items-center gap-2 bg-black/60 p-2.5 rounded-lg border border-white/10 font-mono text-violet-300 text-xs">
+                      <span className="truncate flex-1">{tenantId}</span>
+                      <button
+                        onClick={() => copyToClipboard(tenantId, 'Secret')}
+                        className="p-1 hover:text-white"
+                        title="Copy"
+                      >
+                        {copiedField === 'Secret' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
