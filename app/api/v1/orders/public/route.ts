@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { publicOrderLimiter, getClientIp } from '@/lib/rateLimit';
 import { handleApiError } from '@/lib/apiResponse';
+import { decrypt } from '@/lib/encryption';
+import { checkSteadfastCustomerRisk } from '@/lib/courier/steadfast';
+import { getClientIp, publicOrderLimiter } from '@/lib/rateLimit';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -211,6 +213,44 @@ export async function POST(req: NextRequest) {
 
     const totalAmount = itemsTotal + (validated.delivery_charge || 0);
 
+    // Fraud risk evaluation
+    let isFlagged = false;
+    let flagReason: string | null = null;
+    let courierDeliveryRatio: number | null = null;
+    let courierCancelRatio: number | null = null;
+    let courierFraudReports = 0;
+    let courierFraudComment: string | null = null;
+
+    try {
+      const [tenantRes, courierCredsRes] = await Promise.all([
+        supabaseAdmin.from('tenants').select('min_delivery_ratio, max_cancel_ratio').eq('id', validated.tenant_id).single(),
+        supabaseAdmin.from('courier_credentials').select('*').eq('tenant_id', validated.tenant_id).eq('provider', 'steadfast').eq('is_active', true).maybeSingle(),
+      ]);
+
+      const minDelivery = Number(tenantRes.data?.min_delivery_ratio ?? 50);
+      const maxCancel = Number(tenantRes.data?.max_cancel_ratio ?? 50);
+
+      if (courierCredsRes.data) {
+        const apiKey = decrypt(courierCredsRes.data.encrypted_api_key);
+        const secretKey = courierCredsRes.data.encrypted_api_secret ? decrypt(courierCredsRes.data.encrypted_api_secret) : null;
+
+        const risk = await checkSteadfastCustomerRisk(
+          { apiKey, secretKey },
+          validated.customer_phone,
+          { minDeliveryRatio: minDelivery, maxCancelRatio: maxCancel }
+        );
+
+        isFlagged = risk.is_flagged;
+        flagReason = risk.reason || null;
+        courierDeliveryRatio = risk.delivery_rate_percent;
+        courierCancelRatio = risk.cancel_rate_percent;
+        courierFraudReports = risk.fraud_reports;
+        courierFraudComment = risk.fraud_comment || null;
+      }
+    } catch (riskErr) {
+      console.warn('Public order risk check skipped:', riskErr);
+    }
+
     // Insert order into NexusFlow CRM
     const { data: order, error: orderErr } = await supabaseAdmin
       .from('orders')
@@ -219,11 +259,17 @@ export async function POST(req: NextRequest) {
         customer_name: validated.customer_name,
         customer_phone: validated.customer_phone,
         customer_address: validated.customer_address,
-        status: 'pending',
+        status: isFlagged ? 'flagged' : 'pending',
         total_amount: totalAmount,
         cod_amount: totalAmount,
         delivery_charge: validated.delivery_charge || 0,
         notes: validated.notes || 'Website Checkout',
+        is_flagged: isFlagged,
+        flag_reason: flagReason,
+        courier_delivery_ratio: courierDeliveryRatio,
+        courier_cancel_ratio: courierCancelRatio,
+        courier_fraud_reports: courierFraudReports,
+        courier_fraud_comment: courierFraudComment,
       })
       .select('id, total_amount, status, created_at')
       .maybeSingle();

@@ -15,12 +15,14 @@ import {
   TrendingDown,
   DollarSign,
   Package,
+  ShieldAlert,
 } from 'lucide-react';
 import { fetchApi, formatBDT } from '@/lib/apiClient';
 import { useToast } from '@/app/providers';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { Input, Select } from '@/components/ui/Input';
+import { RiskSettingsModal } from '@/components/orders/RiskSettingsModal';
 
 interface CourierCredRow {
   id: string;
@@ -61,6 +63,7 @@ export default function CourierPage() {
   const queryClient = useQueryClient();
 
   const [configureModalOpen, setConfigureModalOpen] = useState(false);
+  const [riskModalOpen, setRiskModalOpen] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState<'steadfast' | 'pathao' | 'redx'>('steadfast');
   const [apiKey, setApiKey] = useState('');
   const [apiSecret, setApiSecret] = useState('');
@@ -72,6 +75,15 @@ export default function CourierPage() {
     queryKey: ['courier-creds'],
     queryFn: () => fetchApi('/api/v1/courier/credentials'),
   });
+
+  // Fetch courier risk settings
+  const { data: riskSettings } = useQuery<{ minDeliveryRatio: number; maxCancelRatio: number }>({
+    queryKey: ['courier-risk-settings'],
+    queryFn: () => fetchApi('/api/v1/courier/risk-settings'),
+  });
+
+  const minDelivery = riskSettings?.minDeliveryRatio ?? 50;
+  const maxCancel = riskSettings?.maxCancelRatio ?? 50;
 
   // Fetch live courier telemetry & stats
   const { data: stats } = useQuery<CourierStats>({
@@ -210,14 +222,28 @@ export default function CourierPage() {
           </p>
         </div>
 
-        <button
-          onClick={() => syncAllMutation.mutate()}
-          disabled={syncAllMutation.isPending}
-          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-600 to-teal-500 hover:from-cyan-500 hover:to-teal-400 text-white text-xs font-semibold rounded-xl shadow-lg shadow-cyan-600/30 active:scale-[0.98] transition-all w-fit disabled:opacity-50"
-        >
-          <RotateCw className={`w-3.5 h-3.5 ${syncAllMutation.isPending ? 'animate-spin' : ''}`} />
-          <span>{syncAllMutation.isPending ? 'Syncing...' : 'Sync All Couriers'}</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            onClick={() => setRiskModalOpen(true)}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/25 text-xs font-label font-medium text-rose-300 backdrop-blur-md transition-all"
+            title="Configure Steadfast delivery ratio, cancel ratio, and fraud thresholds"
+          >
+            <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
+            <span>Fraud & Risk Rules</span>
+            <span className="px-1.5 py-0.5 rounded-full bg-rose-500/20 text-[10px] font-mono font-bold">
+              {minDelivery}% / {maxCancel}%
+            </span>
+          </button>
+
+          <button
+            onClick={() => syncAllMutation.mutate()}
+            disabled={syncAllMutation.isPending}
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-600 to-teal-500 hover:from-cyan-500 hover:to-teal-400 text-white text-xs font-semibold rounded-xl shadow-lg shadow-cyan-600/30 active:scale-[0.98] transition-all w-fit disabled:opacity-50"
+          >
+            <RotateCw className={`w-3.5 h-3.5 ${syncAllMutation.isPending ? 'animate-spin' : ''}`} />
+            <span>{syncAllMutation.isPending ? 'Syncing...' : 'Sync All Couriers'}</span>
+          </button>
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -551,6 +577,12 @@ export default function CourierPage() {
           </div>
         </form>
       </Modal>
+
+      {/* Courier Fraud & Risk Thresholds Modal */}
+      <RiskSettingsModal
+        isOpen={riskModalOpen}
+        onClose={() => setRiskModalOpen(false)}
+      />
     </div>
   );
 }

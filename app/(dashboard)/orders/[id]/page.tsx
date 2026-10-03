@@ -21,14 +21,19 @@ import {
   Edit,
   Clock,
   ShieldAlert,
+  ShieldCheck,
+  RotateCcw,
 } from 'lucide-react';
 import { fetchApi, formatBDT, formatDate } from '@/lib/apiClient';
 import { useToast } from '@/app/providers';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
-import { Input, Textarea, Select } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { TableSkeleton } from '@/components/ui/TableSkeleton';
+import { OrderInspectorModal } from '@/components/orders/OrderInspectorModal';
+import { HoldOrderModal } from '@/components/orders/HoldOrderModal';
+import { CancelOrderModal } from '@/components/orders/CancelOrderModal';
 
 interface OrderItemDetail {
   id: string;
@@ -65,6 +70,10 @@ interface OrderDetail {
   is_flagged: boolean;
   flag_reason: string | null;
   courier_provider: string | null;
+  courier_delivery_ratio?: number | null;
+  courier_cancel_ratio?: number | null;
+  courier_fraud_reports?: number;
+  courier_fraud_comment?: string | null;
   created_at: string;
   updated_at?: string;
   order_items?: OrderItemDetail[];
@@ -77,22 +86,25 @@ export default function OrderDetailPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [inspectorModalOpen, setInspectorModalOpen] = useState(false);
+  const [holdModalOpen, setHoldModalOpen] = useState(false);
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [chosenCourier, setChosenCourier] = useState('steadfast');
-
-  // Edit form state
-  const [editName, setEditName] = useState('');
-  const [editPhone, setEditPhone] = useState('');
-  const [editAddress, setEditAddress] = useState('');
-  const [editDeliveryCharge, setEditDeliveryCharge] = useState(0);
-  const [editNotes, setEditNotes] = useState('');
 
   const { data: order, isLoading, error } = useQuery<OrderDetail>({
     queryKey: ['order-detail', id],
     queryFn: () => fetchApi(`/api/v1/orders/${id}`),
     enabled: Boolean(id),
   });
+
+  const { data: riskSettings } = useQuery<{ minDeliveryRatio: number; maxCancelRatio: number }>({
+    queryKey: ['courier-risk-settings'],
+    queryFn: () => fetchApi('/api/v1/courier/risk-settings'),
+  });
+
+  const minDelivery = riskSettings?.minDeliveryRatio ?? 50;
+  const maxCancel = riskSettings?.maxCancelRatio ?? 50;
 
   const confirmMutation = useMutation({
     mutationFn: (courier: string) =>
@@ -111,67 +123,21 @@ export default function OrderDetailPage() {
     },
   });
 
-  const cancelMutation = useMutation({
-    mutationFn: () => fetchApi(`/api/v1/orders/${id}/cancel`, { method: 'POST' }),
-    onSuccess: () => {
-      toast('Order cancelled successfully', 'info');
-      queryClient.invalidateQueries({ queryKey: ['order-detail', id] });
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
-    },
-    onError: (err: any) => {
-      toast(err?.message || 'Failed to cancel order', 'error');
-    },
-  });
-
-  const holdMutation = useMutation({
-    mutationFn: () => fetchApi(`/api/v1/orders/${id}/hold`, { method: 'POST' }),
-    onSuccess: () => {
-      toast('Order put on hold', 'info');
-      queryClient.invalidateQueries({ queryKey: ['order-detail', id] });
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
-    },
-    onError: (err: any) => {
-      toast(err?.message || 'Failed to hold order', 'error');
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: (body: any) =>
+  const setPendingMutation = useMutation({
+    mutationFn: () =>
       fetchApi(`/api/v1/orders/${id}`, {
         method: 'PATCH',
-        body: JSON.stringify(body),
+        body: JSON.stringify({ status: 'pending' }),
       }),
     onSuccess: () => {
-      toast('Order details updated successfully!', 'success');
-      setEditModalOpen(false);
+      toast('Order moved back to Pending status', 'success');
       queryClient.invalidateQueries({ queryKey: ['order-detail', id] });
       queryClient.invalidateQueries({ queryKey: ['orders'] });
     },
     onError: (err: any) => {
-      toast(err?.message || 'Failed to update order', 'error');
+      toast(err?.message || 'Failed to reset order to pending', 'error');
     },
   });
-
-  const handleOpenEdit = () => {
-    if (!order) return;
-    setEditName(order.customer_name || '');
-    setEditPhone(order.customer_phone || '');
-    setEditAddress(order.customer_address || '');
-    setEditDeliveryCharge(order.delivery_charge || 0);
-    setEditNotes(order.notes || '');
-    setEditModalOpen(true);
-  };
-
-  const handleEditSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    updateMutation.mutate({
-      customer_name: editName,
-      customer_phone: editPhone,
-      customer_address: editAddress,
-      delivery_charge: Number(editDeliveryCharge),
-      notes: editNotes,
-    });
-  };
 
   if (isLoading) {
     return (
@@ -211,9 +177,29 @@ export default function OrderDetailPage() {
 
   const isPending = order.status === 'pending' || order.status === 'flagged' || order.status === 'on_hold';
 
+  // Fraud and ratio risk evaluation
+  const hasFraudComment = Boolean(order.courier_fraud_comment && order.courier_fraud_comment.trim());
+  const hasFraudReports = Boolean(order.courier_fraud_reports && order.courier_fraud_reports > 0);
+  const isLowDelivery =
+    order.courier_delivery_ratio !== undefined &&
+    order.courier_delivery_ratio !== null &&
+    order.courier_delivery_ratio < minDelivery;
+  const isHighCancel =
+    order.courier_cancel_ratio !== undefined &&
+    order.courier_cancel_ratio !== null &&
+    order.courier_cancel_ratio > maxCancel;
+
+  const isRedRiskAlert =
+    order.is_flagged ||
+    order.status === 'flagged' ||
+    hasFraudComment ||
+    hasFraudReports ||
+    isLowDelivery ||
+    isHighCancel;
+
   return (
     <div className="space-y-6 max-w-5xl mx-auto print:p-0 print:m-0">
-      {/* Top Navigation & Action Strip (Hidden on print) */}
+      {/* Top Navigation & Action Strip */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
         <div className="flex items-center gap-3">
           <Link
@@ -226,11 +212,11 @@ export default function OrderDetailPage() {
             <div className="flex items-center gap-2">
               <span className="font-mono text-sm text-slate-400">Order</span>
               <span className="font-mono font-bold text-white text-base">#{order.id.slice(0, 8)}</span>
-              <Badge status={order.status} />
-              {order.is_flagged && (
+              <Badge status={order.status} showDot={true} />
+              {isRedRiskAlert && (
                 <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 text-[10px] font-semibold border border-rose-500/30">
                   <AlertTriangle className="w-3 h-3 text-rose-400" />
-                  Risk Flagged
+                  Red Alert
                 </span>
               )}
             </div>
@@ -250,34 +236,45 @@ export default function OrderDetailPage() {
             <span>Print Invoice</span>
           </button>
 
-          <Button variant="outline" size="sm" onClick={handleOpenEdit}>
-            <Edit className="w-3.5 h-3.5 mr-1" />
-            <span>Edit Details</span>
+          {/* Full Inspector & Product Add/Delete Modal Trigger */}
+          <Button variant="outline" size="sm" onClick={() => setInspectorModalOpen(true)}>
+            <Edit className="w-3.5 h-3.5 mr-1 text-violet-400" />
+            <span>Edit Details & Products</span>
           </Button>
+
+          {/* Set Back to Pending if on hold or cancelled */}
+          {(order.status === 'on_hold' || order.status === 'cancelled') && (
+            <button
+              onClick={() => setPendingMutation.mutate()}
+              disabled={setPendingMutation.isPending}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-label font-medium transition-colors"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Set to Pending</span>
+            </button>
+          )}
 
           {isPending && (
             <>
               {order.status !== 'on_hold' && (
                 <button
-                  onClick={() => holdMutation.mutate()}
-                  disabled={holdMutation.isPending}
-                  className="px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 text-xs font-label transition-colors"
+                  onClick={() => setHoldModalOpen(true)}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 border border-sky-500/30 text-xs font-label font-medium transition-colors"
                 >
-                  Hold
+                  <PauseCircle className="w-3.5 h-3.5" />
+                  <span>Hold</span>
                 </button>
               )}
 
-              <button
-                onClick={() => {
-                  if (confirm('Are you sure you want to cancel this order?')) {
-                    cancelMutation.mutate();
-                  }
-                }}
-                disabled={cancelMutation.isPending}
-                className="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/20 text-xs font-label transition-colors"
-              >
-                Cancel
-              </button>
+              {order.status !== 'cancelled' && (
+                <button
+                  onClick={() => setCancelModalOpen(true)}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-label font-medium transition-colors"
+                >
+                  <XCircle className="w-3.5 h-3.5" />
+                  <span>Cancel</span>
+                </button>
+              )}
 
               <Button
                 variant="primary"
@@ -288,29 +285,41 @@ export default function OrderDetailPage() {
                 }}
               >
                 <CheckCircle className="w-3.5 h-3.5 mr-1 text-emerald-300" />
-                Confirm & Dispatch
+                <span>Confirm & Dispatch</span>
               </Button>
             </>
           )}
         </div>
       </div>
 
-      {/* Flag Reason Banner if Risk Flagged */}
-      {order.is_flagged && (
-        <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/25 flex items-start gap-3">
+      {/* Flag / Risk Alert Banner if Risk Detected */}
+      {isRedRiskAlert && (
+        <div className="p-4 rounded-2xl bg-rose-950/30 border border-rose-500/30 flex items-start gap-3">
           <ShieldAlert className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
-          <div>
-            <h4 className="text-xs font-bold text-rose-200 font-headline uppercase tracking-wider">
-              High Risk Delivery Warning
+          <div className="space-y-1">
+            <h4 className="text-xs font-bold text-rose-200 font-headline uppercase tracking-wider flex items-center gap-2">
+              <span>Courier Fraud & Delivery Risk Alert</span>
+              {hasFraudComment && (
+                <span className="px-2 py-0.5 rounded-full bg-rose-500/30 text-rose-200 text-[10px] font-bold">
+                  Fraud Reported
+                </span>
+              )}
             </h4>
-            <p className="text-xs text-rose-300/90 mt-0.5 font-body">
-              {order.flag_reason || 'This customer phone number has had repeated returns or cancellations recorded.'}
-            </p>
+            <div className="text-xs text-rose-300/90 font-body">
+              {order.courier_fraud_comment ? (
+                <div>
+                  <strong className="text-white">Steadfast Fraud Note:</strong> {order.courier_fraud_comment}
+                </div>
+              ) : (
+                order.flag_reason ||
+                `Customer risk ratios exceed rules (Delivery: ${order.courier_delivery_ratio ?? 'N/A'}% vs min ${minDelivery}%, Cancel: ${order.courier_cancel_ratio ?? 'N/A'}% vs max ${maxCancel}%).`
+              )}
+            </div>
           </div>
         </div>
       )}
 
-      {/* Printable Invoice Header (Visible only when printing) */}
+      {/* Printable Invoice Header */}
       <div className="hidden print:block mb-8">
         <div className="flex justify-between items-start border-b pb-4">
           <div>
@@ -327,7 +336,7 @@ export default function OrderDetailPage() {
 
       {/* Content Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {/* Left Column (Customer & Courier) */}
+        {/* Left Column (Customer & Logistics) */}
         <div className="space-y-5 md:col-span-1">
           {/* Customer Card */}
           <div className="glass-card p-5 space-y-4">
@@ -338,6 +347,13 @@ export default function OrderDetailPage() {
                   Customer Profile
                 </h3>
               </div>
+              <button
+                type="button"
+                onClick={() => setInspectorModalOpen(true)}
+                className="text-[11px] text-violet-400 hover:text-violet-300 transition-colors"
+              >
+                Edit
+              </button>
             </div>
 
             <div className="space-y-3 text-xs">
@@ -365,10 +381,50 @@ export default function OrderDetailPage() {
                 </div>
               </div>
 
+              {/* Steadfast Courier Track Record */}
+              <div className="pt-2.5 border-t border-white/[0.06] space-y-1.5">
+                <span className="text-slate-400 text-[11px] font-semibold block flex items-center gap-1">
+                  <Truck className="w-3 h-3 text-cyan-400" />
+                  <span>Steadfast Track Record</span>
+                </span>
+                <div className="grid grid-cols-2 gap-2 text-[11px] pt-1">
+                  <div className="p-2 rounded-lg bg-white/[0.03] border border-white/10">
+                    <span className="text-slate-500 block text-[10px]">Delivery Rate</span>
+                    <span
+                      className={`font-mono font-bold ${
+                        isLowDelivery ? 'text-rose-400' : 'text-emerald-400'
+                      }`}
+                    >
+                      {order.courier_delivery_ratio !== undefined && order.courier_delivery_ratio !== null
+                        ? `${order.courier_delivery_ratio}%`
+                        : 'N/A'}
+                    </span>
+                  </div>
+                  <div className="p-2 rounded-lg bg-white/[0.03] border border-white/10">
+                    <span className="text-slate-500 block text-[10px]">Cancel Rate</span>
+                    <span
+                      className={`font-mono font-bold ${
+                        isHighCancel ? 'text-rose-400' : 'text-slate-300'
+                      }`}
+                    >
+                      {order.courier_cancel_ratio !== undefined && order.courier_cancel_ratio !== null
+                        ? `${order.courier_cancel_ratio}%`
+                        : 'N/A'}
+                    </span>
+                  </div>
+                </div>
+
+                {order.courier_fraud_reports !== undefined && order.courier_fraud_reports > 0 && (
+                  <div className="text-[11px] text-rose-300">
+                    Steadfast Fraud Reports: <strong className="font-mono">{order.courier_fraud_reports}</strong>
+                  </div>
+                )}
+              </div>
+
               {order.notes && (
                 <div className="pt-2 border-t border-white/[0.06]">
-                  <span className="text-slate-500 text-[11px] block">Order Notes</span>
-                  <p className="text-slate-300 italic text-[11px] mt-0.5">{order.notes}</p>
+                  <span className="text-slate-500 text-[11px] block">Sales Notes / Reason</span>
+                  <p className="text-amber-300/90 text-[11px] mt-0.5">{order.notes}</p>
                 </div>
               )}
             </div>
@@ -428,6 +484,14 @@ export default function OrderDetailPage() {
                   Order Items ({order.order_items?.length || 0})
                 </h3>
               </div>
+
+              <button
+                type="button"
+                onClick={() => setInspectorModalOpen(true)}
+                className="text-xs text-violet-400 hover:text-violet-300 font-medium"
+              >
+                + Add or Modify Items
+              </button>
             </div>
 
             <div className="overflow-x-auto">
@@ -501,51 +565,6 @@ export default function OrderDetailPage() {
         </div>
       </div>
 
-      {/* Edit Order Modal */}
-      <Modal isOpen={editModalOpen} onClose={() => setEditModalOpen(false)} title="Edit Order Details">
-        <form onSubmit={handleEditSubmit} className="space-y-4">
-          <Input
-            label="Customer Name"
-            value={editName}
-            onChange={(e) => setEditName(e.target.value)}
-            required
-          />
-          <Input
-            label="Customer Phone"
-            value={editPhone}
-            onChange={(e) => setEditPhone(e.target.value)}
-            required
-          />
-          <Textarea
-            label="Delivery Address"
-            value={editAddress}
-            onChange={(e) => setEditAddress(e.target.value)}
-            required
-          />
-          <Input
-            label="Delivery Charge (৳)"
-            type="number"
-            min="0"
-            value={editDeliveryCharge}
-            onChange={(e) => setEditDeliveryCharge(Number(e.target.value))}
-            required
-          />
-          <Textarea
-            label="Internal Notes"
-            value={editNotes}
-            onChange={(e) => setEditNotes(e.target.value)}
-          />
-          <div className="flex items-center justify-end gap-3 pt-3">
-            <Button type="button" variant="outline" onClick={() => setEditModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" variant="primary" isLoading={updateMutation.isPending}>
-              Save Updates
-            </Button>
-          </div>
-        </form>
-      </Modal>
-
       {/* Confirm Dispatch Modal */}
       <Modal
         isOpen={confirmModalOpen}
@@ -583,6 +602,36 @@ export default function OrderDetailPage() {
           </div>
         </div>
       </Modal>
+
+      {/* Hold Order Modal with Sales Note */}
+      <HoldOrderModal
+        isOpen={holdModalOpen}
+        onClose={() => setHoldModalOpen(false)}
+        orderId={order.id}
+        customerName={order.customer_name}
+        totalAmount={order.total_amount}
+        currentNotes={order.notes}
+      />
+
+      {/* Cancel Order Modal with Sales Note */}
+      <CancelOrderModal
+        isOpen={cancelModalOpen}
+        onClose={() => setCancelModalOpen(false)}
+        orderId={order.id}
+        customerName={order.customer_name}
+        totalAmount={order.total_amount}
+        currentNotes={order.notes}
+      />
+
+      {/* Full Order & Customer Inspector & Product Editor Modal */}
+      <OrderInspectorModal
+        isOpen={inspectorModalOpen}
+        onClose={() => setInspectorModalOpen(false)}
+        orderId={order.id}
+        onOpenConfirm={() => setConfirmModalOpen(true)}
+        onOpenHold={() => setHoldModalOpen(true)}
+        onOpenCancel={() => setCancelModalOpen(true)}
+      />
     </div>
   );
 }

@@ -12,9 +12,11 @@ import {
   PauseCircle,
   AlertTriangle,
   Download,
-  Filter,
   Calendar,
   Eye,
+  ShieldAlert,
+  RotateCcw,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { fetchApi, formatBDT, formatDate } from '@/lib/apiClient';
 import { useToast } from '@/app/providers';
@@ -23,6 +25,10 @@ import { Badge } from '@/components/ui/Badge';
 import { Select } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { TableSkeleton } from '@/components/ui/TableSkeleton';
+import { RiskSettingsModal } from '@/components/orders/RiskSettingsModal';
+import { HoldOrderModal } from '@/components/orders/HoldOrderModal';
+import { CancelOrderModal } from '@/components/orders/CancelOrderModal';
+import { OrderInspectorModal } from '@/components/orders/OrderInspectorModal';
 
 interface OrderItemDetail {
   id: string;
@@ -48,6 +54,10 @@ interface OrderRecord {
   is_flagged: boolean;
   flag_reason: string | null;
   courier_provider: string | null;
+  courier_delivery_ratio?: number | null;
+  courier_cancel_ratio?: number | null;
+  courier_fraud_reports?: number;
+  courier_fraud_comment?: string | null;
   created_at: string;
   order_items?: OrderItemDetail[];
 }
@@ -57,6 +67,7 @@ const STATUS_TABS = [
   { label: 'Pending', value: 'pending' },
   { label: 'At Risk', value: 'flagged' },
   { label: 'Confirmed', value: 'confirmed' },
+  { label: 'On Hold', value: 'on_hold' },
   { label: 'In Transit', value: 'shipped' },
   { label: 'Delivered', value: 'delivered' },
   { label: 'Returned', value: 'returned' },
@@ -72,9 +83,26 @@ export default function OrdersPage() {
   const [fromDate, setFromDate] = useState<string>('');
   const [toDate, setToDate] = useState<string>('');
   const [page, setPage] = useState<number>(1);
+
+  // Modals state
   const [selectedOrder, setSelectedOrder] = useState<OrderRecord | null>(null);
   const [confirmModalOpen, setConfirmModalOpen] = useState<boolean>(false);
   const [chosenCourier, setChosenCourier] = useState<string>('steadfast');
+
+  const [riskModalOpen, setRiskModalOpen] = useState<boolean>(false);
+  const [holdModalOpen, setHoldModalOpen] = useState<boolean>(false);
+  const [cancelModalOpen, setCancelModalOpen] = useState<boolean>(false);
+  const [inspectorModalOpen, setInspectorModalOpen] = useState<boolean>(false);
+  const [inspectorOrderId, setInspectorOrderId] = useState<string | null>(null);
+
+  // Fetch tenant courier risk rules
+  const { data: riskSettings } = useQuery<{ minDeliveryRatio: number; maxCancelRatio: number }>({
+    queryKey: ['courier-risk-settings'],
+    queryFn: () => fetchApi('/api/v1/courier/risk-settings'),
+  });
+
+  const minDelivery = riskSettings?.minDeliveryRatio ?? 50;
+  const maxCancel = riskSettings?.maxCancelRatio ?? 50;
 
   // Fetch Orders query
   const { data, isLoading } = useQuery<{
@@ -115,29 +143,19 @@ export default function OrdersPage() {
     },
   });
 
-  // Cancel order mutation
-  const cancelMutation = useMutation({
+  // Mark status back to pending mutation
+  const setPendingMutation = useMutation({
     mutationFn: (orderId: string) =>
-      fetchApi(`/api/v1/orders/${orderId}/cancel`, { method: 'POST' }),
+      fetchApi(`/api/v1/orders/${orderId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'pending' }),
+      }),
     onSuccess: () => {
-      toast('Order cancelled successfully', 'info');
+      toast('Order moved back to Pending status', 'success');
       queryClient.invalidateQueries({ queryKey: ['orders'] });
     },
     onError: (err: unknown) => {
-      toast(err instanceof Error ? err.message : 'Failed to cancel order', 'error');
-    },
-  });
-
-  // Hold order mutation
-  const holdMutation = useMutation({
-    mutationFn: (orderId: string) =>
-      fetchApi(`/api/v1/orders/${orderId}/hold`, { method: 'POST' }),
-    onSuccess: () => {
-      toast('Order placed on hold', 'info');
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
-    },
-    onError: (err: unknown) => {
-      toast(err instanceof Error ? err.message : 'Failed to hold order', 'error');
+      toast(err instanceof Error ? err.message : 'Failed to reset order to pending', 'error');
     },
   });
 
@@ -161,10 +179,25 @@ export default function OrdersPage() {
   const orders: OrderRecord[] = Array.isArray(data) ? data : data?.items || [];
   const pagination = data?.pagination || { total: 0, totalPages: 1, page: 1 };
 
+  const handleOpenInspector = (orderId: string) => {
+    setInspectorOrderId(orderId);
+    setInspectorModalOpen(true);
+  };
+
   const handleOpenConfirm = (order: OrderRecord) => {
     setSelectedOrder(order);
     setChosenCourier(order.courier_provider || 'steadfast');
     setConfirmModalOpen(true);
+  };
+
+  const handleOpenHold = (order: OrderRecord) => {
+    setSelectedOrder(order);
+    setHoldModalOpen(true);
+  };
+
+  const handleOpenCancel = (order: OrderRecord) => {
+    setSelectedOrder(order);
+    setCancelModalOpen(true);
   };
 
   const handleExportCSV = async () => {
@@ -203,12 +236,24 @@ export default function OrdersPage() {
             Orders
           </h1>
           <p className="text-sm text-slate-500 mt-0.5">
-            Manage and track all your orders.
+            Manage, inspect, edit, and track all your customer orders.
           </p>
         </div>
 
+        <div className="flex flex-wrap items-center gap-2.5">
+          {/* Courier Risk Rules Configuration Button */}
+          <button
+            onClick={() => setRiskModalOpen(true)}
+            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/25 text-xs font-label font-medium text-rose-300 backdrop-blur-md transition-all"
+            title="Configure Steadfast fraud, delivery ratio, and cancel ratio thresholds"
+          >
+            <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
+            <span>Courier Risk Rules</span>
+            <span className="px-1.5 py-0.5 rounded-full bg-rose-500/20 text-[10px] font-mono font-bold">
+              {minDelivery}% / {maxCancel}%
+            </span>
+          </button>
 
-        <div className="flex items-center gap-2.5">
           <button
             onClick={handleExportCSV}
             className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/[0.04] border border-white/10 hover:border-white/20 text-xs font-label font-medium text-slate-200 backdrop-blur-md transition-all"
@@ -216,6 +261,7 @@ export default function OrdersPage() {
             <Download className="w-3.5 h-3.5 text-slate-400" />
             <span>Export Manifest</span>
           </button>
+
           <Link
             href="/orders/new"
             className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 text-white text-xs font-semibold rounded-xl shadow-lg shadow-violet-600/30 active:scale-[0.98] transition-all"
@@ -241,13 +287,18 @@ export default function OrdersPage() {
 
         <div className="glass-card p-4">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-400">At Risk</span>
+            <span className="text-xs font-medium text-slate-400">At Risk / Flagged</span>
             <AlertTriangle className="w-4 h-4 text-rose-400" />
           </div>
           <div className="text-2xl font-bold text-rose-400 mt-2 tabular-nums">
-            {orders.filter((o) => o.is_flagged || o.status === 'flagged').length}
+            {orders.filter((o) => {
+              const hasFraud = Boolean(o.courier_fraud_comment || (o.courier_fraud_reports && o.courier_fraud_reports > 0));
+              const lowDeliv = o.courier_delivery_ratio !== undefined && o.courier_delivery_ratio !== null && o.courier_delivery_ratio < minDelivery;
+              const highCancel = o.courier_cancel_ratio !== undefined && o.courier_cancel_ratio !== null && o.courier_cancel_ratio > maxCancel;
+              return o.is_flagged || o.status === 'flagged' || hasFraud || lowDeliv || highCancel;
+            }).length}
           </div>
-          <p className="text-[11px] text-rose-400/80 mt-1">Possible returns</p>
+          <p className="text-[11px] text-rose-400/80 mt-1">Low delivery / fraud warnings</p>
         </div>
 
         <div className="glass-card p-4">
@@ -258,7 +309,7 @@ export default function OrdersPage() {
           <div className="text-2xl font-bold text-cyan-400 mt-2 tabular-nums">
             {orders.filter((o) => o.status === 'shipped').length}
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">In transit</p>
+          <p className="text-[11px] text-slate-500 mt-1">Dispatched to courier</p>
         </div>
 
         <div className="glass-card p-4 relative overflow-hidden">
@@ -424,7 +475,7 @@ export default function OrdersPage() {
               <thead className="bg-white/[0.02] border-b border-white/10 text-slate-400 text-[11px]">
                 <tr>
                   <th className="py-3.5 px-4 font-semibold">Invoice</th>
-                  <th className="py-3.5 px-4 font-semibold">Customer</th>
+                  <th className="py-3.5 px-4 font-semibold">Customer & Courier Risk</th>
                   <th className="py-3.5 px-4 font-semibold">Items</th>
                   <th className="py-3.5 px-4 font-semibold">Amount / COD</th>
                   <th className="py-3.5 px-4 font-semibold">Status</th>
@@ -440,30 +491,59 @@ export default function OrdersPage() {
                     order.status === 'flagged' ||
                     order.status === 'on_hold';
 
+                  // Automatic Steadfast Fraud & Courier Ratio Risk Evaluation
+                  const hasFraudComment = Boolean(order.courier_fraud_comment && order.courier_fraud_comment.trim());
+                  const hasFraudReports = Boolean(order.courier_fraud_reports && order.courier_fraud_reports > 0);
+                  const isLowDelivery =
+                    order.courier_delivery_ratio !== undefined &&
+                    order.courier_delivery_ratio !== null &&
+                    order.courier_delivery_ratio < minDelivery;
+                  const isHighCancel =
+                    order.courier_cancel_ratio !== undefined &&
+                    order.courier_cancel_ratio !== null &&
+                    order.courier_cancel_ratio > maxCancel;
+
+                  const isRedRiskAlert =
+                    order.is_flagged ||
+                    order.status === 'flagged' ||
+                    hasFraudComment ||
+                    hasFraudReports ||
+                    isLowDelivery ||
+                    isHighCancel;
+
                   return (
                     <tr
                       key={order.id}
-                      className="hover:bg-white/[0.02] transition-colors"
+                      className={`transition-colors ${
+                        isRedRiskAlert
+                          ? 'bg-rose-950/25 hover:bg-rose-950/40 border-l-4 border-l-rose-500'
+                          : 'hover:bg-white/[0.02]'
+                      }`}
                     >
+                      {/* Invoice Cell */}
                       <td className="py-3 px-4">
-                        <Link
-                          href={`/orders/${order.id}`}
-                          className="font-mono font-medium text-slate-300 hover:text-violet-400 flex items-center gap-1 group transition-colors"
+                        <button
+                          type="button"
+                          onClick={() => handleOpenInspector(order.id)}
+                          className="font-mono font-medium text-slate-300 hover:text-violet-400 flex items-center gap-1 group transition-colors text-left"
+                          title="Click to inspect and edit customer & products"
                         >
                           <span>#{order.id.slice(0, 8)}</span>
-                          <Eye className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-violet-400" />
-                        </Link>
-                        {order.is_flagged && (
+                          <Eye className="w-3.5 h-3.5 opacity-70 group-hover:opacity-100 group-hover:scale-110 transition-all text-violet-400" />
+                        </button>
+
+                        {isRedRiskAlert && (
                           <div
-                            title={order.flag_reason || 'Risk flagged'}
-                            className="inline-flex items-center gap-1 text-[10px] text-rose-400 mt-1 block font-sans"
+                            title={order.flag_reason || order.courier_fraud_comment || 'Courier Risk Threshold Exceeded'}
+                            className="inline-flex items-center gap-1 text-[10px] text-rose-400 mt-1 font-semibold"
                           >
-                            <AlertTriangle className="w-3 h-3" />
-                            <span>Risk Alert</span>
+                            <AlertTriangle className="w-3 h-3 text-rose-400 shrink-0" />
+                            <span>RED ALERT</span>
                           </div>
                         )}
                       </td>
 
+                      {/* Customer Cell with Courier Risk Indicators */}
                       <td className="py-3 px-4">
                         <div className="font-semibold text-slate-200">
                           {order.customer_name}
@@ -474,8 +554,60 @@ export default function OrdersPage() {
                         <div className="text-[10px] text-slate-500 truncate max-w-xs mt-0.5">
                           {order.customer_address}
                         </div>
+
+                        {/* Customer Risk & Ratio Badges */}
+                        <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                          {hasFraudComment && (
+                            <span
+                              title={order.courier_fraud_comment || 'Steadfast Fraud Remark'}
+                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-rose-500/25 border border-rose-500/40 text-rose-200 text-[10px] font-bold"
+                            >
+                              <ShieldAlert className="w-3 h-3 text-rose-400" />
+                              <span>Fraud Remark</span>
+                            </span>
+                          )}
+
+                          {order.courier_delivery_ratio !== undefined && order.courier_delivery_ratio !== null && (
+                            <span
+                              className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono font-bold border ${
+                                isLowDelivery
+                                  ? 'bg-rose-500/25 border-rose-500/40 text-rose-300'
+                                  : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
+                              }`}
+                              title={`Delivery Ratio: ${order.courier_delivery_ratio}% (Alert threshold: < ${minDelivery}%)`}
+                            >
+                              Deliv: {order.courier_delivery_ratio}%
+                            </span>
+                          )}
+
+                          {order.courier_cancel_ratio !== undefined && order.courier_cancel_ratio !== null && (
+                            <span
+                              className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono font-bold border ${
+                                isHighCancel
+                                  ? 'bg-rose-500/25 border-rose-500/40 text-rose-300'
+                                  : 'bg-white/[0.04] border-white/10 text-slate-400'
+                              }`}
+                              title={`Cancel Ratio: ${order.courier_cancel_ratio}% (Alert threshold: > ${maxCancel}%)`}
+                            >
+                              Cancel: {order.courier_cancel_ratio}%
+                            </span>
+                          )}
+
+                          {hasFraudReports && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-rose-500/20 border border-rose-500/30 text-rose-300 text-[10px] font-mono">
+                              Rep: {order.courier_fraud_reports}
+                            </span>
+                          )}
+                        </div>
+
+                        {order.notes && (
+                          <div className="mt-1 text-[10px] text-amber-300/80 truncate max-w-xs font-mono">
+                            Note: {order.notes}
+                          </div>
+                        )}
                       </td>
 
+                      {/* Items Cell */}
                       <td className="py-3 px-4">
                         <div className="text-slate-300 font-medium">
                           {order.order_items?.length || 0} item(s)
@@ -487,6 +619,7 @@ export default function OrdersPage() {
                         </div>
                       </td>
 
+                      {/* Amount / COD */}
                       <td className="py-3 px-4">
                         <div className="font-mono font-bold text-white tabular-nums">
                           {formatBDT(order.total_amount)}
@@ -496,10 +629,12 @@ export default function OrdersPage() {
                         </div>
                       </td>
 
+                      {/* Status */}
                       <td className="py-3 px-4">
                         <Badge status={order.status} showDot={true} />
                       </td>
 
+                      {/* Courier */}
                       <td className="py-3 px-4">
                         {order.courier_provider ? (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/[0.04] border border-white/10 text-[11px] text-slate-300 font-label capitalize">
@@ -511,20 +646,37 @@ export default function OrdersPage() {
                         )}
                       </td>
 
+                      {/* Date */}
                       <td className="py-3 px-4 text-slate-400 font-mono text-[11px]">
                         {formatDate(order.created_at)}
                       </td>
 
+                      {/* Actions */}
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
-                          <Link
-                            href={`/orders/${order.id}`}
-                            title="View Order Details"
-                            className="p-1.5 text-slate-400 hover:text-white hover:bg-white/[0.05] rounded-lg transition-colors"
+                          {/* Eye inspector & Editor button */}
+                          <button
+                            type="button"
+                            onClick={() => handleOpenInspector(order.id)}
+                            title="Inspect & Edit Customer Details & Products"
+                            className="p-1.5 text-slate-400 hover:text-violet-300 hover:bg-violet-500/10 rounded-lg transition-colors"
                           >
                             <Eye className="w-4 h-4" />
-                          </Link>
+                          </button>
 
+                          {/* Set Back to Pending (if on hold or cancelled) */}
+                          {(order.status === 'on_hold' || order.status === 'cancelled') && (
+                            <button
+                              type="button"
+                              onClick={() => setPendingMutation.mutate(order.id)}
+                              title="Reset back to Pending"
+                              className="p-1.5 text-slate-400 hover:text-amber-400 hover:bg-amber-500/10 rounded-lg transition-colors"
+                            >
+                              <RotateCcw className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+
+                          {/* Confirm */}
                           {isConfirmable && (
                             <button
                               onClick={() => handleOpenConfirm(order)}
@@ -535,6 +687,7 @@ export default function OrdersPage() {
                             </button>
                           )}
 
+                          {/* Delivered COD collector */}
                           {order.status === 'delivered' && (
                             <button
                               onClick={() =>
@@ -550,24 +703,22 @@ export default function OrdersPage() {
                             </button>
                           )}
 
+                          {/* On Hold with Sales Note */}
                           {order.status === 'pending' && (
                             <button
-                              onClick={() => holdMutation.mutate(order.id)}
-                              title="Put on hold"
-                              className="p-1.5 text-slate-400 hover:text-sky-300 hover:bg-white/[0.05] rounded-lg transition-colors"
+                              onClick={() => handleOpenHold(order)}
+                              title="Put on hold with sales team note"
+                              className="p-1.5 text-slate-400 hover:text-sky-300 hover:bg-sky-500/10 rounded-lg transition-colors"
                             >
                               <PauseCircle className="w-4 h-4" />
                             </button>
                           )}
 
+                          {/* Cancel with Sales Note */}
                           {order.status !== 'cancelled' && order.status !== 'delivered' && (
                             <button
-                              onClick={() => {
-                                if (confirm('Are you sure you want to cancel this order?')) {
-                                  cancelMutation.mutate(order.id);
-                                }
-                              }}
-                              title="Cancel Order"
+                              onClick={() => handleOpenCancel(order)}
+                              title="Cancel Order with sales team note"
                               className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
                             >
                               <XCircle className="w-4 h-4" />
@@ -672,6 +823,60 @@ export default function OrdersPage() {
           </div>
         </div>
       </Modal>
+
+      {/* Courier Risk & Fraud Thresholds Modal */}
+      <RiskSettingsModal
+        isOpen={riskModalOpen}
+        onClose={() => setRiskModalOpen(false)}
+      />
+
+      {/* Put On Hold Modal with Sales Note */}
+      <HoldOrderModal
+        isOpen={holdModalOpen}
+        onClose={() => {
+          setHoldModalOpen(false);
+          setSelectedOrder(null);
+        }}
+        orderId={selectedOrder?.id || null}
+        customerName={selectedOrder?.customer_name}
+        totalAmount={selectedOrder?.total_amount}
+        currentNotes={selectedOrder?.notes}
+      />
+
+      {/* Cancel Order Modal with Sales Note */}
+      <CancelOrderModal
+        isOpen={cancelModalOpen}
+        onClose={() => {
+          setCancelModalOpen(false);
+          setSelectedOrder(null);
+        }}
+        orderId={selectedOrder?.id || null}
+        customerName={selectedOrder?.customer_name}
+        totalAmount={selectedOrder?.total_amount}
+        currentNotes={selectedOrder?.notes}
+      />
+
+      {/* Full Order & Customer Inspector & Product Editor Modal */}
+      <OrderInspectorModal
+        isOpen={inspectorModalOpen}
+        onClose={() => {
+          setInspectorModalOpen(false);
+          setInspectorOrderId(null);
+        }}
+        orderId={inspectorOrderId}
+        onOpenConfirm={(order) => {
+          setSelectedOrder(order);
+          setConfirmModalOpen(true);
+        }}
+        onOpenHold={(order) => {
+          setSelectedOrder(order);
+          setHoldModalOpen(true);
+        }}
+        onOpenCancel={(order) => {
+          setSelectedOrder(order);
+          setCancelModalOpen(true);
+        }}
+      />
     </div>
   );
 }

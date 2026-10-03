@@ -132,29 +132,36 @@ export async function POST(req: NextRequest) {
     // 3. Fraud / High-Return Risk Check (display flag only, never auto-blocks)
     let isFlagged = false;
     let flagReason: string | null = null;
+    let courierDeliveryRatio: number | null = null;
+    let courierCancelRatio: number | null = null;
+    let courierFraudReports: number = 0;
+    let courierFraudComment: string | null = null;
 
     try {
-      const { data: courierCreds } = await supabase
-        .from('courier_credentials')
-        .select('*')
-        .eq('tenant_id', auth.tenantId)
-        .eq('provider', 'steadfast')
-        .eq('is_active', true)
-        .single();
+      const [tenantRes, courierCredsRes] = await Promise.all([
+        supabase.from('tenants').select('min_delivery_ratio, max_cancel_ratio').eq('id', auth.tenantId).single(),
+        supabase.from('courier_credentials').select('*').eq('tenant_id', auth.tenantId).eq('provider', 'steadfast').eq('is_active', true).maybeSingle(),
+      ]);
 
-      if (courierCreds) {
-        const apiKey = decrypt(courierCreds.encrypted_api_key);
-        const secretKey = courierCreds.encrypted_api_secret ? decrypt(courierCreds.encrypted_api_secret) : null;
+      const minDelivery = Number(tenantRes.data?.min_delivery_ratio ?? 50);
+      const maxCancel = Number(tenantRes.data?.max_cancel_ratio ?? 50);
+
+      if (courierCredsRes.data) {
+        const apiKey = decrypt(courierCredsRes.data.encrypted_api_key);
+        const secretKey = courierCredsRes.data.encrypted_api_secret ? decrypt(courierCredsRes.data.encrypted_api_secret) : null;
 
         const risk = await checkSteadfastCustomerRisk(
           { apiKey, secretKey },
-          validated.customer_phone
+          validated.customer_phone,
+          { minDeliveryRatio: minDelivery, maxCancelRatio: maxCancel }
         );
 
-        if (risk.is_flagged) {
-          isFlagged = true;
-          flagReason = risk.reason || 'High return history flagged by courier';
-        }
+        isFlagged = risk.is_flagged;
+        flagReason = risk.reason || null;
+        courierDeliveryRatio = risk.delivery_rate_percent;
+        courierCancelRatio = risk.cancel_rate_percent;
+        courierFraudReports = risk.fraud_reports;
+        courierFraudComment = risk.fraud_comment || null;
       }
     } catch (riskErr) {
       console.warn('Courier risk check skipped or failed:', riskErr);
@@ -178,6 +185,10 @@ export async function POST(req: NextRequest) {
         is_flagged: isFlagged,
         flag_reason: flagReason,
         courier_provider: validated.courier_provider || null,
+        courier_delivery_ratio: courierDeliveryRatio,
+        courier_cancel_ratio: courierCancelRatio,
+        courier_fraud_reports: courierFraudReports,
+        courier_fraud_comment: courierFraudComment,
       })
       .select('*')
       .single();
