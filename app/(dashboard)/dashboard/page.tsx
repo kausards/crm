@@ -128,26 +128,25 @@ export default function DashboardPage() {
       {/* SECTION 1: Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="font-headline font-bold text-2xl md:text-3xl text-white tracking-tight flex items-center gap-2">
-            Pulse · {user?.full_name?.split(' ')[0] || 'Merchant'} <span className="text-amber-400">⚡</span>
+          <h1 className="font-bold text-xl text-white">
+            Good day, {user?.full_name?.split(' ')[0] || 'there'} 👋
           </h1>
-          <p className="text-xs md:text-sm text-slate-400 mt-1 font-body">
-            {user?.business_name || 'Your Store'} · Real-time Dhaka core & courier telemetry
+          <p className="text-sm text-slate-500 mt-0.5">
+            {user?.business_name || 'Your Store'} · Here's what's happening today.
           </p>
         </div>
 
-        {/* Controls */}
         <div className="flex items-center gap-2.5">
           <Link
             href="/accounts"
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/[0.04] border border-white/10 hover:border-white/20 text-xs font-label font-medium text-slate-200 backdrop-blur-md transition-all"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white/[0.04] border border-white/[0.08] hover:border-white/[0.14] text-sm font-medium text-slate-300 transition-all"
           >
             <FileDown className="w-3.5 h-3.5 text-slate-400" />
-            <span>Export CSV</span>
+            <span>Export</span>
           </Link>
           <Link
             href="/orders/new"
-            className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 text-white text-xs font-semibold rounded-xl shadow-lg shadow-violet-600/30 active:scale-[0.98] transition-all"
+            className="flex items-center gap-1.5 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold rounded-lg shadow-sm shadow-violet-600/25 active:scale-[0.97] transition-all"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>New Order</span>
@@ -155,106 +154,91 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* SECTION 2: 4 Glass KPI Cards */}
+      {/* SECTION 2: KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* KPI 1: Today's Revenue */}
-        <div className="group relative overflow-hidden glass-card p-5 hover:-translate-y-0.5 hover:border-violet-500/40 transition-all duration-200">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-violet-500 shadow-[0_0_12px_rgba(139,92,246,0.6)]" />
-          <div className="absolute -top-12 -right-12 w-28 h-28 bg-violet-600/10 rounded-full blur-xl group-hover:bg-violet-600/20 transition-all pointer-events-none" />
+        {/* Today's Revenue */}
+        <div className="glass-card p-5 hover:-translate-y-0.5 transition-all duration-200">
           <div className="flex items-start justify-between">
-            <span className="text-xs font-label uppercase tracking-widest text-slate-400 font-semibold">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
               Today&apos;s Revenue
-            </span>
-            <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[11px] font-label font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+            </p>
+            <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/12 text-emerald-400 border border-emerald-500/25">
               <TrendingUp className="w-3 h-3" /> +18%
             </span>
           </div>
           <div className="mt-3">
-            <div className="text-2xl sm:text-3xl font-headline font-bold text-white tracking-tight tabular-nums">
+            <div className="text-2xl font-bold text-white tabular-nums">
               {statsLoading ? '—' : formatBDT(metrics?.today_sales || 0)}
             </div>
-            <p className="mt-2 text-[11px] font-body text-slate-400 flex items-center gap-1.5 truncate">
-              <span className="text-slate-300">{metrics?.today_orders_count || 0} orders</span>
-              <span className="text-slate-600">·</span>
-              <span className="text-pink-400 font-medium">Auto-synced</span>
+            <p className="mt-1.5 text-xs text-slate-500">
+              {metrics?.today_orders_count || 0} orders today
             </p>
           </div>
         </div>
 
-        {/* KPI 2: Today's Orders */}
-        <div className="group relative overflow-hidden glass-card p-5 hover:-translate-y-0.5 hover:border-pink-500/40 transition-all duration-200">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-pink-500 shadow-[0_0_12px_rgba(236,72,153,0.6)]" />
-          <div className="absolute -top-12 -right-12 w-28 h-28 bg-pink-600/10 rounded-full blur-xl group-hover:bg-pink-600/20 transition-all pointer-events-none" />
+        {/* Today's Orders */}
+        <div className="glass-card p-5 hover:-translate-y-0.5 transition-all duration-200">
           <div className="flex items-start justify-between">
-            <span className="text-xs font-label uppercase tracking-widest text-slate-400 font-semibold">
-              Orders Volume
-            </span>
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-label font-medium bg-pink-500/15 text-pink-300 border border-pink-500/30">
-              {metrics?.today_orders_count || 0} Total
-            </span>
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+              Orders
+            </p>
           </div>
           <div className="mt-3">
-            <div className="text-2xl sm:text-3xl font-headline font-bold text-white tracking-tight tabular-nums">
+            <div className="text-2xl font-bold text-white tabular-nums">
               {statsLoading ? '—' : metrics?.today_orders_count || 0}
             </div>
-            <p className="mt-2 text-[11px] font-body text-slate-400 truncate">
-              <span className="text-emerald-400 font-medium">{metrics?.today_delivered_count || 0} delivered</span>
+            <p className="mt-1.5 text-xs text-slate-500">
+              <span className="text-emerald-400">{metrics?.today_delivered_count || 0} delivered</span>
               <span className="text-slate-600"> · </span>
               <span className="text-amber-400">{metrics?.pending_orders_count || 0} pending</span>
             </p>
           </div>
         </div>
 
-        {/* KPI 3: Gross / Net Profit */}
-        <div className="group relative overflow-hidden glass-card p-5 hover:-translate-y-0.5 hover:border-emerald-500/40 transition-all duration-200">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.6)]" />
-          <div className="absolute -top-12 -right-12 w-28 h-28 bg-emerald-600/10 rounded-full blur-xl group-hover:bg-emerald-600/20 transition-all pointer-events-none" />
+        {/* Gross Profit */}
+        <div className="glass-card p-5 hover:-translate-y-0.5 transition-all duration-200">
           <div className="flex items-start justify-between">
-            <span className="text-xs font-label uppercase tracking-widest text-slate-400 font-semibold">
-              Gross Profit (30D)
-            </span>
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+              Gross Profit (30d)
+            </p>
             {pnl && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-label font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-                {pnl.gross_margin_percent?.toFixed(1)}% margin
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/12 text-emerald-400 border border-emerald-500/25">
+                {pnl.gross_margin_percent?.toFixed(1)}%
               </span>
             )}
           </div>
           <div className="mt-3">
-            <div className="text-2xl sm:text-3xl font-headline font-bold text-white tracking-tight tabular-nums">
+            <div className="text-2xl font-bold text-white tabular-nums">
               {isOwner ? (pnl ? formatBDT(pnl.gross_profit) : '—') : 'N/A'}
             </div>
-            <p className="mt-2 text-[11px] font-body text-slate-400 truncate">
-              {pnl ? `Net Profit: ${formatBDT(pnl.net_profit)}` : 'Deterministic accounting'}
+            <p className="mt-1.5 text-xs text-slate-500">
+              {pnl ? `Net: ${formatBDT(pnl.net_profit)}` : 'Finance access required'}
             </p>
           </div>
         </div>
 
-        {/* KPI 4: Low Stock Alert */}
-        <div className="group relative overflow-hidden glass-card p-5 hover:-translate-y-0.5 hover:border-amber-500/40 transition-all duration-200">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.6)]" />
-          <div className="absolute -top-12 -right-12 w-28 h-28 bg-amber-600/10 rounded-full blur-xl group-hover:bg-amber-600/20 transition-all pointer-events-none" />
+        {/* Low Stock */}
+        <div className="glass-card p-5 hover:-translate-y-0.5 transition-all duration-200">
           <div className="flex items-start justify-between">
-            <span className="text-xs font-label uppercase tracking-widest text-slate-400 font-semibold">
-              Low Stock Alert
-            </span>
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+              Low Stock
+            </p>
             <span
-              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-label font-medium border ${
+              className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border ${
                 (metrics?.low_stock_count || 0) > 0
-                  ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
-                  : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                  ? 'bg-amber-500/12 text-amber-400 border-amber-500/25'
+                  : 'bg-emerald-500/12 text-emerald-400 border-emerald-500/25'
               }`}
             >
-              {(metrics?.low_stock_count || 0) > 0 ? 'Action Needed' : 'Healthy'}
+              {(metrics?.low_stock_count || 0) > 0 ? 'Needs attention' : 'All good'}
             </span>
           </div>
           <div className="mt-3">
-            <div className="text-2xl sm:text-3xl font-headline font-bold text-white tracking-tight tabular-nums">
-              {statsLoading ? '—' : `${metrics?.low_stock_count || 0} SKUs`}
+            <div className="text-2xl font-bold text-white tabular-nums">
+              {statsLoading ? '—' : metrics?.low_stock_count || 0}
             </div>
-            <p className="mt-2 text-[11px] font-body text-slate-400 truncate">
-              {(metrics?.low_stock_count || 0) > 0
-                ? 'SKUs ≤ 5 threshold in warehouse'
-                : 'Stock levels optimal across hubs'}
+            <p className="mt-1.5 text-xs text-slate-500">
+              {(metrics?.low_stock_count || 0) > 0 ? 'Products below threshold' : 'Stock levels are healthy'}
             </p>
           </div>
         </div>
@@ -262,15 +246,15 @@ export default function DashboardPage() {
 
       {/* SECTION 3: Chart + Recent Orders */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        {/* Revenue & Profit Visual Chart */}
+        {/* Revenue & Profit Chart */}
         <div className="lg:col-span-8 glass-card p-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/10">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/[0.08]">
             <div>
-              <h2 className="text-sm font-headline font-bold text-white tracking-tight">
-                Revenue & Profit Dynamics
+              <h2 className="text-sm font-semibold text-white">
+                Revenue & Profit
               </h2>
-              <p className="text-xs text-slate-400 mt-0.5 font-body">
-                30-day rolling performance curve across sales channels
+              <p className="text-xs text-slate-500 mt-0.5">
+                Sales performance over selected period
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -306,15 +290,15 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* SVG Chart Canvas */}
+          {/* Chart Canvas */}
           <div className="relative w-full h-64 pt-4">
             {chartLoading ? (
-              <div className="h-full flex items-center justify-center text-xs text-slate-500 font-mono">
-                Calculating revenue telemetry...
+              <div className="h-full flex items-center justify-center text-xs text-slate-600">
+                Loading...
               </div>
             ) : chartData.length === 0 ? (
-              <div className="h-full flex items-center justify-center text-xs text-slate-500 font-mono">
-                No transaction data in this timeframe
+              <div className="h-full flex items-center justify-center text-xs text-slate-600">
+                No data for this period
               </div>
             ) : (() => {
               const maxVal = Math.max(
@@ -438,42 +422,42 @@ export default function DashboardPage() {
               : '—';
 
             return (
-              <div className="mt-4 pt-4 border-t border-white/10 grid grid-cols-3 gap-4">
+              <div className="mt-4 pt-4 border-t border-white/[0.08] grid grid-cols-3 gap-4">
                 <div>
-                  <div className="text-[11px] font-label text-slate-400 uppercase tracking-wider">Avg Daily Sales</div>
-                  <div className="text-sm font-headline font-bold text-white mt-0.5 tabular-nums">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Avg Daily Sales</p>
+                  <p className="text-sm font-bold text-white mt-1 tabular-nums">
                     {chartLoading ? '—' : formatBDT(avgDailySales)}
-                  </div>
+                  </p>
                 </div>
                 <div>
-                  <div className="text-[11px] font-label text-slate-400 uppercase tracking-wider">Avg Daily Orders</div>
-                  <div className="text-sm font-headline font-bold text-emerald-400 mt-0.5 tabular-nums">
-                    {chartLoading ? '—' : `${avgDailyOrders} orders / day`}
-                  </div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Avg Daily Orders</p>
+                  <p className="text-sm font-bold text-emerald-400 mt-1 tabular-nums">
+                    {chartLoading ? '—' : `${avgDailyOrders}/day`}
+                  </p>
                 </div>
                 <div>
-                  <div className="text-[11px] font-label text-slate-400 uppercase tracking-wider">Peak Sales Day</div>
-                  <div className="text-sm font-headline font-bold text-violet-300 mt-0.5 tabular-nums">
-                    {peakPoint && peakPoint.revenue > 0 ? `${peakDateFormatted} (${formatBDT(peakPoint.revenue)})` : '—'}
-                  </div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Peak Day</p>
+                  <p className="text-sm font-bold text-violet-300 mt-1 tabular-nums">
+                    {peakPoint && peakPoint.revenue > 0 ? `${peakDateFormatted}` : '—'}
+                  </p>
                 </div>
               </div>
             );
           })()}
         </div>
 
-        {/* Recent Orders Glass Table */}
+        {/* Recent Orders */}
         <div className="lg:col-span-4 glass-card p-5 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+            <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
               <div className="flex items-center gap-2">
-                <h2 className="text-sm font-headline font-bold text-white">Live Dispatches</h2>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-violet-500/20 text-violet-300 border border-violet-500/30">
+                <h2 className="text-sm font-semibold text-white">Recent Orders</h2>
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-violet-500/15 text-violet-300 border border-violet-500/25">
                   {recentOrders.length}
                 </span>
               </div>
               <Link href="/orders" className="text-xs text-violet-400 hover:text-violet-300 font-medium transition-colors">
-                View all →
+                View all
               </Link>
             </div>
 
@@ -539,86 +523,82 @@ export default function DashboardPage() {
 
           <Link
             href="/orders"
-            className="mt-4 w-full py-2.5 rounded-xl bg-white/[0.04] border border-white/10 hover:border-violet-500/30 hover:bg-violet-500/10 text-slate-200 text-xs font-label font-medium transition-all flex items-center justify-center gap-1.5"
+            className="mt-4 w-full py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] hover:border-violet-500/30 hover:bg-violet-500/08 text-slate-300 text-xs font-medium transition-all flex items-center justify-center gap-1.5"
           >
-            <span>Manage Orders Feed</span>
-            <ExternalLink className="w-3 h-3 text-slate-400" />
+            <span>Manage All Orders</span>
+            <ExternalLink className="w-3 h-3 text-slate-500" />
           </Link>
         </div>
       </div>
 
-      {/* SECTION 4: Action Items */}
+      {/* SECTION 4: Quick Actions */}
       <div className="glass-card p-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-white/10">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-white/[0.08]">
           <div>
-            <h2 className="text-sm font-headline font-bold text-white">Operations Queue</h2>
-            <p className="text-xs text-slate-400 mt-0.5 font-body">Direct pipeline tasks requiring action</p>
+            <h2 className="text-sm font-semibold text-white">Quick Actions</h2>
+            <p className="text-xs text-slate-500 mt-0.5">Items that need your attention</p>
           </div>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-label font-medium">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            Courier Webhooks Active
-          </span>
         </div>
 
         <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Card 1: Low Stock */}
-          <div className="glass-card p-4 flex flex-col justify-between gap-3 border-l-2 border-l-amber-500">
+          {/* Low Stock */}
+          <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.05] p-4 flex flex-col justify-between gap-3">
             <div className="flex items-start gap-3">
-              <div className="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/25 flex items-center justify-center text-amber-400 shrink-0">
+              <div className="w-9 h-9 rounded-xl bg-amber-500/15 flex items-center justify-center text-amber-400 shrink-0">
                 <Boxes className="w-4 h-4" />
               </div>
               <div>
-                <div className="text-xs font-headline font-semibold text-slate-100">Low Stock SKUs</div>
-                <div className="text-xs text-slate-400 mt-0.5 font-body">
-                  <span className="font-bold text-amber-300">{metrics?.low_stock_count || 0} items</span> below safety threshold
-                </div>
+                <p className="text-sm font-semibold text-slate-100">Low Stock</p>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  <span className="text-amber-400 font-semibold">{metrics?.low_stock_count || 0} products</span> below minimum
+                </p>
               </div>
             </div>
             <Link
               href="/inventory"
-              className="mt-2 px-3 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 text-xs font-label font-medium text-center transition-all"
+              className="px-3 py-2 rounded-lg bg-amber-500/15 hover:bg-amber-500/22 border border-amber-500/25 text-amber-300 text-xs font-semibold text-center transition-all"
             >
-              Reorder SKUs
+              View Products
             </Link>
           </div>
 
-          {/* Card 2: Pending Dispatches */}
-          <div className="glass-card p-4 flex flex-col justify-between gap-3 border-l-2 border-l-violet-500">
+          {/* Pending Orders */}
+          <div className="rounded-xl border border-violet-500/20 bg-violet-500/[0.05] p-4 flex flex-col justify-between gap-3">
             <div className="flex items-start gap-3">
-              <div className="w-9 h-9 rounded-xl bg-violet-500/15 border border-violet-500/25 flex items-center justify-center text-violet-400 shrink-0">
+              <div className="w-9 h-9 rounded-xl bg-violet-500/15 flex items-center justify-center text-violet-400 shrink-0">
                 <Package className="w-4 h-4" />
               </div>
               <div>
-                <div className="text-xs font-headline font-semibold text-slate-100">Pending Courier Dispatches</div>
-                <div className="text-xs text-slate-400 mt-0.5 font-body">
-                  <span className="font-bold text-violet-300">{metrics?.pending_orders_count || 0} orders</span> awaiting consignment
-                </div>
+                <p className="text-sm font-semibold text-slate-100">Pending Orders</p>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  <span className="text-violet-300 font-semibold">{metrics?.pending_orders_count || 0} orders</span> to process
+                </p>
               </div>
             </div>
             <Link
               href="/orders"
-              className="mt-2 px-3 py-1.5 rounded-lg bg-violet-500/15 hover:bg-violet-500/25 border border-violet-500/30 text-violet-300 text-xs font-label font-medium text-center transition-all"
+              className="px-3 py-2 rounded-lg bg-violet-500/15 hover:bg-violet-500/22 border border-violet-500/25 text-violet-300 text-xs font-semibold text-center transition-all"
             >
-              Batch Dispatch
+              Manage Orders
             </Link>
           </div>
 
-          {/* Card 3: Customer Dues */}
-          <div className="glass-card p-4 flex flex-col justify-between gap-3 border-l-2 border-l-pink-500">
+          {/* Customer Dues */}
+          <div className="rounded-xl border border-pink-500/20 bg-pink-500/[0.05] p-4 flex flex-col justify-between gap-3">
             <div className="flex items-start gap-3">
-              <div className="w-9 h-9 rounded-xl bg-pink-500/15 border border-pink-500/25 flex items-center justify-center text-pink-400 shrink-0">
+              <div className="w-9 h-9 rounded-xl bg-pink-500/15 flex items-center justify-center text-pink-400 shrink-0">
                 <TrendingUp className="w-4 h-4" />
               </div>
               <div>
-                <div className="text-xs font-headline font-semibold text-slate-100">Customer Dues (বাকির খাতা)</div>
-                <div className="text-xs text-slate-400 mt-0.5 font-body">
-                  Outstanding: <span className="font-mono font-bold text-pink-300">{formatBDT(metrics?.total_pending_due || 0)}</span>
-                </div>
+                <p className="text-sm font-semibold text-slate-100">Customer Dues</p>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Outstanding: <span className="text-pink-300 font-semibold font-mono">{formatBDT(metrics?.total_pending_due || 0)}</span>
+                </p>
               </div>
             </div>
             <Link
               href="/due-loan"
-              className="mt-2 px-3 py-1.5 rounded-lg bg-pink-500/15 hover:bg-pink-500/25 border border-pink-500/30 text-pink-300 text-xs font-label font-medium text-center transition-all"
+              className="px-3 py-2 rounded-lg bg-pink-500/15 hover:bg-pink-500/22 border border-pink-500/25 text-pink-300 text-xs font-semibold text-center transition-all"
             >
               Collect Payments
             </Link>

@@ -70,13 +70,15 @@ const config: Config = {
         "sidebar-hover": "rgba(255,255,255,0.05)",
       },
       fontFamily: {
-        inter: ["var(--font-inter)", "Inter", "sans-serif"],
-        sora: ["var(--font-sora)", "Sora", "sans-serif"],
-        geist: ["var(--font-geist)", "Geist", "sans-serif"],
-        mono: ["var(--font-mono)", "JetBrains Mono", "monospace"],
-        headline: ["var(--font-sora)", "Sora", "sans-serif"],
-        body: ["var(--font-inter)", "Inter", "sans-serif"],
-        label: ["var(--font-geist)", "Geist", "sans-serif"],
+        sans: ["'Plus Jakarta Sans'", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],
+        mono: ["'JetBrains Mono'", "ui-monospace", "monospace"],
+        // Aliases — all resolve to Plus Jakarta Sans for consistency
+        headline: ["'Plus Jakarta Sans'", "sans-serif"],
+        body: ["'Plus Jakarta Sans'", "sans-serif"],
+        label: ["'Plus Jakarta Sans'", "sans-serif"],
+        inter: ["'Plus Jakarta Sans'", "sans-serif"],
+        sora: ["'Plus Jakarta Sans'", "sans-serif"],
+        geist: ["'Plus Jakarta Sans'", "sans-serif"],
       },
       fontSize: {
         "headline-xl": ["30px", { lineHeight: "38px", fontWeight: "700" }],
