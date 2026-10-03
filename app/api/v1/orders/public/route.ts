@@ -72,32 +72,36 @@ export async function GET(req: NextRequest) {
 // POST: Public Checkout Ingestion for external websites and landing pages
 export async function POST(req: NextRequest) {
   try {
-    const ip = getClientIp(req);
-    const limitCheck = await publicOrderLimiter.limit(`public_order_${ip}`);
-    if (!limitCheck.success) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: 'RATE_LIMIT_EXCEEDED',
-            message: 'Too many requests. Please wait a moment before trying again.',
+    try {
+      const ip = getClientIp(req);
+      const limitCheck = await publicOrderLimiter.limit(`public_order_${ip}`);
+      if (!limitCheck.success) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: {
+              code: 'RATE_LIMIT_EXCEEDED',
+              message: 'Too many requests. Please wait a moment before trying again.',
+            },
           },
-        },
-        { status: 429, headers: CORS_HEADERS }
-      );
+          { status: 429, headers: CORS_HEADERS }
+        );
+      }
+    } catch (limErr) {
+      console.warn('Public order limiter skipped due to error:', limErr);
     }
 
     const body = await req.json();
     const validated = publicOrderSchema.parse(body);
 
     // Verify tenant exists and is active
-    const { data: tenant } = await supabaseAdmin
+    const { data: tenant, error: tenantErr } = await supabaseAdmin
       .from('tenants')
       .select('id, subscription_status, business_name')
       .eq('id', validated.tenant_id)
-      .single();
+      .maybeSingle();
 
-    if (!tenant || tenant.subscription_status === 'cancelled') {
+    if (tenantErr || !tenant || tenant.subscription_status === 'cancelled') {
       return NextResponse.json(
         {
           success: false,
@@ -169,19 +173,19 @@ export async function POST(req: NextRequest) {
             is_active: true,
           })
           .select('id, buy_price, sell_price')
-          .single();
+          .maybeSingle();
 
         if (prodErr || !newProd) {
-          // If insert fails (e.g. schema constraint), use first existing product if available
           if (productList.length > 0) {
             matchedProduct = productList[0];
           } else {
+            console.error('Failed to create fallback product:', prodErr);
             return NextResponse.json(
               {
                 success: false,
                 error: {
                   code: 'INTERNAL_ERROR',
-                  message: 'Failed to record product for order',
+                  message: prodErr?.message || 'Failed to record product for order',
                 },
               },
               { status: 500, headers: CORS_HEADERS }
@@ -222,22 +226,25 @@ export async function POST(req: NextRequest) {
         notes: validated.notes || 'Website Checkout',
       })
       .select('id, total_amount, status, created_at')
-      .single();
+      .maybeSingle();
 
     if (orderErr || !order) {
+      console.error('Order creation error:', orderErr);
       return NextResponse.json(
         {
           success: false,
-          error: { code: 'INTERNAL_ERROR', message: 'Failed to place order in CRM' },
+          error: { code: 'INTERNAL_ERROR', message: orderErr?.message || 'Failed to place order in CRM' },
         },
         { status: 500, headers: CORS_HEADERS }
       );
     }
 
     // Insert order items
-    await supabaseAdmin.from('order_items').insert(
-      orderItemsToInsert.map((i) => ({ ...i, order_id: order.id }))
-    );
+    if (orderItemsToInsert.length > 0) {
+      await supabaseAdmin.from('order_items').insert(
+        orderItemsToInsert.map((i) => ({ ...i, order_id: order.id }))
+      );
+    }
 
     return NextResponse.json(
       {
@@ -253,6 +260,7 @@ export async function POST(req: NextRequest) {
       { status: 201, headers: CORS_HEADERS }
     );
   } catch (err) {
+    console.error('Unhandled public order error:', err);
     return handleApiError(err);
   }
 }
