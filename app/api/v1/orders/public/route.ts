@@ -260,7 +260,11 @@ export async function POST(req: NextRequest) {
       { status: 201, headers: CORS_HEADERS }
     );
   } catch (err) {
-    console.error('Unhandled public order error:', err);
-    return handleApiError(err);
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error('Unhandled public order error:', errMsg);
+    return NextResponse.json(
+      { success: false, error: { code: 'INTERNAL_ERROR', message: errMsg } },
+      { status: 500, headers: CORS_HEADERS }
+    );
   }
 }
