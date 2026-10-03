@@ -8,16 +8,12 @@ import {
   ShoppingCart,
   Boxes,
   AlertTriangle,
-  ArrowUpRight,
   Package,
   Plus,
   FileDown,
   CheckCircle2,
-  Clock,
   RotateCcw,
   ExternalLink,
-  Truck,
-  Zap,
 } from 'lucide-react';
 import { fetchApi, formatBDT } from '@/lib/apiClient';
 import { useAuth } from '@/app/providers';
@@ -132,7 +128,7 @@ export default function DashboardPage() {
             Good day, {user?.full_name?.split(' ')[0] || 'there'} 👋
           </h1>
           <p className="text-sm text-slate-500 mt-0.5">
-            {user?.business_name || 'Your Store'} · Here's what's happening today.
+            {user?.business_name || 'Your Store'} · Here&apos;s what&apos;s happening today.
           </p>
         </div>
 
