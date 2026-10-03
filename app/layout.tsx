@@ -1,25 +1,25 @@
 import type { Metadata } from 'next';
-import { Inter, Sora } from 'next/font/google';
+import { Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import Providers from './providers';
 
-const inter = Inter({
+const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
-  variable: '--font-inter',
+  variable: '--font-sans',
   display: 'swap',
-  weight: ['300', '400', '500', '600', '700'],
+  weight: ['300', '400', '500', '600', '700', '800'],
 });
 
-const sora = Sora({
+const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
-  variable: '--font-sora',
+  variable: '--font-mono',
   display: 'swap',
-  weight: ['400', '500', '600', '700', '800'],
+  weight: ['400', '500'],
 });
 
 export const metadata: Metadata = {
-  title: 'NexusFlow CRM — Bangladesh E-Commerce Operating System',
-  description: 'Deterministic Multi-tenant Inventory, Multi-Courier & Accounts OS for Bangladeshi E-Commerce Brands',
+  title: 'NexusFlow CRM',
+  description: 'Smart CRM & Inventory Management for E-Commerce Brands',
 };
 
 export default function RootLayout({
@@ -28,14 +28,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`dark ${inter.variable} ${sora.variable}`}>
-      <head>
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
-        />
-      </head>
-      <body className="antialiased min-h-screen bg-[#070709] text-slate-100 font-inter selection:bg-brand-violet/30 selection:text-white">
+    <html lang="en" className={`dark ${plusJakartaSans.variable} ${jetbrainsMono.variable}`}>
+      <body className={`antialiased min-h-screen bg-[#0c0e14] text-slate-100 selection:bg-violet-500/30 selection:text-white ${plusJakartaSans.className}`}>
         <Providers>{children}</Providers>
       </body>
     </html>

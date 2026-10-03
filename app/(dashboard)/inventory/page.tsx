@@ -242,16 +242,11 @@ export default function InventoryPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-300 text-[10px] font-mono font-medium border border-violet-500/25">
-              Stock Ledger
-            </span>
-          </div>
-          <h1 className="font-headline font-bold text-2xl md:text-3xl text-white tracking-tight mt-1.5">
-            Products &amp; Inventory
+          <h1 className="font-bold text-xl text-white">
+            Products
           </h1>
-          <p className="text-xs text-slate-400 mt-0.5 font-body">
-            Real-time stock valuation, wholesale margins &amp; warehouse allocations
+          <p className="text-sm text-slate-500 mt-0.5">
+            Track your products, stock, and pricing.
           </p>
         </div>
 
@@ -267,50 +262,50 @@ export default function InventoryPage() {
         )}
       </div>
 
-      {/* 4 Metric Cards */}
+      {/* Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-        <div className="glass-card p-4 relative overflow-hidden">
+        <div className="glass-card p-4">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-label uppercase tracking-wider text-slate-400 font-semibold">Total SKUs</span>
+            <span className="text-xs font-medium text-slate-400">Total Products</span>
             <Boxes className="w-4 h-4 text-violet-400" />
           </div>
-          <div className="text-2xl font-headline font-bold text-white mt-2 tabular-nums">
+          <div className="text-2xl font-bold text-white mt-2 tabular-nums">
             {pagination.total}
           </div>
-          <p className="text-[11px] text-slate-500 mt-1 font-body">Active items in catalog</p>
+          <p className="text-[11px] text-slate-500 mt-1">Total products</p>
         </div>
 
-        <div className="glass-card p-4 relative overflow-hidden">
+        <div className="glass-card p-4">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-label uppercase tracking-wider text-slate-400 font-semibold">Inventory Value</span>
+            <span className="text-xs font-medium text-slate-400">Stock Value</span>
             <TrendingUp className="w-4 h-4 text-emerald-400" />
           </div>
-          <div className="text-2xl font-headline font-bold text-emerald-400 mt-2 tabular-nums font-mono">
+          <div className="text-2xl font-bold text-emerald-400 mt-2 tabular-nums font-mono">
             {formatBDT(products.reduce((acc, p) => acc + (p.buy_price * p.stock_quantity), 0))}
           </div>
-          <p className="text-[11px] text-emerald-400/80 mt-1 font-body">Wholesale buy valuation</p>
+          <p className="text-[11px] text-emerald-400/80 mt-1">Total stock value</p>
         </div>
 
-        <div className="glass-card p-4 relative overflow-hidden">
+        <div className="glass-card p-4">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-label uppercase tracking-wider text-slate-400 font-semibold">Low Stock</span>
+            <span className="text-xs font-medium text-slate-400">Low Stock</span>
             <AlertTriangle className="w-4 h-4 text-amber-400" />
           </div>
-          <div className="text-2xl font-headline font-bold text-amber-400 mt-2 tabular-nums">
+          <div className="text-2xl font-bold text-amber-400 mt-2 tabular-nums">
             {products.filter((p) => p.stock_quantity <= p.low_stock_threshold && p.stock_quantity > 0).length}
           </div>
-          <p className="text-[11px] text-amber-400/80 mt-1 font-body">Below safety threshold</p>
+          <p className="text-[11px] text-amber-400/80 mt-1">Need restocking</p>
         </div>
 
-        <div className="glass-card p-4 relative overflow-hidden">
+        <div className="glass-card p-4">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-label uppercase tracking-wider text-slate-400 font-semibold">Out of Stock</span>
+            <span className="text-xs font-medium text-slate-400">Out of Stock</span>
             <AlertTriangle className="w-4 h-4 text-rose-400" />
           </div>
-          <div className="text-2xl font-headline font-bold text-rose-400 mt-2 tabular-nums">
+          <div className="text-2xl font-bold text-rose-400 mt-2 tabular-nums">
             {products.filter((p) => p.stock_quantity <= 0).length}
           </div>
-          <p className="text-[11px] text-rose-400/80 mt-1 font-body">Requires immediate purchase</p>
+          <p className="text-[11px] text-rose-400/80 mt-1">Out of stock</p>
         </div>
       </div>
 

@@ -154,14 +154,14 @@ export default function CourierPage() {
       id: 'steadfast' as const,
       code: 'SF',
       name: 'Steadfast Courier',
-      sub: 'Nationwide API v2.4',
+      sub: '',
       accentColor: 'from-violet-500 to-indigo-500',
       logoBg: 'bg-violet-600/15 border-violet-500/30 text-violet-300',
       dispatched: `${stats?.providers?.steadfast?.dispatched ?? 0} parcels`,
       latency: '24-48h avg',
       cod: formatBDT(stats?.providers?.steadfast?.cod ?? 0),
       keyLabel: 'API Key',
-      keySub: 'Live Token',
+      keySub: '',
       dummyKey: connectedMap.get('steadfast') ? '••••••••••••••••••••••••••••' : 'Not configured',
       webhookUrl: `${appOrigin}/api/v1/courier/webhook/steadfast`,
     },
@@ -169,14 +169,14 @@ export default function CourierPage() {
       id: 'pathao' as const,
       code: 'PT',
       name: 'Pathao Courier',
-      sub: 'Express Dhaka Logistics v3',
+      sub: '',
       accentColor: 'from-pink-500 to-rose-500',
       logoBg: 'bg-pink-600/15 border-pink-500/30 text-pink-300',
       dispatched: `${stats?.providers?.pathao?.dispatched ?? 0} parcels`,
       latency: 'Same / Next Day',
       cod: formatBDT(stats?.providers?.pathao?.cod ?? 0),
       keyLabel: 'Merchant Secret',
-      keySub: 'OAuth 2.0',
+      keySub: '',
       dummyKey: connectedMap.get('pathao') ? '••••••••••••••••••••••••••••' : 'Not configured',
       webhookUrl: `${appOrigin}/api/v1/courier/webhook/pathao`,
     },
@@ -184,14 +184,14 @@ export default function CourierPage() {
       id: 'redx' as const,
       code: 'RX',
       name: 'RedX Logistics',
-      sub: 'Parcel Open API Direct',
+      sub: '',
       accentColor: 'from-cyan-500 to-teal-500',
       logoBg: 'bg-cyan-600/15 border-cyan-500/30 text-cyan-300',
       dispatched: `${stats?.providers?.redx?.dispatched ?? 0} parcels`,
       latency: '24-72h avg',
       cod: formatBDT(stats?.providers?.redx?.cod ?? 0),
       keyLabel: 'Bearer Token',
-      keySub: 'Auto-Renewing',
+      keySub: '',
       dummyKey: connectedMap.get('redx') ? '••••••••••••••••••••••••••••' : 'Not configured',
       webhookUrl: `${appOrigin}/api/v1/courier/webhook/redx`,
     },
@@ -202,19 +202,11 @@ export default function CourierPage() {
       {/* 1. Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 text-[10px] font-mono font-medium border border-cyan-500/25">
-              Live Courier Telemetry
-            </span>
-            <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-label font-medium border border-emerald-500/20">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Webhooks Active
-            </span>
-          </div>
-          <h1 className="font-headline font-bold text-2xl md:text-3xl text-white tracking-tight mt-1.5">
-            Courier Logistics Tracker
+          <h1 className="font-bold text-xl text-white">
+            Courier Tracker
           </h1>
-          <p className="text-xs text-slate-400 mt-0.5 font-body">
-            Multi-carrier dispatch routing, live consignment tracking & COD reconciliation
+          <p className="text-sm text-slate-500 mt-0.5">
+            Track shipments across all your courier partners.
           </p>
         </div>
 
@@ -224,72 +216,72 @@ export default function CourierPage() {
           className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-600 to-teal-500 hover:from-cyan-500 hover:to-teal-400 text-white text-xs font-semibold rounded-xl shadow-lg shadow-cyan-600/30 active:scale-[0.98] transition-all w-fit disabled:opacity-50"
         >
           <RotateCw className={`w-3.5 h-3.5 ${syncAllMutation.isPending ? 'animate-spin' : ''}`} />
-          <span>{syncAllMutation.isPending ? 'Reconciling...' : 'Sync All Couriers'}</span>
+          <span>{syncAllMutation.isPending ? 'Syncing...' : 'Sync All Couriers'}</span>
         </button>
       </div>
 
-      {/* 2. 4 Summary Metric Cards */}
+      {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-        <div className="glass-card p-4 relative overflow-hidden">
+        <div className="glass-card p-4">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-label uppercase tracking-wider text-slate-400 font-semibold">Total Dispatched</span>
+            <span className="text-xs font-medium text-slate-400">Total Dispatched</span>
             <Package className="w-4 h-4 text-cyan-400" />
           </div>
-          <div className="text-2xl font-headline font-bold text-white mt-2 tabular-nums">
+          <div className="text-2xl font-bold text-white mt-2 tabular-nums">
             {stats?.total_dispatched ?? 0}
           </div>
-          <p className="text-[11px] text-slate-500 mt-1 font-body">
-            {stats?.delivered_count ?? 0} successfully delivered
+          <p className="text-[11px] text-slate-500 mt-1">
+            {stats?.delivered_count ?? 0} delivered
           </p>
         </div>
 
-        <div className="glass-card p-4 relative overflow-hidden">
+        <div className="glass-card p-4">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-label uppercase tracking-wider text-slate-400 font-semibold">In-Transit COD</span>
+            <span className="text-xs font-medium text-slate-400">COD In Transit</span>
             <DollarSign className="w-4 h-4 text-amber-400" />
           </div>
-          <div className="text-2xl font-headline font-bold text-amber-400 mt-2 tabular-nums font-mono">
+          <div className="text-2xl font-bold text-amber-400 mt-2 tabular-nums font-mono">
             {formatBDT(stats?.cod_in_transit ?? 0)}
           </div>
-          <p className="text-[11px] text-amber-400/80 mt-1 font-body">
+          <p className="text-[11px] text-amber-400/80 mt-1">
             {stats?.in_transit_count ?? 0} parcels in transit
           </p>
         </div>
 
-        <div className="glass-card p-4 relative overflow-hidden">
+        <div className="glass-card p-4">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-label uppercase tracking-wider text-slate-400 font-semibold">Delivery Rate</span>
+            <span className="text-xs font-medium text-slate-400">Delivery Rate</span>
             <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           </div>
-          <div className="text-2xl font-headline font-bold text-emerald-400 mt-2 tabular-nums font-mono">
+          <div className="text-2xl font-bold text-emerald-400 mt-2 tabular-nums font-mono">
             {stats?.delivery_rate ?? 0}%
           </div>
-          <p className="text-[11px] text-emerald-400/80 mt-1 font-body">Courier fulfillment ratio</p>
+          <p className="text-[11px] text-emerald-400/80 mt-1">Of all dispatched orders</p>
         </div>
 
-        <div className="glass-card p-4 relative overflow-hidden">
+        <div className="glass-card p-4">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-label uppercase tracking-wider text-slate-400 font-semibold">RTO Return Loss</span>
+            <span className="text-xs font-medium text-slate-400">Return Loss</span>
             <TrendingDown className="w-4 h-4 text-rose-400" />
           </div>
-          <div className="text-2xl font-headline font-bold text-rose-400 mt-2 tabular-nums font-mono">
+          <div className="text-2xl font-bold text-rose-400 mt-2 tabular-nums font-mono">
             {formatBDT(stats?.rto_loss ?? 0)}
           </div>
-          <p className="text-[11px] text-rose-400/80 mt-1 font-body">
-            {stats?.returned_count ?? 0} parcels returned to origin
+          <p className="text-[11px] text-rose-400/80 mt-1">
+            {stats?.returned_count ?? 0} returned
           </p>
         </div>
       </div>
 
-      {/* 3. Three Courier Gateway Cards */}
+      {/* Connected Couriers */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-headline font-bold text-white tracking-tight uppercase">
-            Active Logistics Integrations
+          <h2 className="text-sm font-semibold text-white">
+            Connected Couriers
           </h2>
-          <span className="text-xs text-slate-400 font-label flex items-center gap-1.5">
+          <span className="text-xs text-slate-400 flex items-center gap-1.5">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Encrypted with AES-256-GCM</span>
+            <span>Encrypted</span>
           </span>
         </div>
 
@@ -344,8 +336,7 @@ export default function CourierPage() {
                   {/* Masked API Key */}
                   <div className="space-y-1 mb-3">
                     <div className="flex items-center justify-between text-[11px]">
-                      <span className="text-slate-300 font-label">{c.keyLabel}</span>
-                      <span className="text-[10px] font-mono text-slate-500">{c.keySub}</span>
+                      <span className="text-slate-300">{c.keyLabel}</span>
                     </div>
                     <div className="relative">
                       <input
@@ -367,8 +358,7 @@ export default function CourierPage() {
                   {/* Webhook Endpoint */}
                   <div className="space-y-1 mb-4">
                     <div className="flex items-center justify-between text-[11px]">
-                      <span className="text-slate-300 font-label">Webhook URL</span>
-                      <span className="text-[10px] font-mono text-emerald-400">Auto-Reconcile</span>
+                      <span className="text-slate-300">Webhook URL</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <div className="glass-input flex-1 px-2.5 py-1.5 text-[11px] font-mono text-slate-400 truncate">
@@ -413,11 +403,11 @@ export default function CourierPage() {
       <div className="glass-card p-5 space-y-5">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-white/10">
           <div>
-            <h2 className="text-sm font-headline font-bold text-white tracking-tight">
-              Delivery Success Matrix
+            <h2 className="text-sm font-semibold text-white">
+              Delivery Performance
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5 font-body">
-              30-day comparative fulfillment rate vs return penalty
+            <p className="text-xs text-slate-500 mt-0.5">
+              Last 30 days
             </p>
           </div>
 

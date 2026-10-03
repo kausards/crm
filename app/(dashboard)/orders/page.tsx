@@ -55,7 +55,7 @@ interface OrderRecord {
 const STATUS_TABS = [
   { label: 'All Orders', value: '' },
   { label: 'Pending', value: 'pending' },
-  { label: 'Risk Flagged', value: 'flagged' },
+  { label: 'At Risk', value: 'flagged' },
   { label: 'Confirmed', value: 'confirmed' },
   { label: 'In Transit', value: 'shipped' },
   { label: 'Delivered', value: 'delivered' },
@@ -199,21 +199,14 @@ export default function OrdersPage() {
       {/* Header & Controls */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-300 text-[10px] font-mono font-medium border border-violet-500/25">
-              Fulfillment Engine
-            </span>
-            <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-label font-medium border border-emerald-500/20">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Auto-Sync Active
-            </span>
-          </div>
-          <h1 className="font-headline font-bold text-2xl md:text-3xl text-white tracking-tight mt-1.5">
-            Orders Pipeline
+          <h1 className="font-bold text-xl text-white">
+            Orders
           </h1>
-          <p className="text-xs text-slate-400 mt-0.5 font-body">
-            Direct consignment dispatch, risk analysis & lifecycle tracking
+          <p className="text-sm text-slate-500 mt-0.5">
+            Manage and track all your orders.
           </p>
         </div>
+
 
         <div className="flex items-center gap-2.5">
           <button
@@ -233,50 +226,50 @@ export default function OrdersPage() {
         </div>
       </div>
 
-      {/* 4 Pipeline Stat Strip */}
+      {/* Stat Strip */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
-        <div className="glass-card p-4 relative overflow-hidden">
+        <div className="glass-card p-4">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-label uppercase tracking-wider text-slate-400 font-semibold">Total Orders</span>
+            <span className="text-xs font-medium text-slate-400">Total Orders</span>
             <Truck className="w-4 h-4 text-violet-400" />
           </div>
-          <div className="text-2xl font-headline font-bold text-white mt-2 tabular-nums">
+          <div className="text-2xl font-bold text-white mt-2 tabular-nums">
             {pagination.total || orders.length}
           </div>
-          <p className="text-[11px] text-slate-500 mt-1 font-body">In current batch</p>
+          <p className="text-[11px] text-slate-500 mt-1">This month</p>
         </div>
 
-        <div className="glass-card p-4 relative overflow-hidden">
+        <div className="glass-card p-4">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-label uppercase tracking-wider text-slate-400 font-semibold">Flagged Risks</span>
+            <span className="text-xs font-medium text-slate-400">At Risk</span>
             <AlertTriangle className="w-4 h-4 text-rose-400" />
           </div>
-          <div className="text-2xl font-headline font-bold text-rose-400 mt-2 tabular-nums">
+          <div className="text-2xl font-bold text-rose-400 mt-2 tabular-nums">
             {orders.filter((o) => o.is_flagged || o.status === 'flagged').length}
           </div>
-          <p className="text-[11px] text-rose-400/80 mt-1 font-body">High RTO likelihood</p>
+          <p className="text-[11px] text-rose-400/80 mt-1">Possible returns</p>
         </div>
 
-        <div className="glass-card p-4 relative overflow-hidden">
+        <div className="glass-card p-4">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-label uppercase tracking-wider text-slate-400 font-semibold">In Transit</span>
+            <span className="text-xs font-medium text-slate-400">In Transit</span>
             <Truck className="w-4 h-4 text-cyan-400" />
           </div>
-          <div className="text-2xl font-headline font-bold text-cyan-400 mt-2 tabular-nums">
+          <div className="text-2xl font-bold text-cyan-400 mt-2 tabular-nums">
             {orders.filter((o) => o.status === 'shipped').length}
           </div>
-          <p className="text-[11px] text-slate-500 mt-1 font-body">With Steadfast & Pathao</p>
+          <p className="text-[11px] text-slate-500 mt-1">In transit</p>
         </div>
 
         <div className="glass-card p-4 relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-label uppercase tracking-wider text-slate-400 font-semibold">Delivered Success</span>
+            <span className="text-xs font-medium text-slate-400">Delivered</span>
             <CheckCircle className="w-4 h-4 text-emerald-400" />
           </div>
-          <div className="text-2xl font-headline font-bold text-emerald-400 mt-2 tabular-nums">
+          <div className="text-2xl font-bold text-emerald-400 mt-2 tabular-nums">
             {orders.filter((o) => o.status === 'delivered').length}
           </div>
-          <p className="text-[11px] text-emerald-400/80 mt-1 font-body">COD collected</p>
+          <p className="text-[11px] text-emerald-400/80 mt-1">Successfully delivered</p>
         </div>
       </div>
 
