@@ -31,7 +31,6 @@ import { Badge } from '@/components/ui/Badge';
 import { Select } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { TableSkeleton } from '@/components/ui/TableSkeleton';
-import { OrderInspectorModal } from '@/components/orders/OrderInspectorModal';
 import { HoldOrderModal } from '@/components/orders/HoldOrderModal';
 import { CancelOrderModal } from '@/components/orders/CancelOrderModal';
 
@@ -86,7 +85,6 @@ export default function OrderDetailPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const [inspectorModalOpen, setInspectorModalOpen] = useState(false);
   const [holdModalOpen, setHoldModalOpen] = useState(false);
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
@@ -236,11 +234,13 @@ export default function OrderDetailPage() {
             <span>Print Invoice</span>
           </button>
 
-          {/* Full Inspector & Product Add/Delete Modal Trigger */}
-          <Button variant="outline" size="sm" onClick={() => setInspectorModalOpen(true)}>
-            <Edit className="w-3.5 h-3.5 mr-1 text-violet-400" />
-            <span>Edit Details & Products</span>
-          </Button>
+          {/* Full Edit Page Trigger */}
+          <Link href={`/orders/${id}/edit`}>
+            <Button variant="outline" size="sm">
+              <Edit className="w-3.5 h-3.5 mr-1 text-violet-400" />
+              <span>Edit Details & Products</span>
+            </Button>
+          </Link>
 
           {/* Set Back to Pending if on hold or cancelled */}
           {(order.status === 'on_hold' || order.status === 'cancelled') && (
@@ -335,9 +335,8 @@ export default function OrderDetailPage() {
       </div>
 
       {/* Content Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {/* Left Column (Customer & Logistics) */}
-        <div className="space-y-5 md:col-span-1">
+      <div className="space-y-5">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           {/* Customer Card */}
           <div className="glass-card p-5 space-y-4">
             <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
@@ -347,91 +346,93 @@ export default function OrderDetailPage() {
                   Customer Profile
                 </h3>
               </div>
-              <button
-                type="button"
-                onClick={() => setInspectorModalOpen(true)}
+              <Link
+                href={`/orders/${id}/edit`}
                 className="text-[11px] text-violet-400 hover:text-violet-300 transition-colors"
               >
                 Edit
-              </button>
+              </Link>
             </div>
 
-            <div className="space-y-3 text-xs">
-              <div>
-                <span className="text-slate-500 text-[11px] block">Full Name</span>
-                <span className="font-semibold text-white text-sm">{order.customer_name}</span>
-              </div>
-
-              <div>
-                <span className="text-slate-500 text-[11px] block">Phone Number</span>
-                <a
-                  href={`tel:${order.customer_phone}`}
-                  className="font-mono text-violet-400 hover:underline flex items-center gap-1.5 mt-0.5"
-                >
-                  <Phone className="w-3.5 h-3.5" />
-                  <span>{order.customer_phone}</span>
-                </a>
-              </div>
-
-              <div>
-                <span className="text-slate-500 text-[11px] block">Delivery Address</span>
-                <div className="flex items-start gap-1.5 mt-0.5 text-slate-300">
-                  <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0 mt-0.5" />
-                  <span>{order.customer_address || 'No address provided'}</span>
-                </div>
-              </div>
-
-              {/* Steadfast Courier Track Record */}
-              <div className="pt-2.5 border-t border-white/[0.06] space-y-1.5">
-                <span className="text-slate-400 text-[11px] font-semibold block flex items-center gap-1">
-                  <Truck className="w-3 h-3 text-cyan-400" />
-                  <span>Steadfast Track Record</span>
-                </span>
-                <div className="grid grid-cols-2 gap-2 text-[11px] pt-1">
-                  <div className="p-2 rounded-lg bg-white/[0.03] border border-white/10">
-                    <span className="text-slate-500 block text-[10px]">Delivery Rate</span>
-                    <span
-                      className={`font-mono font-bold ${
-                        isLowDelivery ? 'text-rose-400' : 'text-emerald-400'
-                      }`}
-                    >
-                      {order.courier_delivery_ratio !== undefined && order.courier_delivery_ratio !== null
-                        ? `${order.courier_delivery_ratio}%`
-                        : 'N/A'}
-                    </span>
-                  </div>
-                  <div className="p-2 rounded-lg bg-white/[0.03] border border-white/10">
-                    <span className="text-slate-500 block text-[10px]">Cancel Rate</span>
-                    <span
-                      className={`font-mono font-bold ${
-                        isHighCancel ? 'text-rose-400' : 'text-slate-300'
-                      }`}
-                    >
-                      {order.courier_cancel_ratio !== undefined && order.courier_cancel_ratio !== null
-                        ? `${order.courier_cancel_ratio}%`
-                        : 'N/A'}
-                    </span>
-                  </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <div className="space-y-3">
+                <div>
+                  <span className="text-slate-500 text-[11px] block">Full Name</span>
+                  <span className="font-semibold text-white text-sm">{order.customer_name}</span>
                 </div>
 
-                {order.courier_fraud_reports !== undefined && order.courier_fraud_reports > 0 && (
-                  <div className="text-[11px] text-rose-300">
-                    Steadfast Fraud Reports: <strong className="font-mono">{order.courier_fraud_reports}</strong>
+                <div>
+                  <span className="text-slate-500 text-[11px] block">Phone Number</span>
+                  <a
+                    href={`tel:${order.customer_phone}`}
+                    className="font-mono text-violet-400 hover:underline flex items-center gap-1.5 mt-0.5"
+                  >
+                    <Phone className="w-3.5 h-3.5" />
+                    <span>{order.customer_phone}</span>
+                  </a>
+                </div>
+
+                <div>
+                  <span className="text-slate-500 text-[11px] block">Delivery Address</span>
+                  <div className="flex items-start gap-1.5 mt-0.5 text-slate-300">
+                    <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0 mt-0.5" />
+                    <span>{order.customer_address || 'No address provided'}</span>
                   </div>
-                )}
+                </div>
               </div>
 
-              {order.notes && (
-                <div className="pt-2 border-t border-white/[0.06]">
-                  <span className="text-slate-500 text-[11px] block">Sales Notes / Reason</span>
-                  <p className="text-amber-300/90 text-[11px] mt-0.5">{order.notes}</p>
+              <div className="space-y-3">
+                {/* Steadfast Courier Track Record */}
+                <div className="pt-2 sm:pt-0 sm:border-l sm:pl-4 border-white/[0.06] space-y-1.5 h-full">
+                  <span className="text-slate-400 text-[11px] font-semibold block flex items-center gap-1">
+                    <Truck className="w-3 h-3 text-cyan-400" />
+                    <span>Steadfast Track Record</span>
+                  </span>
+                  <div className="grid grid-cols-2 gap-2 text-[11px] pt-1">
+                    <div className="p-2 rounded-lg bg-white/[0.03] border border-white/10">
+                      <span className="text-slate-500 block text-[10px]">Delivery Rate</span>
+                      <span
+                        className={`font-mono font-bold ${
+                          isLowDelivery ? 'text-rose-400' : 'text-emerald-400'
+                        }`}
+                      >
+                        {order.courier_delivery_ratio !== undefined && order.courier_delivery_ratio !== null
+                          ? `${order.courier_delivery_ratio}%`
+                          : 'N/A'}
+                      </span>
+                    </div>
+                    <div className="p-2 rounded-lg bg-white/[0.03] border border-white/10">
+                      <span className="text-slate-500 block text-[10px]">Cancel Rate</span>
+                      <span
+                        className={`font-mono font-bold ${
+                          isHighCancel ? 'text-rose-400' : 'text-slate-300'
+                        }`}
+                      >
+                        {order.courier_cancel_ratio !== undefined && order.courier_cancel_ratio !== null
+                          ? `${order.courier_cancel_ratio}%`
+                          : 'N/A'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {order.courier_fraud_reports !== undefined && order.courier_fraud_reports > 0 && (
+                    <div className="text-[11px] text-rose-300 mt-2">
+                      Steadfast Fraud Reports: <strong className="font-mono">{order.courier_fraud_reports}</strong>
+                    </div>
+                  )}
+                  {order.notes && (
+                    <div className="pt-3 mt-2 border-t border-white/[0.06]">
+                      <span className="text-slate-500 text-[11px] block">Sales Notes / Reason</span>
+                      <p className="text-amber-300/90 text-[11px] mt-0.5">{order.notes}</p>
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           </div>
 
           {/* Courier Card */}
-          <div className="glass-card p-5 space-y-3">
+          <div className="glass-card p-5 space-y-3 flex flex-col">
             <div className="flex items-center gap-2 border-b border-white/[0.08] pb-3">
               <Truck className="w-4 h-4 text-indigo-400" />
               <h3 className="font-headline font-bold text-xs uppercase tracking-wider text-slate-300">
@@ -439,9 +440,9 @@ export default function OrderDetailPage() {
               </h3>
             </div>
 
-            <div className="space-y-2 text-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-slate-500">Provider</span>
+            <div className="space-y-2 text-xs flex-1">
+              <div className="flex items-center justify-between bg-white/[0.02] p-2 rounded-lg">
+                <span className="text-slate-400">Provider</span>
                 <span className="font-semibold text-white capitalize">
                   {order.courier_provider || 'Not assigned'}
                 </span>
@@ -449,7 +450,7 @@ export default function OrderDetailPage() {
 
               {order.courier_shipments && order.courier_shipments.length > 0 ? (
                 order.courier_shipments.map((s) => (
-                  <div key={s.id} className="pt-2 border-t border-white/[0.06] space-y-1.5">
+                  <div key={s.id} className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.06] space-y-2 mt-2">
                     <div className="flex items-center justify-between">
                       <span className="text-slate-500 text-[11px]">Consignment ID</span>
                       <span className="font-mono text-violet-300">{s.consignment_id || 'N/A'}</span>
@@ -458,92 +459,92 @@ export default function OrderDetailPage() {
                       <span className="text-slate-500 text-[11px]">Tracking Code</span>
                       <span className="font-mono text-emerald-400">{s.tracking_code || 'N/A'}</span>
                     </div>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between border-t border-white/[0.06] pt-2 mt-1">
                       <span className="text-slate-500 text-[11px]">Shipment Status</span>
                       <span className="text-xs uppercase font-bold text-slate-300">{s.status}</span>
                     </div>
                   </div>
                 ))
               ) : (
-                <p className="text-[11px] text-slate-500 pt-1">
-                  Shipment will be created automatically once order is confirmed.
-                </p>
+                <div className="flex items-center justify-center h-24 border border-dashed border-white/10 rounded-lg mt-2">
+                  <p className="text-[11px] text-slate-500">
+                    Shipment will be created automatically once order is confirmed.
+                  </p>
+                </div>
               )}
             </div>
           </div>
         </div>
 
-        {/* Right Columns (Items & Summary) */}
-        <div className="space-y-5 md:col-span-2">
-          {/* Order Items Table */}
-          <div className="glass-card overflow-hidden">
-            <div className="p-4 border-b border-white/[0.08] flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Package className="w-4 h-4 text-violet-400" />
-                <h3 className="font-headline font-bold text-xs uppercase tracking-wider text-slate-300">
-                  Order Items ({order.order_items?.length || 0})
-                </h3>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setInspectorModalOpen(true)}
-                className="text-xs text-violet-400 hover:text-violet-300 font-medium"
-              >
-                + Add or Modify Items
-              </button>
+        {/* Order Items Table - Full Width */}
+        <div className="glass-card overflow-hidden">
+          <div className="p-4 border-b border-white/[0.08] flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Package className="w-4 h-4 text-violet-400" />
+              <h3 className="font-headline font-bold text-xs uppercase tracking-wider text-slate-300">
+                Order Items ({order.order_items?.length || 0})
+              </h3>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-white/[0.02] border-b border-white/10 text-slate-400 uppercase font-label text-[10px] tracking-wider">
-                  <tr>
-                    <th className="py-3 px-4">Item & SKU</th>
-                    <th className="py-3 px-4 text-center">Qty</th>
-                    <th className="py-3 px-4 text-right">Price</th>
-                    <th className="py-3 px-4 text-right">Subtotal</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/[0.05]">
-                  {(order.order_items || []).map((item) => {
-                    const lineTotal = (Number(item.sell_price) || 0) * (Number(item.quantity) || 0);
-                    return (
-                      <tr key={item.id} className="hover:bg-white/[0.02]">
-                        <td className="py-3 px-4">
-                          <div className="font-semibold text-white">
-                            {item.products?.name || 'Product'}
-                          </div>
-                          {item.products?.sku && (
-                            <span className="text-[10px] font-mono text-slate-500">
-                              SKU: {item.products.sku}
-                            </span>
-                          )}
-                        </td>
-                        <td className="py-3 px-4 text-center font-mono font-bold text-white">
-                          {item.quantity}
-                        </td>
-                        <td className="py-3 px-4 text-right font-mono text-slate-300">
-                          {formatBDT(item.sell_price)}
-                        </td>
-                        <td className="py-3 px-4 text-right font-mono font-bold text-white">
-                          {formatBDT(lineTotal)}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                  {(!order.order_items || order.order_items.length === 0) && (
-                    <tr>
-                      <td colSpan={4} className="py-8 text-center text-xs text-slate-500">
-                        No item records attached to this invoice.
+            <Link
+              href={`/orders/${id}/edit`}
+              className="text-xs text-violet-400 hover:text-violet-300 font-medium"
+            >
+              + Add or Modify Items
+            </Link>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-white/[0.02] border-b border-white/10 text-slate-400 uppercase font-label text-[10px] tracking-wider">
+                <tr>
+                  <th className="py-3 px-4">Item & SKU</th>
+                  <th className="py-3 px-4 text-center">Qty</th>
+                  <th className="py-3 px-4 text-right">Price</th>
+                  <th className="py-3 px-4 text-right">Subtotal</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/[0.05]">
+                {(order.order_items || []).map((item) => {
+                  const lineTotal = (Number(item.sell_price) || 0) * (Number(item.quantity) || 0);
+                  return (
+                    <tr key={item.id} className="hover:bg-white/[0.02]">
+                      <td className="py-3 px-4">
+                        <div className="font-semibold text-white">
+                          {item.products?.name || 'Product'}
+                        </div>
+                        {item.products?.sku && (
+                          <span className="text-[10px] font-mono text-slate-500">
+                            SKU: {item.products.sku}
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 text-center font-mono font-bold text-white">
+                        {item.quantity}
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono text-slate-300">
+                        {formatBDT(item.sell_price)}
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono font-bold text-white">
+                        {formatBDT(lineTotal)}
                       </td>
                     </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                  );
+                })}
+                {(!order.order_items || order.order_items.length === 0) && (
+                  <tr>
+                    <td colSpan={4} className="py-8 text-center text-xs text-slate-500">
+                      No item records attached to this invoice.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
 
-            {/* Financial Breakdown */}
-            <div className="p-4 bg-white/[0.02] border-t border-white/[0.08] space-y-2">
+          {/* Financial Breakdown */}
+          <div className="p-4 bg-white/[0.02] border-t border-white/[0.08] flex justify-end">
+            <div className="w-full md:w-80 space-y-2">
               <div className="flex justify-between text-xs text-slate-400">
                 <span>Items Subtotal:</span>
                 <span className="font-mono text-slate-200">{formatBDT(itemsSubtotal)}</span>
@@ -623,15 +624,7 @@ export default function OrderDetailPage() {
         currentNotes={order.notes}
       />
 
-      {/* Full Order & Customer Inspector & Product Editor Modal */}
-      <OrderInspectorModal
-        isOpen={inspectorModalOpen}
-        onClose={() => setInspectorModalOpen(false)}
-        orderId={order.id}
-        onOpenConfirm={() => setConfirmModalOpen(true)}
-        onOpenHold={() => setHoldModalOpen(true)}
-        onOpenCancel={() => setCancelModalOpen(true)}
-      />
+
     </div>
   );
 }
