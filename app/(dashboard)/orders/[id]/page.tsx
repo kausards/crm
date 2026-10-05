@@ -336,100 +336,8 @@ export default function OrderDetailPage() {
 
       {/* Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Main Column: Order Items */}
-        <div className="lg:col-span-2 space-y-5">
-          {/* Order Items Table - Moved to left column */}
-          <div className="glass-card overflow-hidden">
-            <div className="p-4 border-b border-white/[0.08] flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Package className="w-4 h-4 text-violet-400" />
-                <h3 className="font-headline font-bold text-xs uppercase tracking-wider text-slate-300">
-                  Order Items ({order.order_items?.length || 0})
-                </h3>
-              </div>
-
-              <Link
-                href={`/orders/${id}/edit`}
-                className="text-xs text-violet-400 hover:text-violet-300 font-medium"
-              >
-                + Add or Modify Items
-              </Link>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-white/[0.02] border-b border-white/10 text-slate-400 uppercase font-label text-[10px] tracking-wider">
-                  <tr>
-                    <th className="py-3 px-4">Item & SKU</th>
-                    <th className="py-3 px-4 text-center">Qty</th>
-                    <th className="py-3 px-4 text-right">Price</th>
-                    <th className="py-3 px-4 text-right">Subtotal</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/[0.05]">
-                  {(order.order_items || []).map((item) => {
-                    const lineTotal = (Number(item.sell_price) || 0) * (Number(item.quantity) || 0);
-                    return (
-                      <tr key={item.id} className="hover:bg-white/[0.02]">
-                        <td className="py-3 px-4">
-                          <div className="font-semibold text-white">
-                            {item.products?.name || 'Product'}
-                          </div>
-                          {item.products?.sku && (
-                            <span className="text-[10px] font-mono text-slate-500">
-                              SKU: {item.products.sku}
-                            </span>
-                          )}
-                        </td>
-                        <td className="py-3 px-4 text-center font-mono font-bold text-white">
-                          {item.quantity}
-                        </td>
-                        <td className="py-3 px-4 text-right font-mono text-slate-300">
-                          {formatBDT(item.sell_price)}
-                        </td>
-                        <td className="py-3 px-4 text-right font-mono font-bold text-white">
-                          {formatBDT(lineTotal)}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                  {(!order.order_items || order.order_items.length === 0) && (
-                    <tr>
-                      <td colSpan={4} className="py-8 text-center text-xs text-slate-500">
-                        No item records attached to this invoice.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Financial Breakdown */}
-            <div className="p-4 bg-white/[0.02] border-t border-white/[0.08] flex justify-end">
-              <div className="w-full md:w-80 space-y-2">
-                <div className="flex justify-between text-xs text-slate-400">
-                  <span>Items Subtotal:</span>
-                  <span className="font-mono text-slate-200">{formatBDT(itemsSubtotal)}</span>
-                </div>
-                <div className="flex justify-between text-xs text-slate-400">
-                  <span>Delivery Charge:</span>
-                  <span className="font-mono text-slate-200">{formatBDT(order.delivery_charge || 0)}</span>
-                </div>
-                <div className="flex justify-between text-sm font-bold text-white pt-2 border-t border-white/[0.08]">
-                  <span>Total Amount:</span>
-                  <span className="font-mono text-violet-400">{formatBDT(order.total_amount)}</span>
-                </div>
-                <div className="flex justify-between text-xs font-semibold text-emerald-400">
-                  <span>Cash On Delivery (COD):</span>
-                  <span className="font-mono">{formatBDT(order.cod_amount)}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Sidebar Column: Customer & Courier */}
-        <div className="space-y-5">
+        <div className="space-y-5 order-2 lg:order-2 lg:col-span-1">
           {/* Customer Card */}
           <div className="glass-card p-5 space-y-4">
             <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
@@ -447,7 +355,87 @@ export default function OrderDetailPage() {
               </Link>
             </div>
 
-            <div className="space-y-4 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <div className="space-y-3">
+                <div>
+                  <span className="text-slate-500 text-[11px] block">Full Name</span>
+                  <span className="font-semibold text-white text-sm">{order.customer_name}</span>
+                </div>
+
+                <div>
+                  <span className="text-slate-500 text-[11px] block">Phone Number</span>
+                  <a
+                    href={`tel:${order.customer_phone}`}
+                    className="font-mono text-violet-400 hover:underline flex items-center gap-1.5 mt-0.5"
+                  >
+                    <Phone className="w-3.5 h-3.5" />
+                    <span>{order.customer_phone}</span>
+                  </a>
+                </div>
+
+                <div>
+                  <span className="text-slate-500 text-[11px] block">Delivery Address</span>
+                  <div className="flex items-start gap-1.5 mt-0.5 text-slate-300">
+                    <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0 mt-0.5" />
+                    <span>{order.customer_address || 'No address provided'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {/* Steadfast Courier Track Record */}
+                <div className="pt-2 sm:pt-0 sm:border-l sm:pl-4 border-white/[0.06] space-y-1.5 h-full">
+                  <span className="text-slate-400 text-[11px] font-semibold block flex items-center gap-1">
+                    <Truck className="w-3 h-3 text-cyan-400" />
+                    <span>Steadfast Track Record</span>
+                  </span>
+                  <div className="grid grid-cols-2 gap-2 text-[11px] pt-1">
+                    <div className="p-2 rounded-lg bg-white/[0.03] border border-white/10">
+                      <span className="text-slate-500 block text-[10px]">Delivery Rate</span>
+                      <span
+                        className={`font-mono font-bold ${
+                          isLowDelivery ? 'text-rose-400' : 'text-emerald-400'
+                        }`}
+                      >
+                        {order.courier_delivery_ratio !== undefined && order.courier_delivery_ratio !== null
+                          ? `${order.courier_delivery_ratio}%`
+                          : 'N/A'}
+                      </span>
+                    </div>
+                    <div className="p-2 rounded-lg bg-white/[0.03] border border-white/10">
+                      <span className="text-slate-500 block text-[10px]">Cancel Rate</span>
+                      <span
+                        className={`font-mono font-bold ${
+                          isHighCancel ? 'text-rose-400' : 'text-slate-300'
+                        }`}
+                      >
+                        {order.courier_cancel_ratio !== undefined && order.courier_cancel_ratio !== null
+                          ? `${order.courier_cancel_ratio}%`
+                          : 'N/A'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {order.courier_fraud_reports !== undefined && order.courier_fraud_reports > 0 && (
+                    <div className="text-[11px] text-rose-300 mt-2">
+                      Steadfast Fraud Reports: <strong className="font-mono">{order.courier_fraud_reports}</strong>
+                    </div>
+                  )}
+                  {order.notes && (
+                    <div className="pt-3 mt-2 border-t border-white/[0.06]">
+                      <span className="text-slate-500 text-[11px] block">Sales Notes / Reason</span>
+                      <p className="text-amber-300/90 text-[11px] mt-0.5">{order.notes}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Courier Card */}
+          <div className="glass-card p-5 space-y-3 flex flex-col">
+            <div className="flex items-center gap-2 border-b border-white/[0.08] pb-3">
+              <Truck className="w-4 h-4 text-indigo-400" />
               <h3 className="font-headline font-bold text-xs uppercase tracking-wider text-slate-300">
                 Logistics & Dispatch
               </h3>
@@ -487,6 +475,97 @@ export default function OrderDetailPage() {
               )}
             </div>
           </div>
+        </div>
+
+        {/* Main Column: Order Items Table */}
+        <div className="lg:col-span-2 space-y-5 order-1 lg:order-1">
+          <div className="glass-card overflow-hidden">
+          <div className="p-4 border-b border-white/[0.08] flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Package className="w-4 h-4 text-violet-400" />
+              <h3 className="font-headline font-bold text-xs uppercase tracking-wider text-slate-300">
+                Order Items ({order.order_items?.length || 0})
+              </h3>
+            </div>
+
+            <Link
+              href={`/orders/${id}/edit`}
+              className="text-xs text-violet-400 hover:text-violet-300 font-medium"
+            >
+              + Add or Modify Items
+            </Link>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-white/[0.02] border-b border-white/10 text-slate-400 uppercase font-label text-[10px] tracking-wider">
+                <tr>
+                  <th className="py-3 px-4">Item & SKU</th>
+                  <th className="py-3 px-4 text-center">Qty</th>
+                  <th className="py-3 px-4 text-right">Price</th>
+                  <th className="py-3 px-4 text-right">Subtotal</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/[0.05]">
+                {(order.order_items || []).map((item) => {
+                  const lineTotal = (Number(item.sell_price) || 0) * (Number(item.quantity) || 0);
+                  return (
+                    <tr key={item.id} className="hover:bg-white/[0.02]">
+                      <td className="py-3 px-4">
+                        <div className="font-semibold text-white">
+                          {item.products?.name || 'Product'}
+                        </div>
+                        {item.products?.sku && (
+                          <span className="text-[10px] font-mono text-slate-500">
+                            SKU: {item.products.sku}
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 text-center font-mono font-bold text-white">
+                        {item.quantity}
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono text-slate-300">
+                        {formatBDT(item.sell_price)}
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono font-bold text-white">
+                        {formatBDT(lineTotal)}
+                      </td>
+                    </tr>
+                  );
+                })}
+                {(!order.order_items || order.order_items.length === 0) && (
+                  <tr>
+                    <td colSpan={4} className="py-8 text-center text-xs text-slate-500">
+                      No item records attached to this invoice.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Financial Breakdown */}
+          <div className="p-4 bg-white/[0.02] border-t border-white/[0.08] flex justify-end">
+            <div className="w-full md:w-80 space-y-2">
+              <div className="flex justify-between text-xs text-slate-400">
+                <span>Items Subtotal:</span>
+                <span className="font-mono text-slate-200">{formatBDT(itemsSubtotal)}</span>
+              </div>
+              <div className="flex justify-between text-xs text-slate-400">
+                <span>Delivery Charge:</span>
+                <span className="font-mono text-slate-200">{formatBDT(order.delivery_charge || 0)}</span>
+              </div>
+              <div className="flex justify-between text-sm font-bold text-white pt-2 border-t border-white/[0.08]">
+                <span>Total Amount:</span>
+                <span className="font-mono text-violet-400">{formatBDT(order.total_amount)}</span>
+              </div>
+              <div className="flex justify-between text-xs font-semibold text-emerald-400">
+                <span>Cash On Delivery (COD):</span>
+                <span className="font-mono">{formatBDT(order.cod_amount)}</span>
+              </div>
+            </div>
+          </div>
+        </div>
         </div>
       </div>
 
