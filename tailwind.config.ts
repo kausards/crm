@@ -70,12 +70,12 @@ const config: Config = {
         "sidebar-hover": "rgba(255,255,255,0.05)",
       },
       fontFamily: {
-        sans: ["'Plus Jakarta Sans'", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],
-        mono: ["'JetBrains Mono'", "ui-monospace", "monospace"],
+        sans: ["var(--font-sans)", "system-ui", "sans-serif"],
+        mono: ["var(--font-mono)", "monospace"],
         // Aliases — all resolve to Plus Jakarta Sans for consistency
-        headline: ["'Plus Jakarta Sans'", "sans-serif"],
-        body: ["'Plus Jakarta Sans'", "sans-serif"],
-        label: ["'Plus Jakarta Sans'", "sans-serif"],
+        headline: ["var(--font-sans)", "system-ui", "sans-serif"],
+        body: ["var(--font-sans)", "system-ui", "sans-serif"],
+        label: ["var(--font-sans)", "system-ui", "sans-serif"],
       },
       fontSize: {
         "headline-xl": ["30px", { lineHeight: "38px", fontWeight: "700" }],

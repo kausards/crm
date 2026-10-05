@@ -311,7 +311,7 @@ export function OrderInspectorModal({
       isOpen={isOpen}
       onClose={onClose}
       title={`Order & Customer Inspector #${orderId?.slice(0, 8)}`}
-      maxWidth="4xl"
+      maxWidth="6xl"
     >
       {orderLoading ? (
         <div className="py-16 text-center text-slate-400">
@@ -397,8 +397,11 @@ export function OrderInspectorModal({
             </div>
           </div>
 
-          {/* Steadfast Courier Fraud Risk Banner */}
-          <div
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+            {/* LEFT SIDEBAR (1/3 Width) */}
+            <div className="space-y-5 lg:col-span-1">
+              {/* Steadfast Courier Fraud Risk Banner */}
+              <div
             className={`p-3.5 rounded-xl border transition-all ${
               isRiskOrder
                 ? 'bg-rose-950/25 border-rose-500/40 text-rose-200'
@@ -477,7 +480,7 @@ export function OrderInspectorModal({
               <span>Customer Information (Editable)</span>
             </h4>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="space-y-3">
               <div>
                 <label className="block text-[11px] font-medium text-slate-400 mb-1">
                   Customer Name *
@@ -506,7 +509,7 @@ export function OrderInspectorModal({
                 </div>
               </div>
 
-              <div className="md:col-span-2">
+              <div>
                 <label className="block text-[11px] font-medium text-slate-400 mb-1">
                   Delivery Address *
                 </label>
@@ -546,9 +549,12 @@ export function OrderInspectorModal({
               </div>
             </div>
           </div>
+            </div>
 
-          {/* Products & Items Section */}
-          <div className="space-y-3 pt-2">
+            {/* RIGHT MAIN COLUMN (2/3 Width) */}
+            <div className="lg:col-span-2 space-y-5">
+              {/* Products & Items Section */}
+              <div className="space-y-3 pt-2 lg:pt-0">
             <div className="flex items-center justify-between border-b border-white/[0.06] pb-1.5">
               <h4 className="font-semibold text-slate-200 text-xs flex items-center gap-1.5">
                 <Package className="w-3.5 h-3.5 text-violet-400" />
@@ -690,6 +696,7 @@ export function OrderInspectorModal({
                 <span className="font-mono font-bold text-emerald-400 text-sm">{formatBDT(totalAmount)}</span>
               </div>
             </div>
+          </div>
           </div>
 
           {/* Footer Actions */}
