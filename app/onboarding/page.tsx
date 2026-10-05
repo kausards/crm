@@ -61,7 +61,7 @@ export default function OnboardingPage() {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-sora font-bold text-[17px] tracking-tight text-white">Nexus Flow</span>
+              <span className="font-headline font-bold text-[17px] tracking-tight text-white">Nexus Flow</span>
               <span className="text-[10px] uppercase font-mono tracking-widest px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30 font-medium">
                 Enterprise Setup
               </span>
@@ -92,7 +92,7 @@ export default function OnboardingPage() {
             <span className="text-white/20">•</span>
             <span>Initial Ledger Calibration</span>
           </div>
-          <h1 className="font-sora font-extrabold text-2xl md:text-3xl text-white tracking-tight leading-snug">
+          <h1 className="font-headline font-extrabold text-2xl md:text-3xl text-white tracking-tight leading-snug">
             Configure{' '}
             <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
               Opening Balances
@@ -113,7 +113,7 @@ export default function OnboardingPage() {
 
             {/* Step 1: Business Profile (COMPLETED) */}
             <div className="relative z-10 flex flex-col items-center group cursor-pointer">
-              <div className="w-10 h-10 rounded-full bg-tertiary/15 border-2 border-tertiary text-tertiary flex items-center justify-center font-sora font-semibold text-sm shadow-[0_0_16px_rgba(34,197,94,0.3)]">
+              <div className="w-10 h-10 rounded-full bg-tertiary/15 border-2 border-tertiary text-tertiary flex items-center justify-center font-headline font-semibold text-sm shadow-[0_0_16px_rgba(34,197,94,0.3)]">
                 <span className="material-symbols-outlined text-[20px]">check</span>
               </div>
               <div className="mt-2 text-center">
@@ -125,7 +125,7 @@ export default function OnboardingPage() {
             {/* Step 2: Opening Balance (ACTIVE) */}
             <div className="relative z-10 flex flex-col items-center">
               <div className="w-10 h-10 rounded-full bg-gradient-to-r from-primary to-secondary p-[2px] shadow-[0_0_24px_rgba(236,72,153,0.35)] ring-4 ring-primary/20">
-                <div className="w-full h-full rounded-full bg-surface flex items-center justify-center text-white font-sora font-bold text-sm">
+                <div className="w-full h-full rounded-full bg-surface flex items-center justify-center text-white font-headline font-bold text-sm">
                   2
                 </div>
               </div>
@@ -137,7 +137,7 @@ export default function OnboardingPage() {
 
             {/* Step 3: Connect Courier (UPCOMING) */}
             <div className="relative z-10 flex flex-col items-center opacity-65">
-              <div className="w-10 h-10 rounded-full bg-surface-container border border-white/10 text-on-surface-variant flex items-center justify-center font-sora font-medium text-sm">
+              <div className="w-10 h-10 rounded-full bg-surface-container border border-white/10 text-on-surface-variant flex items-center justify-center font-headline font-medium text-sm">
                 3
               </div>
               <div className="mt-2 text-center">
@@ -152,7 +152,7 @@ export default function OnboardingPage() {
         <div className="w-full bg-surface-container-low border border-white/[0.09] shadow-2xl rounded-2xl p-6 sm:p-9 relative overflow-hidden backdrop-blur-xl">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-6 border-b border-white/[0.06]">
             <div>
-              <h2 className="font-sora font-bold text-lg text-white flex items-center gap-2">
+              <h2 className="font-headline font-bold text-lg text-white flex items-center gap-2">
                 <span>Financial Baseline Metrics</span>
                 <span className="text-[11px] font-mono font-medium px-2 py-0.5 rounded bg-white/[0.05] text-white/70 border border-white/10">
                   BDT (৳) Currency
@@ -203,7 +203,7 @@ export default function OnboardingPage() {
               </div>
               <div className="rounded-xl flex items-center px-4 py-3 bg-surface-container border border-white/[0.08] focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all">
                 <div className="flex items-center gap-2 text-on-surface-variant">
-                  <span className="font-sora font-bold text-lg text-white/80">৳</span>
+                  <span className="font-headline font-bold text-lg text-white/80">৳</span>
                   <span className="w-px h-5 bg-white/10"></span>
                 </div>
                 <input
@@ -213,7 +213,7 @@ export default function OnboardingPage() {
                   value={totalStockValue || ''}
                   onChange={(e) => setTotalStockValue(Number(e.target.value))}
                   placeholder="0"
-                  className="w-full bg-transparent border-0 px-3 text-white font-sora font-semibold text-lg focus:outline-none"
+                  className="w-full bg-transparent border-0 px-3 text-white font-headline font-semibold text-lg focus:outline-none"
                 />
                 <div className="text-[11px] font-mono bg-white/[0.04] text-white/60 px-2 py-1 rounded border border-white/5 shrink-0">
                   Wholesale Cost
@@ -231,7 +231,7 @@ export default function OnboardingPage() {
                   <span className="text-[11px] text-tertiary">Money owed to you</span>
                 </div>
                 <div className="rounded-xl flex items-center px-4 py-3 bg-surface-container border border-white/[0.08] focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all">
-                  <span className="font-sora font-bold text-lg text-tertiary">৳</span>
+                  <span className="font-headline font-bold text-lg text-tertiary">৳</span>
                   <input
                     type="number"
                     min="0"
@@ -239,7 +239,7 @@ export default function OnboardingPage() {
                     value={totalReceivable || ''}
                     onChange={(e) => setTotalReceivable(Number(e.target.value))}
                     placeholder="0"
-                    className="w-full bg-transparent border-0 px-3 text-white font-sora font-semibold text-lg focus:outline-none"
+                    className="w-full bg-transparent border-0 px-3 text-white font-headline font-semibold text-lg focus:outline-none"
                   />
                 </div>
               </div>
@@ -252,7 +252,7 @@ export default function OnboardingPage() {
                   <span className="text-[11px] text-error">Money you owe</span>
                 </div>
                 <div className="rounded-xl flex items-center px-4 py-3 bg-surface-container border border-white/[0.08] focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all">
-                  <span className="font-sora font-bold text-lg text-error">৳</span>
+                  <span className="font-headline font-bold text-lg text-error">৳</span>
                   <input
                     type="number"
                     min="0"
@@ -260,7 +260,7 @@ export default function OnboardingPage() {
                     value={totalPayable || ''}
                     onChange={(e) => setTotalPayable(Number(e.target.value))}
                     placeholder="0"
-                    className="w-full bg-transparent border-0 px-3 text-white font-sora font-semibold text-lg focus:outline-none"
+                    className="w-full bg-transparent border-0 px-3 text-white font-headline font-semibold text-lg focus:outline-none"
                   />
                 </div>
               </div>

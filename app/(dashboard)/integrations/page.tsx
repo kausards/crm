@@ -250,7 +250,7 @@ export default function IntegrationsPage() {
 
   // HTML / JS Embed code for landing pages
   const embedCodeSnippet = `<!-- NexusFlow CRM Checkout Form Snippet -->
-<form id="nexusflow-checkout-form" style="max-width: 480px; margin: 0 auto; font-family: sans-serif; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background: #fff;">
+<form id="nexusflow-checkout-form" style="max-width: 480px; margin: 0 auto; font-family: var(--font-sans); padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background: #fff;">
   <h3 style="margin-top: 0; font-size: 18px; color: #0f172a;">অর্ডার কনফার্ম করতে ফর্মটি পূরণ করুন</h3>
   
   <div style="margin-bottom: 12px;">

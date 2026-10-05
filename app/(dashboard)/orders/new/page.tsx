@@ -163,7 +163,7 @@ export default function NewOrderPage() {
         <div className="lg:col-span-2 space-y-6">
           {/* Customer Details Card */}
           <div className="bg-[#15121A] border border-white/[0.08] rounded-2xl p-5 shadow-glow-card space-y-4">
-            <h3 className="font-sora text-sm font-semibold text-slate-300 uppercase tracking-wider">
+            <h3 className="font-headline text-sm font-semibold text-slate-300 uppercase tracking-wider">
               Customer Information
             </h3>
 

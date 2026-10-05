@@ -12,7 +12,7 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-[#07050A] text-[#e8e0ec] flex flex-col font-inter selection:bg-brand-violet/40 selection:text-white">
+    <div className="min-h-screen bg-[#07050A] text-[#e8e0ec] flex flex-col font-sans selection:bg-brand-violet/40 selection:text-white">
       {/* Background glow effects */}
       <div className="fixed top-0 left-1/4 w-[500px] h-[350px] bg-brand-violet/10 blur-[140px] pointer-events-none -z-10" />
       <div className="fixed bottom-0 right-1/4 w-[500px] h-[350px] bg-brand-magenta/10 blur-[140px] pointer-events-none -z-10" />

@@ -76,9 +76,6 @@ const config: Config = {
         headline: ["'Plus Jakarta Sans'", "sans-serif"],
         body: ["'Plus Jakarta Sans'", "sans-serif"],
         label: ["'Plus Jakarta Sans'", "sans-serif"],
-        inter: ["'Plus Jakarta Sans'", "sans-serif"],
-        sora: ["'Plus Jakarta Sans'", "sans-serif"],
-        geist: ["'Plus Jakarta Sans'", "sans-serif"],
       },
       fontSize: {
         "headline-xl": ["30px", { lineHeight: "38px", fontWeight: "700" }],

@@ -312,7 +312,7 @@ export default function AdminPage() {
                 <Crown className="w-8 h-8 text-purple-300 animate-pulse" />
               </div>
             </div>
-            <h1 className="font-sora text-2xl sm:text-3xl font-bold tracking-tight text-white">
+            <h1 className="font-headline text-2xl sm:text-3xl font-bold tracking-tight text-white">
               SaaS Master Root Console
             </h1>
             <p className="mt-2 text-xs text-slate-400 max-w-sm mx-auto">
@@ -475,7 +475,7 @@ export default function AdminPage() {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-sora font-extrabold text-sm sm:text-base text-white tracking-wide">
+              <span className="font-headline font-extrabold text-sm sm:text-base text-white tracking-wide">
                 NEXUS FLOW
               </span>
               <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-violet/20 text-brand-violet border border-brand-violet/30 uppercase tracking-widest">
