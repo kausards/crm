@@ -121,16 +121,16 @@ export async function POST(
               customer_name: order.customer_name,
               customer_phone: order.customer_phone,
               customer_address: order.customer_address,
-              delivery_area: 'Dhaka',
+              delivery_area: body.delivery_area || (order.customer_address.toLowerCase().includes('dhaka') ? 'Dhaka' : 'Outside Dhaka'),
               cash_collection_amount: Number(order.cod_amount),
             }
           );
           consignmentId = res.consignment_id;
           trackingCode = res.tracking_code;
         }
-      } catch (courierErr) {
+      } catch (courierErr: any) {
         console.error('Courier API dispatch error:', courierErr);
-        // We log and still allow confirmation or return courier error message
+        return errorResponse('COURIER_ERROR', `Courier dispatch failed: ${courierErr.message || 'Unknown error'}`, 502);
       }
     }
 

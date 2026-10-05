@@ -30,6 +30,16 @@ create table if not exists public.tenants (
   created_at timestamptz default now()
 );
 
+alter table public.tenants enable row level security;
+
+create policy "tenants_tenant_select" on public.tenants
+  for select using (id = auth.tenant_id());
+
+create policy "tenants_tenant_update" on public.tenants
+  for update using (id = auth.tenant_id())
+  with check (id = auth.tenant_id());
+
+
 -- 3. Profiles table (extends auth.users with tenant_id and role)
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,

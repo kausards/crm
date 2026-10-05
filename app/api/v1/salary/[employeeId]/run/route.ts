@@ -100,10 +100,35 @@ export async function POST(
       return errorResponse('NOT_FOUND', 'Employee not found', 404);
     }
 
+    const monthStart = validated.month.slice(0, 7) + '-01';
+    const [mYear, mMon] = monthStart.split('-').map(Number);
+    const lastDayOfMonth = new Date(mYear, mMon, 0).getDate();
+    const monthEnd = `${monthStart.slice(0, 7)}-${String(lastDayOfMonth).padStart(2, '0')}`;
+
+    const { data: attendanceList } = await supabase
+      .from('attendance')
+      .select('status')
+      .eq('employee_id', employeeId)
+      .eq('tenant_id', auth.tenantId)
+      .gte('date', monthStart)
+      .lte('date', monthEnd);
+
+    let daysPresent = 0;
+    let daysAbsent = 0;
+
+    for (const record of attendanceList || []) {
+      if (record.status === 'present') daysPresent += 1;
+      else if (record.status === 'absent') daysAbsent += 1;
+      else if (record.status === 'half') {
+        daysPresent += 0.5;
+        daysAbsent += 0.5;
+      }
+    }
+
     const calculation = calculateSalaryPayable({
       monthlySalary: Number(employee.monthly_salary),
       salaryDivisor: employee.salary_divisor,
-      daysAbsent: validated.days_absent,
+      daysAbsent: daysAbsent,
       manualOverride: validated.manual_override,
     });
 
@@ -113,8 +138,8 @@ export async function POST(
         tenant_id: auth.tenantId,
         employee_id: employeeId,
         month: validated.month,
-        days_present: validated.days_present,
-        days_absent: validated.days_absent,
+        days_present: daysPresent,
+        days_absent: daysAbsent,
         gross_salary: calculation.grossSalary,
         deduction: calculation.deduction,
         net_payable: calculation.netPayable,
