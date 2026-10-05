@@ -365,9 +365,9 @@ export default function OrderEditPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column: Customer & Logistics info */}
-        <div className="space-y-6">
+        <div className="space-y-6 lg:col-span-1">
           <div className="glass-card p-5 space-y-4">
             <h4 className="font-headline font-bold text-sm text-slate-300 flex items-center gap-2 border-b border-white/[0.08] pb-3">
               <User className="w-4 h-4 text-violet-400" />
@@ -440,7 +440,7 @@ export default function OrderEditPage() {
         </div>
 
         {/* Right Column: Order Items */}
-        <div className="glass-card p-5 space-y-5 flex flex-col">
+        <div className="glass-card p-5 space-y-5 flex flex-col lg:col-span-2">
           <h4 className="font-headline font-bold text-sm text-slate-300 flex items-center gap-2 border-b border-white/[0.08] pb-3">
             <Package className="w-4 h-4 text-violet-400" />
             Order Items ({items.length})
