@@ -9,6 +9,7 @@ export type ErrorCode =
   | 'CONFLICT'
   | 'RATE_LIMIT_EXCEEDED'
   | 'BAD_REQUEST'
+  | 'COURIER_ERROR'
   | 'INTERNAL_ERROR';
 
 export function successResponse<T>(data: T, status = 200) {
