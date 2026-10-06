@@ -19,9 +19,22 @@ import {
 } from 'lucide-react';
 import { fetchApi, formatBDT } from '@/lib/apiClient';
 import { useToast } from '@/app/providers';
-import { Button } from '@/components/ui/Button';
+
+// Shadcn imports
+import { Button } from '@/components/ui/shadcn/button';
+import { Badge } from '@/components/ui/shadcn/badge';
+import { Input } from '@/components/ui/shadcn/input';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription
+} from '@/components/ui/shadcn/card';
+
+// Old UI components
 import { Modal } from '@/components/ui/Modal';
-import { Input, Select } from '@/components/ui/Input';
+import { Input as FormInput, Select } from '@/components/ui/Input';
 import { RiskSettingsModal } from '@/components/orders/RiskSettingsModal';
 
 interface CourierCredRow {
@@ -167,8 +180,8 @@ export default function CourierPage() {
       code: 'SF',
       name: 'Steadfast Courier',
       sub: '',
-      accentColor: 'from-violet-500 to-indigo-500',
-      logoBg: 'bg-violet-600/15 border-violet-500/30 text-violet-300',
+      accentColor: 'bg-indigo-500',
+      logoBg: 'bg-indigo-50 border-indigo-100 text-indigo-700',
       dispatched: `${stats?.providers?.steadfast?.dispatched ?? 0} parcels`,
       latency: '24-48h avg',
       cod: formatBDT(stats?.providers?.steadfast?.cod ?? 0),
@@ -182,8 +195,8 @@ export default function CourierPage() {
       code: 'PT',
       name: 'Pathao Courier',
       sub: '',
-      accentColor: 'from-pink-500 to-rose-500',
-      logoBg: 'bg-pink-600/15 border-pink-500/30 text-pink-300',
+      accentColor: 'bg-pink-500',
+      logoBg: 'bg-pink-50 border-pink-100 text-pink-700',
       dispatched: `${stats?.providers?.pathao?.dispatched ?? 0} parcels`,
       latency: 'Same / Next Day',
       cod: formatBDT(stats?.providers?.pathao?.cod ?? 0),
@@ -197,8 +210,8 @@ export default function CourierPage() {
       code: 'RX',
       name: 'RedX Logistics',
       sub: '',
-      accentColor: 'from-cyan-500 to-teal-500',
-      logoBg: 'bg-cyan-600/15 border-cyan-500/30 text-cyan-300',
+      accentColor: 'bg-emerald-500',
+      logoBg: 'bg-emerald-50 border-emerald-100 text-emerald-700',
       dispatched: `${stats?.providers?.redx?.dispatched ?? 0} parcels`,
       latency: '24-72h avg',
       cod: formatBDT(stats?.providers?.redx?.cod ?? 0),
@@ -210,250 +223,255 @@ export default function CourierPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6">
       {/* 1. Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="font-bold text-xl text-white">
-            Courier Tracker
-          </h1>
-          <p className="text-sm text-slate-500 mt-0.5">
+          <h1 className="text-2xl font-semibold tracking-tight">Courier Tracker</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Track shipments across all your courier partners.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
-          <button
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => setRiskModalOpen(true)}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/25 text-xs font-label font-medium text-rose-300 backdrop-blur-md transition-all"
             title="Configure Steadfast delivery ratio, cancel ratio, and fraud thresholds"
           >
-            <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
-            <span>Fraud & Risk Rules</span>
-            <span className="px-1.5 py-0.5 rounded-full bg-rose-500/20 text-[10px] font-mono font-bold">
+            <ShieldAlert className="w-4 h-4 mr-2 text-rose-500" />
+            Fraud & Risk Rules
+            <Badge variant="secondary" className="ml-2 bg-rose-100 text-rose-800 hover:bg-rose-100">
               {minDelivery}% / {maxCancel}%
-            </span>
-          </button>
+            </Badge>
+          </Button>
 
-          <button
+          <Button
+            size="sm"
             onClick={() => syncAllMutation.mutate()}
             disabled={syncAllMutation.isPending}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-600 to-teal-500 hover:from-cyan-500 hover:to-teal-400 text-white text-xs font-semibold rounded-xl shadow-lg shadow-cyan-600/30 active:scale-[0.98] transition-all w-fit disabled:opacity-50"
           >
-            <RotateCw className={`w-3.5 h-3.5 ${syncAllMutation.isPending ? 'animate-spin' : ''}`} />
-            <span>{syncAllMutation.isPending ? 'Syncing...' : 'Sync All Couriers'}</span>
-          </button>
+            <RotateCw className={`w-4 h-4 mr-2 ${syncAllMutation.isPending ? 'animate-spin' : ''}`} />
+            {syncAllMutation.isPending ? 'Syncing...' : 'Sync All Couriers'}
+          </Button>
         </div>
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-        <div className="glass-card p-4">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-400">Total Dispatched</span>
-            <Package className="w-4 h-4 text-cyan-400" />
-          </div>
-          <div className="text-2xl font-bold text-white mt-2 tabular-nums">
-            {stats?.total_dispatched ?? 0}
-          </div>
-          <p className="text-[11px] text-slate-500 mt-1">
-            {stats?.delivered_count ?? 0} delivered
-          </p>
-        </div>
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Dispatched</CardTitle>
+            <Package className="h-4 w-4 text-indigo-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold tabular-nums">
+              {stats?.total_dispatched ?? 0}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {stats?.delivered_count ?? 0} delivered
+            </p>
+          </CardContent>
+        </Card>
 
-        <div className="glass-card p-4">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-400">COD In Transit</span>
-            <DollarSign className="w-4 h-4 text-amber-400" />
-          </div>
-          <div className="text-2xl font-bold text-amber-400 mt-2 tabular-nums font-mono">
-            {formatBDT(stats?.cod_in_transit ?? 0)}
-          </div>
-          <p className="text-[11px] text-amber-400/80 mt-1">
-            {stats?.in_transit_count ?? 0} parcels in transit
-          </p>
-        </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">COD In Transit</CardTitle>
+            <DollarSign className="h-4 w-4 text-amber-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-amber-600 tabular-nums">
+              {formatBDT(stats?.cod_in_transit ?? 0)}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {stats?.in_transit_count ?? 0} parcels in transit
+            </p>
+          </CardContent>
+        </Card>
 
-        <div className="glass-card p-4">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-400">Delivery Rate</span>
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-          </div>
-          <div className="text-2xl font-bold text-emerald-400 mt-2 tabular-nums font-mono">
-            {stats?.delivery_rate ?? 0}%
-          </div>
-          <p className="text-[11px] text-emerald-400/80 mt-1">Of all dispatched orders</p>
-        </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Delivery Rate</CardTitle>
+            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-emerald-600 tabular-nums">
+              {stats?.delivery_rate ?? 0}%
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Of all dispatched orders
+            </p>
+          </CardContent>
+        </Card>
 
-        <div className="glass-card p-4">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-400">Return Loss</span>
-            <TrendingDown className="w-4 h-4 text-rose-400" />
-          </div>
-          <div className="text-2xl font-bold text-rose-400 mt-2 tabular-nums font-mono">
-            {formatBDT(stats?.rto_loss ?? 0)}
-          </div>
-          <p className="text-[11px] text-rose-400/80 mt-1">
-            {stats?.returned_count ?? 0} returned
-          </p>
-        </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Return Loss</CardTitle>
+            <TrendingDown className="h-4 w-4 text-destructive" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-destructive tabular-nums">
+              {formatBDT(stats?.rto_loss ?? 0)}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {stats?.returned_count ?? 0} returned
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Connected Couriers */}
-      <div className="space-y-3">
+      <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-white">
-            Connected Couriers
-          </h2>
-          <span className="text-xs text-slate-400 flex items-center gap-1.5">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Encrypted</span>
-          </span>
+          <h2 className="text-lg font-semibold tracking-tight">Connected Couriers</h2>
+          <Badge variant="outline" className="border-emerald-500 text-emerald-600 bg-emerald-500/10">
+            <ShieldCheck className="w-3 h-3 mr-1" />
+            Encrypted Keys
+          </Badge>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {couriers.map((c) => {
             const isRevealed = Boolean(showKey[c.id]);
+            const isConnected = Boolean(connectedMap.get(c.id));
 
             return (
-              <div
-                key={c.id}
-                className="glass-card p-5 relative overflow-hidden flex flex-col justify-between"
-              >
+              <Card key={c.id} className="relative overflow-hidden flex flex-col justify-between pt-1">
                 {/* Top accent line */}
-                <div className={`absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r ${c.accentColor}`} />
+                <div className={`absolute top-0 left-0 right-0 h-1 ${c.accentColor}`} />
 
-                <div>
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-xl border flex items-center justify-center font-headline font-bold text-sm ${c.logoBg}`}>
+                <CardContent className="p-5 flex-1">
+                  <div className="flex items-start justify-between mb-5">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-10 h-10 rounded-lg border flex items-center justify-center font-bold text-sm shrink-0 ${c.logoBg}`}>
                         {c.code}
                       </div>
                       <div>
-                        <h3 className="font-headline font-bold text-sm text-white">
+                        <h3 className="font-semibold text-base">
                           {c.name}
                         </h3>
-                        <p className="text-[11px] text-slate-400 font-mono mt-0.5">{c.sub}</p>
+                        {c.sub && <p className="text-xs text-muted-foreground mt-0.5">{c.sub}</p>}
                       </div>
                     </div>
 
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-label font-medium bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                      Live
-                    </span>
+                    <Badge variant={isConnected ? 'outline' : 'secondary'} className={isConnected ? 'border-emerald-500 text-emerald-600 bg-emerald-500/10' : ''}>
+                      {isConnected && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-pulse" />}
+                      {isConnected ? 'Live' : 'Offline'}
+                    </Badge>
                   </div>
 
                   {/* Quick stats grid */}
-                  <div className="grid grid-cols-3 gap-2 py-2 px-3 rounded-xl bg-white/[0.03] border border-white/[0.05] mb-4 text-center">
+                  <div className="grid grid-cols-3 gap-2 p-3 rounded-lg bg-muted/50 border mb-5 text-center">
                     <div>
-                      <div className="text-[10px] text-slate-500 uppercase font-label">Dispatched</div>
-                      <div className="text-xs font-headline font-bold text-white mt-0.5">{c.dispatched}</div>
+                      <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wide">Dispatched</div>
+                      <div className="text-sm font-semibold mt-1">{c.dispatched}</div>
                     </div>
-                    <div className="border-x border-white/[0.06]">
-                      <div className="text-[10px] text-slate-500 uppercase font-label">SLA</div>
-                      <div className="text-xs font-headline font-bold text-emerald-400 mt-0.5">{c.latency}</div>
+                    <div className="border-x">
+                      <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wide">SLA</div>
+                      <div className="text-sm font-semibold text-emerald-600 mt-1">{c.latency}</div>
                     </div>
                     <div>
-                      <div className="text-[10px] text-slate-500 uppercase font-label">COD Value</div>
-                      <div className="text-xs font-mono font-bold text-white mt-0.5">{c.cod}</div>
+                      <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wide">COD Value</div>
+                      <div className="text-sm font-semibold tabular-nums mt-1">{c.cod}</div>
                     </div>
                   </div>
 
                   {/* Masked API Key */}
-                  <div className="space-y-1 mb-3">
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="text-slate-300">{c.keyLabel}</span>
+                  <div className="space-y-1.5 mb-4">
+                    <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                      {c.keyLabel}
                     </div>
                     <div className="relative">
-                      <input
+                      <Input
                         type={isRevealed ? 'text' : 'password'}
                         value={c.dummyKey}
                         readOnly
-                        className="glass-input w-full px-3 py-2 text-xs font-mono text-slate-400 pr-9 focus:outline-none"
+                        className="font-mono text-sm pr-10 bg-muted/30"
                       />
-                      <button
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         type="button"
                         onClick={() => toggleShowKey(c.id)}
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-white"
+                        className="absolute inset-y-0 right-0 h-9 w-9 text-muted-foreground"
                       >
-                        {isRevealed ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                      </button>
+                        {isRevealed ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </Button>
                     </div>
                   </div>
 
                   {/* Webhook Endpoint */}
-                  <div className="space-y-1 mb-4">
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="text-slate-300">Webhook URL</span>
+                  <div className="space-y-1.5">
+                    <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                      Webhook URL
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="glass-input flex-1 px-2.5 py-1.5 text-[11px] font-mono text-slate-400 truncate">
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 px-3 py-2 bg-muted/50 border rounded-md text-xs font-mono text-primary font-medium truncate">
                         {c.webhookUrl}
                       </div>
-                      <button
+                      <Button
+                        variant="outline"
+                        size="icon"
                         type="button"
                         onClick={() => copyWebhookUrl(c.id)}
-                        className="p-2 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 rounded-xl text-slate-300 hover:text-white transition-all"
+                        className="shrink-0 h-8 w-8"
                         title="Copy Webhook"
                       >
-                        {copiedUrl === c.id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                      </button>
+                        {copiedUrl === c.id ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+                      </Button>
                     </div>
                   </div>
-                </div>
+                </CardContent>
 
-                <div className="pt-3 border-t border-white/[0.06] flex items-center gap-2">
-                  <button
+                <div className="p-4 border-t bg-muted/10 flex items-center gap-2">
+                  <Button
+                    variant="outline"
                     onClick={() => handleOpenConfig(c.id)}
-                    className="flex-1 py-2 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-xs font-label font-medium text-white transition-all flex items-center justify-center gap-1.5"
+                    className="flex-1 text-sm font-medium"
                     type="button"
                   >
-                    <Settings className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Configure Keys</span>
-                  </button>
-                  <button
+                    <Settings className="w-4 h-4 mr-2 text-muted-foreground" />
+                    Configure Keys
+                  </Button>
+                  <Button
+                    variant="secondary"
                     onClick={() => toast(`Ping dispatched to ${c.name}! Status: Live`, 'success')}
-                    className="py-2 px-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 text-xs font-label text-slate-300 hover:text-white transition-all"
+                    className="text-sm font-medium"
                     type="button"
                   >
                     Test Ping
-                  </button>
+                  </Button>
                 </div>
-              </div>
+              </Card>
             );
           })}
         </div>
       </div>
 
       {/* 4. Delivery Performance Matrix */}
-      <div className="glass-card p-5 space-y-5">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-white/10">
+      <Card>
+        <CardHeader className="p-4 sm:px-6 sm:pt-6 pb-4 border-b flex flex-row items-center justify-between">
           <div>
-            <h2 className="text-sm font-semibold text-white">
-              Delivery Performance
-            </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Last 30 days
-            </p>
+            <CardTitle>Delivery Performance</CardTitle>
+            <CardDescription className="mt-1">Last 30 days</CardDescription>
           </div>
-
-          <div className="flex items-center gap-4 text-xs font-label">
-            <div className="flex items-center gap-1.5 text-slate-300">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+          <div className="flex items-center gap-4 text-sm font-medium">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
               <span>Delivered</span>
             </div>
-            <div className="flex items-center gap-1.5 text-slate-300">
-              <span className="w-2.5 h-2.5 rounded-full bg-rose-400" />
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-rose-500" />
               <span>Returned</span>
             </div>
-            <div className="flex items-center gap-1.5 text-slate-300">
-              <span className="w-2.5 h-2.5 rounded-full bg-slate-600" />
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-slate-700" />
               <span>In Transit</span>
             </div>
           </div>
-        </div>
-
-        <div className="space-y-4">
+        </CardHeader>
+        <CardContent className="p-4 sm:p-6 space-y-6">
           {[
             { id: 'steadfast' as const, name: 'Steadfast Courier' },
             { id: 'pathao' as const, name: 'Pathao Courier' },
@@ -469,23 +487,23 @@ export default function CourierPage() {
             const inTransitRate = Math.max(0, 100 - delRate - retRate);
 
             return (
-              <div key={provider.id} className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs">
+              <div key={provider.id} className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-white">{provider.name}</span>
-                    <span className="text-[10px] text-slate-500 font-mono">
+                    <span className="font-semibold">{provider.name}</span>
+                    <span className="text-xs text-muted-foreground font-mono">
                       ({dispatched} {dispatched === 1 ? 'parcel' : 'parcels'} total)
                     </span>
                   </div>
-                  <span className="font-mono text-emerald-400 font-medium">
+                  <span className="font-mono text-emerald-600 font-medium">
                     {dispatched === 0
                       ? 'No parcels dispatched yet'
                       : `${delRate}% Delivered (${retRate}% Returned · ${inTransit} in transit)`}
                   </span>
                 </div>
-                <div className="w-full h-2.5 bg-white/[0.05] rounded-full overflow-hidden flex border border-white/[0.06]">
+                <div className="w-full h-2.5 bg-secondary rounded-full overflow-hidden flex">
                   {dispatched === 0 ? (
-                    <div className="h-full w-full bg-white/[0.02]" />
+                    <div className="h-full w-full bg-secondary" />
                   ) : (
                     <>
                       {delRate > 0 && (
@@ -504,7 +522,7 @@ export default function CourierPage() {
                       )}
                       {inTransitRate > 0 && (
                         <div
-                          className="h-full bg-slate-600 transition-all duration-500"
+                          className="h-full bg-slate-300 dark:bg-slate-700 transition-all duration-500"
                           style={{ width: `${inTransitRate}%` }}
                           title={`In Transit: ${inTransit}`}
                         />
@@ -515,8 +533,8 @@ export default function CourierPage() {
               </div>
             );
           })}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Configure Credentials Modal */}
       <Modal
@@ -525,7 +543,7 @@ export default function CourierPage() {
         title={`Configure ${selectedProvider.toUpperCase()}`}
         maxWidth="md"
       >
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <Select
             label="Courier Provider"
             value={selectedProvider}
@@ -537,7 +555,7 @@ export default function CourierPage() {
             ]}
           />
 
-          <Input
+          <FormInput
             label="API Key / Client ID"
             placeholder="Enter production API key"
             value={apiKey}
@@ -545,7 +563,7 @@ export default function CourierPage() {
             required
           />
 
-          <Input
+          <FormInput
             type="password"
             label={`Secret Key / Password ${selectedProvider === 'redx' ? '(Optional)' : ''}`}
             placeholder="Enter secret key"
@@ -554,12 +572,12 @@ export default function CourierPage() {
             required={selectedProvider !== 'redx'}
           />
 
-          <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-slate-400 flex items-center gap-2 font-body">
-            <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span>Encrypted using AES-256-GCM before persistent database storage.</span>
+          <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-sm text-emerald-600 font-medium flex items-start gap-2">
+            <ShieldCheck className="w-4 h-4 shrink-0 mt-0.5" />
+            <span className="leading-snug">Encrypted using AES-256-GCM before persistent database storage.</span>
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-3">
+          <div className="flex items-center justify-end gap-2 pt-4 border-t mt-2">
             <Button
               type="button"
               variant="outline"
@@ -569,10 +587,9 @@ export default function CourierPage() {
             </Button>
             <Button
               type="submit"
-              variant="primary"
-              isLoading={saveMutation.isPending}
+              disabled={saveMutation.isPending}
             >
-              Save Credentials
+              {saveMutation.isPending ? 'Saving...' : 'Save Credentials'}
             </Button>
           </div>
         </form>

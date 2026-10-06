@@ -10,14 +10,34 @@ import {
   AlertTriangle,
   TrendingUp,
   Trash2,
-  PackageCheck,
   Pencil,
   History,
 } from 'lucide-react';
 import { fetchApi, formatBDT, formatDate } from '@/lib/apiClient';
 import { useAuth, useToast } from '@/app/providers';
-import { Button } from '@/components/ui/Button';
-import { Input, Select } from '@/components/ui/Input';
+
+// Shadcn imports
+import { Button } from '@/components/ui/shadcn/button';
+import { Badge } from '@/components/ui/shadcn/badge';
+import { Input } from '@/components/ui/shadcn/input';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/shadcn/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/shadcn/table";
+
+// Old UI components with internal state/logic that we shouldn't break
+import { Input as FormInput, Select } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { TableSkeleton } from '@/components/ui/TableSkeleton';
 
@@ -180,7 +200,7 @@ export default function InventoryPage() {
     setEditName(prod.name);
     setEditSku(prod.sku || '');
     setEditBuyPrice(prod.buy_price);
-    setSellPrice(prod.sell_price);
+    setEditSellPrice(prod.sell_price);
     setEditLowStockThreshold(prod.low_stock_threshold);
     setEditModalOpen(true);
   };
@@ -238,272 +258,260 @@ export default function InventoryPage() {
   const pagination = data?.pagination || { total: 0, totalPages: 1, page: 1 };
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="font-bold text-xl text-white">
-            Products
-          </h1>
-          <p className="text-sm text-slate-500 mt-0.5">
-            Track your products, stock, and pricing.
-          </p>
+          <h1 className="text-2xl font-semibold tracking-tight">Inventory</h1>
+          <p className="text-sm text-muted-foreground mt-1">Manage your catalog, stock levels, and adjustments.</p>
         </div>
 
-        {isOwner && (
-          <button
-            type="button"
-            onClick={() => setAddModalOpen(true)}
-            className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 text-white text-xs font-semibold rounded-xl shadow-lg shadow-violet-600/30 active:scale-[0.98] transition-all"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Add Product</span>
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {search && (
+            <Button variant="ghost" size="sm" onClick={() => setSearch('')}>
+              Clear filter
+            </Button>
+          )}
+
+          {isOwner && (
+            <Button size="sm" onClick={() => setAddModalOpen(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add Product
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-        <div className="glass-card p-4">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-400">Total Products</span>
-            <Boxes className="w-4 h-4 text-violet-400" />
-          </div>
-          <div className="text-2xl font-bold text-white mt-2 tabular-nums">
-            {pagination.total}
-          </div>
-          <p className="text-[11px] text-slate-500 mt-1">Total products</p>
-        </div>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Products</CardTitle>
+            <Boxes className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold tabular-nums">{pagination.total}</div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Stock Value</CardTitle>
+            <TrendingUp className="h-4 w-4 text-emerald-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold tabular-nums">
+              {formatBDT(products.reduce((acc, p) => acc + (p.buy_price * p.stock_quantity), 0))}
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="glass-card p-4">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-400">Stock Value</span>
-            <TrendingUp className="w-4 h-4 text-emerald-400" />
-          </div>
-          <div className="text-2xl font-bold text-emerald-400 mt-2 tabular-nums font-mono">
-            {formatBDT(products.reduce((acc, p) => acc + (p.buy_price * p.stock_quantity), 0))}
-          </div>
-          <p className="text-[11px] text-emerald-400/80 mt-1">Total stock value</p>
-        </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Low Stock</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-amber-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold tabular-nums">
+              {products.filter((p) => p.stock_quantity <= p.low_stock_threshold && p.stock_quantity > 0).length}
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="glass-card p-4">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-400">Low Stock</span>
-            <AlertTriangle className="w-4 h-4 text-amber-400" />
-          </div>
-          <div className="text-2xl font-bold text-amber-400 mt-2 tabular-nums">
-            {products.filter((p) => p.stock_quantity <= p.low_stock_threshold && p.stock_quantity > 0).length}
-          </div>
-          <p className="text-[11px] text-amber-400/80 mt-1">Need restocking</p>
-        </div>
-
-        <div className="glass-card p-4">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-400">Out of Stock</span>
-            <AlertTriangle className="w-4 h-4 text-rose-400" />
-          </div>
-          <div className="text-2xl font-bold text-rose-400 mt-2 tabular-nums">
-            {products.filter((p) => p.stock_quantity <= 0).length}
-          </div>
-          <p className="text-[11px] text-rose-400/80 mt-1">Out of stock</p>
-        </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Out of Stock</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-destructive" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold tabular-nums text-destructive">
+              {products.filter((p) => p.stock_quantity <= 0).length}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Search Ribbon */}
-      <div className="glass-card p-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        <div className="relative flex-1 max-w-md">
-          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-          <input
-            id="catalog-search"
-            type="text"
-            placeholder="Search SKU tag, product title..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-            className="glass-input w-full pl-9 pr-3 py-2 text-xs"
-          />
-        </div>
-
-        {search && (
-          <button
-            onClick={() => setSearch('')}
-            className="text-xs text-slate-400 hover:text-white px-2 py-1 font-label"
-          >
-            Clear filter
-          </button>
-        )}
-      </div>
-
-      {/* Products Glass Table */}
-      <div className="glass-card overflow-hidden">
-        {isLoading ? (
-          <TableSkeleton rows={6} cols={7} />
-        ) : products.length === 0 ? (
-          <div className="py-20 text-center">
-            <Boxes className="w-10 h-10 text-slate-600 mx-auto mb-2" />
-            <p className="text-sm text-slate-400 font-headline font-semibold">No products in inventory</p>
-            {isOwner && (
-              <Button
-                variant="primary"
-                size="sm"
-                className="mt-3"
-                onClick={() => setAddModalOpen(true)}
-              >
-                Add First Product
-              </Button>
-            )}
+      {/* Products Table */}
+      <Card>
+        <CardHeader className="p-4 sm:px-6 sm:pt-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <CardTitle>Catalog</CardTitle>
+            <div className="relative flex-1 w-full max-w-sm">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search SKU tag, product title..."
+                className="pl-8"
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+              />
+            </div>
           </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-white/[0.02] border-b border-white/10 text-slate-400 text-[11px]">
-                <tr>
-                  <th className="py-3.5 px-4 font-semibold">Product Name</th>
-                  <th className="py-3.5 px-4 font-semibold">SKU</th>
-                  <th className="py-3.5 px-4 font-semibold">Buy Price</th>
-                  <th className="py-3.5 px-4 font-semibold">Sell Price</th>
-                  <th className="py-3.5 px-4 font-semibold">Margin</th>
-                  <th className="py-3.5 px-4 font-semibold">Stock</th>
-                  <th className="py-3.5 px-4 text-right font-semibold">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/[0.05]">
+        </CardHeader>
+        <CardContent className="p-0 sm:px-6 sm:pb-6">
+          {isLoading ? (
+            <div className="p-6">
+              <TableSkeleton rows={6} cols={7} />
+            </div>
+          ) : products.length === 0 ? (
+            <div className="py-20 text-center">
+              <Boxes className="w-10 h-10 text-muted-foreground mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground font-medium">No products in inventory</p>
+              {isOwner && (
+                <Button className="mt-4" onClick={() => setAddModalOpen(true)}>
+                  Add First Product
+                </Button>
+              )}
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[300px]">Product Name</TableHead>
+                  <TableHead>SKU</TableHead>
+                  <TableHead>Buy Price</TableHead>
+                  <TableHead>Sell Price</TableHead>
+                  <TableHead>Margin</TableHead>
+                  <TableHead>Stock</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {products.map((prod) => {
                   const isLow = prod.stock_quantity <= prod.low_stock_threshold && prod.stock_quantity > 0;
                   const isOutOfStock = prod.stock_quantity <= 0;
                   const unitMargin = prod.sell_price - prod.buy_price;
 
                   return (
-                    <tr
-                      key={prod.id}
-                      className="hover:bg-white/[0.02] transition-colors"
-                    >
-                      <td className="py-3.5 px-4 font-semibold text-white">
+                    <TableRow key={prod.id}>
+                      <TableCell className="font-medium">
                         {prod.name}
-                      </td>
-                      <td className="py-3.5 px-4 font-mono text-violet-300">
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
                         {prod.sku || '—'}
-                      </td>
-                      <td className="py-3.5 px-4 text-slate-400 font-mono">
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
                         {formatBDT(prod.buy_price)}
-                      </td>
-                      <td className="py-3.5 px-4 font-mono font-bold text-white tabular-nums">
+                      </TableCell>
+                      <TableCell className="font-semibold tabular-nums">
                         {formatBDT(prod.sell_price)}
-                      </td>
-                      <td className="py-3.5 px-4 text-emerald-400 font-mono font-medium">
+                      </TableCell>
+                      <TableCell className="text-emerald-600 font-medium">
                         +{formatBDT(unitMargin)}
-                      </td>
-                      <td className="py-3.5 px-4">
+                      </TableCell>
+                      <TableCell>
                         <div className="flex items-center gap-2">
-                          <span
-                            className={`font-bold font-mono tabular-nums ${
-                              isOutOfStock
-                                ? 'text-rose-400'
-                                : isLow
-                                ? 'text-amber-400'
-                                : 'text-slate-100'
-                            }`}
-                          >
+                          <span className={`font-semibold tabular-nums ${
+                            isOutOfStock ? 'text-destructive' : isLow ? 'text-amber-600' : ''
+                          }`}>
                             {prod.stock_quantity}
                           </span>
                           {isOutOfStock ? (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-label font-medium bg-rose-500/15 text-rose-300 border border-rose-500/30">
+                            <Badge variant="destructive" className="h-5 text-[10px] px-1.5 font-semibold">
                               Out of Stock
-                            </span>
+                            </Badge>
                           ) : isLow ? (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-label font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                            <Badge variant="outline" className="h-5 text-[10px] px-1.5 border-amber-500 text-amber-600 bg-amber-500/10">
                               Low Stock
-                            </span>
+                            </Badge>
                           ) : null}
                         </div>
-                      </td>
-                      <td className="py-3.5 px-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
                           {isOwner && (
-                            <button
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground"
                               onClick={() => openEditModal(prod)}
-                              title="Edit Product Details"
-                              className="p-1.5 text-slate-400 hover:text-white hover:bg-white/[0.08] rounded-lg transition-colors"
+                              title="Edit Product"
                             >
-                              <Pencil className="w-3.5 h-3.5" />
-                            </button>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
                           )}
-
-                          <button
+                          
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-primary"
                             onClick={() => {
                               setSelectedProduct(prod);
                               setAdjustModalOpen(true);
                             }}
                             title="Adjust Stock"
-                            className="px-2 py-1 bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 border border-white/10 rounded-lg text-xs font-label font-medium flex items-center gap-1 transition-all"
                           >
-                            <ArrowUpDown className="w-3 h-3 text-violet-400" />
-                            <span>Adjust</span>
-                          </button>
+                            <ArrowUpDown className="h-4 w-4" />
+                          </Button>
 
-                          <button
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground"
                             onClick={() => {
                               setHistoryProduct(prod);
                               setHistoryModalOpen(true);
                             }}
-                            title="View Stock Movements History"
-                            className="p-1.5 text-slate-400 hover:text-cyan-300 hover:bg-white/[0.08] rounded-lg transition-colors"
+                            title="View History"
                           >
-                            <History className="w-3.5 h-3.5" />
-                          </button>
+                            <History className="h-4 w-4" />
+                          </Button>
 
                           {isOwner && (
-                            <button
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive"
                               onClick={() => {
                                 if (confirm(`Archive product "${prod.name}"?`)) {
                                   archiveMutation.mutate(prod.id);
                                 }
                               }}
                               title="Archive Product"
-                              className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           )}
                         </div>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   );
                 })}
-              </tbody>
-            </table>
-          </div>
-        )}
+              </TableBody>
+            </Table>
+          )}
 
-        {/* Pagination */}
-        {pagination.totalPages > 1 && (
-          <div className="flex items-center justify-between p-4 bg-white/[0.02] border-t border-white/10 text-xs">
-            <span className="text-slate-400 font-label">
-              Page {pagination.page} of {pagination.totalPages} ({pagination.total} products)
-            </span>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page <= 1}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-              >
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page >= pagination.totalPages}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                Next
-              </Button>
+          {/* Pagination */}
+          {pagination.totalPages > 1 && (
+            <div className="flex items-center justify-between px-6 py-4 border-t border-border">
+              <span className="text-sm text-muted-foreground font-medium">
+                Page {pagination.page} of {pagination.totalPages} ({pagination.total} products)
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                >
+                  Prev
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page >= pagination.totalPages}
+                  onClick={() => setPage((p) => p + 1)}
+                >
+                  Next
+                </Button>
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Add Product Modal */}
       <Modal
@@ -513,7 +521,7 @@ export default function InventoryPage() {
         maxWidth="lg"
       >
         <form onSubmit={handleAddSubmit} className="space-y-4">
-          <Input
+          <FormInput
             label="Product Title"
             placeholder="e.g. Premium Cotton Polo Shirt"
             value={name}
@@ -522,14 +530,14 @@ export default function InventoryPage() {
           />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input
+            <FormInput
               label="SKU / Barcode"
               placeholder="POLO-BLK-M"
               value={sku}
               onChange={(e) => setSku(e.target.value)}
             />
 
-            <Input
+            <FormInput
               type="number"
               min="0"
               label="Low Stock Threshold"
@@ -541,7 +549,7 @@ export default function InventoryPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Input
+            <FormInput
               type="number"
               min="0"
               step="1"
@@ -552,7 +560,7 @@ export default function InventoryPage() {
               required
             />
 
-            <Input
+            <FormInput
               type="number"
               min="0"
               step="1"
@@ -563,7 +571,7 @@ export default function InventoryPage() {
               required
             />
 
-            <Input
+            <FormInput
               type="number"
               min="0"
               step="1"
@@ -576,19 +584,11 @@ export default function InventoryPage() {
           </div>
 
           <div className="flex items-center justify-end gap-3 pt-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setAddModalOpen(false)}
-            >
+            <Button type="button" variant="outline" onClick={() => setAddModalOpen(false)}>
               Cancel
             </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              isLoading={createProductMutation.isPending}
-            >
-              Create Product
+            <Button type="submit" disabled={createProductMutation.isPending}>
+              {createProductMutation.isPending ? 'Creating...' : 'Create Product'}
             </Button>
           </div>
         </form>
@@ -602,8 +602,8 @@ export default function InventoryPage() {
         maxWidth="md"
       >
         <form onSubmit={handleAdjustSubmit} className="space-y-4">
-          <p className="text-xs text-slate-400 font-body">
-            Current Stock: <strong className="text-white font-mono">{selectedProduct?.stock_quantity} units</strong>. Every adjustment is immutably logged.
+          <p className="text-sm text-muted-foreground">
+            Current Stock: <strong className="text-foreground">{selectedProduct?.stock_quantity} units</strong>. Every adjustment is immutably logged.
           </p>
 
           <Select
@@ -616,7 +616,7 @@ export default function InventoryPage() {
             ]}
           />
 
-          <Input
+          <FormInput
             type="number"
             min="1"
             label="Units to Adjust"
@@ -638,19 +638,11 @@ export default function InventoryPage() {
           />
 
           <div className="flex items-center justify-end gap-3 pt-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setAdjustModalOpen(false)}
-            >
+            <Button type="button" variant="outline" onClick={() => setAdjustModalOpen(false)}>
               Cancel
             </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              isLoading={adjustStockMutation.isPending}
-            >
-              Commit Adjustment
+            <Button type="submit" disabled={adjustStockMutation.isPending}>
+              {adjustStockMutation.isPending ? 'Committing...' : 'Commit Adjustment'}
             </Button>
           </div>
         </form>
@@ -664,7 +656,7 @@ export default function InventoryPage() {
         maxWidth="lg"
       >
         <form onSubmit={handleEditSubmit} className="space-y-4">
-          <Input
+          <FormInput
             label="Product Title"
             placeholder="e.g. Premium Cotton Polo Shirt"
             value={editName}
@@ -673,14 +665,14 @@ export default function InventoryPage() {
           />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input
+            <FormInput
               label="SKU / Barcode"
               placeholder="POLO-BLK-M"
               value={editSku}
               onChange={(e) => setEditSku(e.target.value)}
             />
 
-            <Input
+            <FormInput
               type="number"
               min="0"
               label="Low Stock Threshold"
@@ -692,7 +684,7 @@ export default function InventoryPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input
+            <FormInput
               type="number"
               min="0"
               step="any"
@@ -702,7 +694,7 @@ export default function InventoryPage() {
               required
             />
 
-            <Input
+            <FormInput
               type="number"
               min="0"
               step="any"
@@ -713,24 +705,16 @@ export default function InventoryPage() {
             />
           </div>
 
-          <p className="text-xs text-slate-400 font-body">
-            Note: To change inventory count, please use the dedicated <strong className="text-violet-400 font-semibold">Adjust</strong> button to maintain an immutable audit trail.
+          <p className="text-sm text-muted-foreground">
+            Note: To change inventory count, please use the dedicated <strong className="text-primary font-medium">Adjust</strong> button to maintain an immutable audit trail.
           </p>
 
           <div className="flex items-center justify-end gap-3 pt-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setEditModalOpen(false)}
-            >
+            <Button type="button" variant="outline" onClick={() => setEditModalOpen(false)}>
               Cancel
             </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              isLoading={editProductMutation.isPending}
-            >
-              Save Changes
+            <Button type="submit" disabled={editProductMutation.isPending}>
+              {editProductMutation.isPending ? 'Saving...' : 'Save Changes'}
             </Button>
           </div>
         </form>
@@ -743,61 +727,61 @@ export default function InventoryPage() {
         title={`Stock Ledger History — ${historyProduct?.name}`}
         maxWidth="lg"
       >
-        <div className="space-y-3">
-          <div className="flex items-center justify-between text-xs text-slate-400 border-b border-white/[0.08] pb-2">
-            <span>SKU: <strong className="text-white font-mono">{historyProduct?.sku || 'None'}</strong></span>
-            <span>Current Balance: <strong className="text-emerald-400 font-mono text-sm">{historyProduct?.stock_quantity} units</strong></span>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between text-sm text-muted-foreground border-b pb-3">
+            <span>SKU: <strong className="text-foreground">{historyProduct?.sku || 'None'}</strong></span>
+            <span>Current Balance: <strong className="text-foreground font-semibold">{historyProduct?.stock_quantity} units</strong></span>
           </div>
 
           <div className="overflow-x-auto max-h-[380px] overflow-y-auto">
             {movementsLoading ? (
               <TableSkeleton rows={4} cols={4} />
             ) : (!movementsData?.movements || movementsData.movements.length === 0) ? (
-              <div className="py-12 text-center text-xs text-slate-500">
+              <div className="py-12 text-center text-sm text-muted-foreground">
                 No stock movement transactions recorded yet for this product.
               </div>
             ) : (
-              <table className="w-full text-left text-xs">
-                <thead className="bg-white/[0.02] border-b border-white/10 text-slate-400 uppercase font-label text-[10px] tracking-wider sticky top-0 bg-[#0d1117]">
-                  <tr>
-                    <th className="py-2.5 px-3">Date</th>
-                    <th className="py-2.5 px-3">Direction</th>
-                    <th className="py-2.5 px-3 text-right">Units</th>
-                    <th className="py-2.5 px-3">Reason / Context</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/[0.05]">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Direction</TableHead>
+                    <TableHead className="text-right">Units</TableHead>
+                    <TableHead>Reason / Context</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {movementsData.movements.map((m) => (
-                    <tr key={m.id} className="hover:bg-white/[0.02]">
-                      <td className="py-2.5 px-3 font-mono text-slate-400 text-[11px]">
+                    <TableRow key={m.id}>
+                      <TableCell className="text-xs text-muted-foreground">
                         {formatDate(m.created_at)}
-                      </td>
-                      <td className="py-2.5 px-3">
+                      </TableCell>
+                      <TableCell>
                         {m.direction === 'in' ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
+                          <Badge variant="outline" className="border-emerald-500 text-emerald-600 bg-emerald-500/10 font-bold px-2 py-0.5 text-[10px]">
                             ▲ IN
-                          </span>
+                          </Badge>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/15 text-rose-400 border border-rose-500/25">
+                          <Badge variant="destructive" className="font-bold px-2 py-0.5 text-[10px]">
                             ▼ OUT
-                          </span>
+                          </Badge>
                         )}
-                      </td>
-                      <td className="py-2.5 px-3 text-right font-mono font-bold text-white text-xs">
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
                         {m.quantity}
-                      </td>
-                      <td className="py-2.5 px-3 text-slate-300 capitalize text-[11px]">
+                      </TableCell>
+                      <TableCell className="capitalize text-xs text-muted-foreground">
                         {m.reason.replace(/_/g, ' ')}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             )}
           </div>
 
-          <div className="flex justify-end pt-3 border-t border-white/[0.06]">
-            <Button variant="outline" size="sm" onClick={() => setHistoryModalOpen(false)}>
+          <div className="flex justify-end pt-3">
+            <Button variant="outline" onClick={() => setHistoryModalOpen(false)}>
               Close
             </Button>
           </div>

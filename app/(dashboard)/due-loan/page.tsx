@@ -23,9 +23,29 @@ import {
 } from 'lucide-react';
 import { fetchApi, formatBDT, formatDate } from '@/lib/apiClient';
 import { useToast } from '@/app/providers';
-import { Button } from '@/components/ui/Button';
-import { Input, Select } from '@/components/ui/Input';
+
+// Shadcn imports
+import { Button } from '@/components/ui/shadcn/button';
+import { Badge } from '@/components/ui/shadcn/badge';
+import { Input } from '@/components/ui/shadcn/input';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/shadcn/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/shadcn/table";
+
+// Old UI components
 import { Modal } from '@/components/ui/Modal';
+import { Input as FormInput, Select } from '@/components/ui/Input';
 import { TableSkeleton } from '@/components/ui/TableSkeleton';
 
 interface DueLoanSummary {
@@ -295,362 +315,250 @@ export default function DueLoanPage() {
   const netPosition = totalDueVal - totalLoanVal;
 
   return (
-    <div className="flex flex-col w-full gap-6 max-w-[1600px] mx-auto pb-14">
-      {/* Sub-Navigation Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-4 pb-1">
-        <nav className="flex items-center gap-1.5 p-1 rounded-xl glass-card">
-          <Link
-            href="/accounts"
-            className="px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-white/[0.04] transition-colors"
-          >
-            Overview
-          </Link>
-          <Link
-            href="/accounts"
-            className="px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-white/[0.04] transition-colors"
-          >
-            Bill & Cost
-          </Link>
-          <Link
-            href="/payroll"
-            className="px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-white/[0.04] transition-colors"
-          >
-            Salary & Attendance
-          </Link>
-          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-brand-violet/20 border border-brand-violet/40 text-violet-200 text-xs font-semibold shadow-sm">
-            <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
-            <span>Due & Loan Ledger</span>
-          </div>
-        </nav>
+    <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 pb-14">
+      {/* Header & Controls */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Due & Loan</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Manage customer receivables and institutional liabilities.
+          </p>
+        </div>
 
-        {/* Action Controls */}
-        <div className="flex items-center gap-3">
-          <button
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => toast('Ledger CSV export generated', 'success')}
-            className="btn-glass flex items-center gap-2 px-3.5 py-2 text-xs font-medium text-slate-300"
-            type="button"
           >
-            <Download className="w-3.5 h-3.5 text-slate-400" />
-            <span>Export CSV</span>
-          </button>
-          <button
+            <Download className="w-4 h-4 mr-2" />
+            Export CSV
+          </Button>
+          <Button
+            size="sm"
             onClick={() => {
               setEntryType(activeTab === 'due' ? 'credit' : 'borrowed');
               setModalOpen(true);
             }}
-            className="btn-gradient-glow flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white"
-            type="button"
           >
-            <Plus className="w-4 h-4" />
-            <span>{activeTab === 'due' ? 'Record Customer Due' : 'Record Loan'}</span>
-          </button>
+            <Plus className="w-4 h-4 mr-2" />
+            {activeTab === 'due' ? 'Record Customer Due' : 'Record Loan'}
+          </Button>
         </div>
       </div>
 
       {/* 1. HERO KPI CARDS */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <div className="grid gap-4 sm:grid-cols-3">
         {/* Card 1: Total Customer Due */}
-        <div className="glass-card p-6 rounded-2xl relative overflow-hidden group hover:border-emerald-500/40 transition-all duration-300">
-          <div className="absolute top-0 left-0 w-1.5 h-full bg-emerald-500" />
-          <div className="absolute -right-8 -top-8 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none group-hover:bg-emerald-500/20 transition-all" />
-
-          <div className="flex items-start justify-between">
-            <div className="space-y-1">
-              <span className="text-xs font-medium text-slate-400 tracking-wide">
-                Total Customer Due (Receivable)
-              </span>
-              <div className="flex items-baseline gap-2 pt-1">
-                <span className="text-3xl font-bold font-headline tracking-tight text-white">
-                  {summaryLoading ? '...' : formatBDT(totalDueVal)}
-                </span>
-                <span className="text-[11px] font-mono font-semibold text-emerald-400">BDT</span>
-              </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Receivable</CardTitle>
+            <User className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold tabular-nums">
+              {summaryLoading ? '...' : formatBDT(totalDueVal)}
             </div>
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center">
-              <Wallet className="w-5 h-5" />
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 mt-4 pt-3 border-t border-white/[0.06]">
-            <span className="badge-green text-[10px] font-semibold">
-              Active Receivables
-            </span>
-            <span className="text-xs text-slate-400">Bakir Khata ledger balance</span>
-          </div>
-        </div>
+            <p className="text-xs text-muted-foreground mt-1">Customer due balance</p>
+          </CardContent>
+        </Card>
 
         {/* Card 2: Total Loan Balance */}
-        <div className="glass-card p-6 rounded-2xl relative overflow-hidden group hover:border-rose-500/40 transition-all duration-300">
-          <div className="absolute top-0 left-0 w-1.5 h-full bg-rose-500" />
-          <div className="absolute -right-8 -top-8 w-24 h-24 bg-rose-500/10 rounded-full blur-2xl pointer-events-none group-hover:bg-rose-500/20 transition-all" />
-
-          <div className="flex items-start justify-between">
-            <div className="space-y-1">
-              <span className="text-xs font-medium text-slate-400 tracking-wide">
-                Total Loan Balance (Payable)
-              </span>
-              <div className="flex items-baseline gap-2 pt-1">
-                <span className="text-3xl font-bold font-headline tracking-tight text-white">
-                  {summaryLoading ? '...' : formatBDT(totalLoanVal)}
-                </span>
-                <span className="text-[11px] font-mono font-semibold text-rose-400">BDT</span>
-              </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Payable</CardTitle>
+            <Building className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold tabular-nums">
+              {summaryLoading ? '...' : formatBDT(totalLoanVal)}
             </div>
-            <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center">
-              <Building className="w-5 h-5" />
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 mt-4 pt-3 border-t border-white/[0.06]">
-            <span className="badge-red text-[10px] font-semibold">
-              Liabilities
-            </span>
-            <span className="text-xs text-slate-400">Institutional & Director loans</span>
-          </div>
-        </div>
+            <p className="text-xs text-muted-foreground mt-1">Institutional loans</p>
+          </CardContent>
+        </Card>
 
         {/* Card 3: Net Financial Position */}
-        <div className="glass-card p-6 rounded-2xl relative overflow-hidden group hover:border-brand-violet/40 transition-all duration-300">
-          <div className="absolute top-0 left-0 w-1.5 h-full bg-brand-violet" />
-          <div className="absolute -right-8 -top-8 w-24 h-24 bg-brand-violet/10 rounded-full blur-2xl pointer-events-none group-hover:bg-brand-violet/20 transition-all" />
-
-          <div className="flex items-start justify-between">
-            <div className="space-y-1">
-              <span className="text-xs font-medium text-slate-400 tracking-wide">
-                Net Financial Position
-              </span>
-              <div className="flex items-baseline gap-2 pt-1">
-                <span
-                  className={`text-3xl font-bold font-headline tracking-tight ${
-                    netPosition >= 0 ? 'text-emerald-400' : 'text-rose-400'
-                  }`}
-                >
-                  {summaryLoading ? '...' : formatBDT(netPosition)}
-                </span>
-                <span className="text-[11px] font-mono text-slate-400">
-                  {netPosition >= 0 ? 'Net Asset' : 'Net Debt'}
-                </span>
-              </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Net Position</CardTitle>
+            <Wallet className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className={`text-2xl font-bold tabular-nums ${netPosition >= 0 ? 'text-emerald-600' : 'text-destructive'}`}>
+              {summaryLoading ? '...' : formatBDT(netPosition)}
             </div>
-            <div className="w-10 h-10 rounded-xl bg-brand-violet/10 border border-brand-violet/20 text-purple-300 flex items-center justify-center">
-              <Scale className="w-5 h-5" />
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 mt-4 pt-3 border-t border-white/[0.06]">
-            <span className="badge-cyan text-[10px] font-semibold">
-              Due vs Loan
-            </span>
-            <span className="text-xs text-slate-400 truncate">Total Receivables minus Total Debt</span>
-          </div>
-        </div>
-      </section>
+            <p className="text-xs text-muted-foreground mt-1">
+              {netPosition >= 0 ? 'Net Asset' : 'Net Debt'}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* 2. SUB-TAB SWITCHER & SEARCH TOOLBAR */}
-      <section className="glass-card p-3 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="flex items-center p-1 rounded-xl bg-black/40 border border-white/[0.06] w-full md:w-auto">
-          <button
+      <Card className="flex flex-col md:flex-row items-center justify-between gap-4 p-2 sm:p-4 border">
+        <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-md w-full md:w-auto">
+          <Button
+            variant={activeTab === 'due' ? 'default' : 'ghost'}
+            className="flex-1 md:flex-none justify-center gap-2 h-9"
             onClick={() => setActiveTab('due')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium transition-all ${
-              activeTab === 'due'
-                ? 'bg-brand-violet/20 border border-brand-violet/40 text-white font-semibold shadow-sm'
-                : 'text-slate-400 hover:text-white'
-            }`}
           >
-            <User className="w-3.5 h-3.5 text-purple-400" />
+            <User className="w-4 h-4" />
             <span>Customer Due Ledger</span>
-            <span className="text-[11px] font-mono px-1.5 py-0.2 rounded-full bg-brand-violet/30 text-purple-300">
+            <Badge variant="secondary" className="ml-1 px-1.5 min-w-[20px] text-center justify-center">
               {dues?.length || 0}
-            </span>
-          </button>
-          <button
+            </Badge>
+          </Button>
+          <Button
+            variant={activeTab === 'loan' ? 'default' : 'ghost'}
+            className="flex-1 md:flex-none justify-center gap-2 h-9"
             onClick={() => setActiveTab('loan')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium transition-all ${
-              activeTab === 'loan'
-                ? 'bg-brand-magenta/20 border border-brand-magenta/40 text-white font-semibold shadow-sm'
-                : 'text-slate-400 hover:text-white'
-            }`}
           >
-            <Building className="w-3.5 h-3.5 text-pink-400" />
+            <Building className="w-4 h-4" />
             <span>Loan & Borrowings</span>
-            <span className="text-[11px] font-mono px-1.5 py-0.2 rounded-full bg-brand-magenta/30 text-pink-300">
+            <Badge variant="secondary" className="ml-1 px-1.5 min-w-[20px] text-center justify-center">
               {loans?.length || 0}
-            </span>
-          </button>
+            </Badge>
+          </Button>
         </div>
 
-        <div className="relative min-w-[280px] w-full md:w-auto">
-          <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-400" />
-          <input
+        <div className="relative w-full md:w-[300px]">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="glass-input w-full pl-9 pr-3 py-2 text-xs text-white placeholder:text-slate-500 rounded-xl"
+            className="pl-8"
             placeholder="Search party name or phone..."
-            type="text"
           />
         </div>
-      </section>
+      </Card>
 
       {/* 3. ACTIVE LEDGER TABLE */}
-      <div className="glass-card rounded-2xl overflow-hidden">
-        {activeTab === 'due' ? (
-          /* Customer Due Ledger */
-          duesLoading ? (
-            <TableSkeleton rows={5} cols={7} />
-          ) : (dues?.length || 0) === 0 ? (
-            <div className="py-20 text-center text-xs text-slate-500">No customer due entries found</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="border-b border-white/[0.06] text-slate-400 uppercase font-mono text-[10px] tracking-wider bg-white/[0.01]">
-                    <th className="py-3 px-5">Party Name</th>
-                    <th className="py-3 px-4">Contact</th>
-                    <th className="py-3 px-4">Type</th>
-                    <th className="py-3 px-4">Note</th>
-                    <th className="py-3 px-4">Date</th>
-                    <th className="py-3 px-4 text-right">Amount</th>
-                    <th className="py-3 px-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/[0.04]">
+      <Card>
+        <CardContent className="p-0">
+          {activeTab === 'due' ? (
+            /* Customer Due Ledger */
+            duesLoading ? (
+              <div className="p-6">
+                <TableSkeleton rows={5} cols={7} />
+              </div>
+            ) : (dues?.length || 0) === 0 ? (
+              <div className="py-20 text-center text-sm font-medium text-muted-foreground">No customer due entries found</div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Party Name</TableHead>
+                    <TableHead>Contact</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Note</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {dues?.map((item) => (
-                    <tr key={item.id} className="hover:bg-white/[0.02] transition-colors">
-                      <td className="py-3.5 px-5 font-semibold text-white flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-slate-300 font-mono text-xs">
-                          {item.party_name.slice(0, 1)}
+                    <TableRow key={item.id}>
+                      <TableCell className="font-medium flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-muted border flex items-center justify-center text-muted-foreground font-bold text-xs shrink-0">
+                          {item.party_name.slice(0, 2).toUpperCase()}
                         </div>
                         <span>{item.party_name}</span>
-                      </td>
-                      <td className="py-3.5 px-4 font-mono text-slate-400">{item.party_phone || '—'}</td>
-                      <td className="py-3.5 px-4">
-                        <span
-                          className={
-                            item.type === 'credit'
-                              ? 'badge-amber text-[10px] font-semibold'
-                              : 'badge-green text-[10px] font-semibold'
-                          }
-                        >
+                      </TableCell>
+                      <TableCell className="font-mono text-muted-foreground text-xs">{item.party_phone || '—'}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={item.type === 'credit' ? 'border-amber-500 text-amber-600 bg-amber-500/10' : 'border-emerald-500 text-emerald-600 bg-emerald-500/10'}>
                           {item.type === 'credit' ? 'Due Added' : 'Payment Received'}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 text-slate-400 max-w-xs truncate">{item.note || '—'}</td>
-                      <td className="py-3.5 px-4 font-mono text-slate-400">{formatDate(item.date)}</td>
-                      <td
-                        className={`py-3.5 px-4 text-right font-mono font-bold ${
-                          item.type === 'credit' ? 'text-amber-400' : 'text-emerald-400'
-                        }`}
-                      >
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground max-w-[200px] truncate text-xs">{item.note || '—'}</TableCell>
+                      <TableCell className="font-mono text-muted-foreground text-xs">{formatDate(item.date)}</TableCell>
+                      <TableCell className={`text-right font-bold tabular-nums ${item.type === 'credit' ? 'text-amber-600' : 'text-emerald-600'}`}>
                         {formatBDT(item.amount)}
-                      </td>
-                      <td className="py-3.5 px-4 text-right">
+                      </TableCell>
+                      <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
-                          <button
-                            onClick={() => openEditDue(item)}
-                            title="Edit Due Entry"
-                            className="p-1 text-slate-400 hover:text-white hover:bg-white/[0.08] rounded transition-colors"
-                          >
-                            <Pencil className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => {
-                              if (confirm(`Delete due entry for "${item.party_name}"?`)) {
-                                deleteDueMutation.mutate(item.id);
-                              }
-                            }}
-                            title="Delete Due Entry"
-                            className="p-1 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded transition-colors"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={() => openEditDue(item)}>
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => {
+                            if (confirm(`Delete due entry for "${item.party_name}"?`)) {
+                              deleteDueMutation.mutate(item.id);
+                            }
+                          }}>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </div>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
-            </div>
-          )
-        ) : (
-          /* Loan & Borrowings Ledger */
-          loansLoading ? (
-            <TableSkeleton rows={5} cols={7} />
-          ) : (loans?.length || 0) === 0 ? (
-            <div className="py-20 text-center text-xs text-slate-500">No loan records found</div>
+                </TableBody>
+              </Table>
+            )
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="border-b border-white/[0.06] text-slate-400 uppercase font-mono text-[10px] tracking-wider bg-white/[0.01]">
-                    <th className="py-3 px-5">Lender / Institution</th>
-                    <th className="py-3 px-4">Contact</th>
-                    <th className="py-3 px-4">Type</th>
-                    <th className="py-3 px-4">Terms / Note</th>
-                    <th className="py-3 px-4">Date</th>
-                    <th className="py-3 px-4 text-right">Amount</th>
-                    <th className="py-3 px-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/[0.04]">
+            /* Loan & Borrowings Ledger */
+            loansLoading ? (
+              <div className="p-6">
+                <TableSkeleton rows={5} cols={7} />
+              </div>
+            ) : (loans?.length || 0) === 0 ? (
+              <div className="py-20 text-center text-sm font-medium text-muted-foreground">No loan records found</div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Lender / Institution</TableHead>
+                    <TableHead>Contact</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Terms / Note</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {loans?.map((item) => (
-                    <tr key={item.id} className="hover:bg-white/[0.02] transition-colors">
-                      <td className="py-3.5 px-5 font-semibold text-white flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-pink-300 font-mono text-xs">
-                          {item.party_name.slice(0, 1)}
+                    <TableRow key={item.id}>
+                      <TableCell className="font-medium flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-muted border flex items-center justify-center text-muted-foreground font-bold text-xs shrink-0">
+                          {item.party_name.slice(0, 2).toUpperCase()}
                         </div>
                         <span>{item.party_name}</span>
-                      </td>
-                      <td className="py-3.5 px-4 font-mono text-slate-400">{item.party_phone || '—'}</td>
-                      <td className="py-3.5 px-4">
-                        <span
-                          className={
-                            item.type === 'borrowed'
-                              ? 'badge-red text-[10px] font-semibold'
-                              : 'badge-green text-[10px] font-semibold'
-                          }
-                        >
+                      </TableCell>
+                      <TableCell className="font-mono text-muted-foreground text-xs">{item.party_phone || '—'}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={item.type === 'borrowed' ? 'border-destructive text-destructive bg-destructive/10' : 'border-emerald-500 text-emerald-600 bg-emerald-500/10'}>
                           {item.type === 'borrowed' ? 'Loan Borrowed' : 'Installment Repaid'}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 text-slate-400 max-w-xs truncate">{item.note || '—'}</td>
-                      <td className="py-3.5 px-4 font-mono text-slate-400">{formatDate(item.date)}</td>
-                      <td
-                        className={`py-3.5 px-4 text-right font-mono font-bold ${
-                          item.type === 'borrowed' ? 'text-rose-400' : 'text-emerald-400'
-                        }`}
-                      >
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground max-w-[200px] truncate text-xs">{item.note || '—'}</TableCell>
+                      <TableCell className="font-mono text-muted-foreground text-xs">{formatDate(item.date)}</TableCell>
+                      <TableCell className={`text-right font-bold tabular-nums ${item.type === 'borrowed' ? 'text-destructive' : 'text-emerald-600'}`}>
                         {formatBDT(item.amount)}
-                      </td>
-                      <td className="py-3.5 px-4 text-right">
+                      </TableCell>
+                      <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
-                          <button
-                            onClick={() => openEditLoan(item)}
-                            title="Edit Loan Entry"
-                            className="p-1 text-slate-400 hover:text-white hover:bg-white/[0.08] rounded transition-colors"
-                          >
-                            <Pencil className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => {
-                              if (confirm(`Delete loan entry for "${item.party_name}"?`)) {
-                                deleteLoanMutation.mutate(item.id);
-                              }
-                            }}
-                            title="Delete Loan Entry"
-                            className="p-1 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded transition-colors"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={() => openEditLoan(item)}>
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => {
+                            if (confirm(`Delete loan entry for "${item.party_name}"?`)) {
+                              deleteLoanMutation.mutate(item.id);
+                            }
+                          }}>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </div>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
-            </div>
-          )
-        )}
-      </div>
+                </TableBody>
+              </Table>
+            )
+          )}
+        </CardContent>
+      </Card>
 
       {/* Record / Edit Modal */}
       <Modal
@@ -670,8 +578,8 @@ export default function DueLoanPage() {
         }
         maxWidth="md"
       >
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
+        <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+          <FormInput
             label={activeTab === 'due' ? 'Customer / Party Name' : 'Lender / Institution Name'}
             placeholder={activeTab === 'due' ? 'e.g. Rahim Store / Kamal Hossain' : 'e.g. City Bank / Founder'}
             value={partyName}
@@ -680,13 +588,13 @@ export default function DueLoanPage() {
           />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input
+            <FormInput
               label="Phone Number"
               placeholder="017xxxxxxxx"
               value={partyPhone}
               onChange={(e) => setPartyPhone(e.target.value)}
             />
-            <Input
+            <FormInput
               label="Amount (৳)"
               type="number"
               min="1"
@@ -715,7 +623,7 @@ export default function DueLoanPage() {
                     ]
               }
             />
-            <Input
+            <FormInput
               label="Transaction Date"
               type="date"
               value={date}
@@ -724,17 +632,16 @@ export default function DueLoanPage() {
             />
           </div>
 
-          <Input
+          <FormInput
             label="Note / Reference"
             placeholder="Optional memo or voucher number"
             value={note}
             onChange={(e) => setNote(e.target.value)}
           />
 
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/[0.08]">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-border mt-2">
             <Button
-              variant="ghost"
-              size="sm"
+              variant="outline"
               type="button"
               onClick={() => {
                 setModalOpen(false);
@@ -744,10 +651,8 @@ export default function DueLoanPage() {
               Cancel
             </Button>
             <Button
-              variant="primary"
-              size="sm"
               type="submit"
-              isLoading={
+              disabled={
                 addDueMutation.isPending ||
                 addLoanMutation.isPending ||
                 editDueMutation.isPending ||

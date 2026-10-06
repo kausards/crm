@@ -64,29 +64,29 @@ export function Modal({
       {/* Backdrop */}
       <div
         onClick={onClose}
-        className="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity animate-in fade-in duration-200"
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
       />
 
       {/* Modal Dialog */}
       <div
-        className={`relative w-full ${maxWidthStyles[maxWidth]} bg-[#0c0d14]/95 border border-white/10 backdrop-blur-2xl rounded-2xl shadow-2xl shadow-black overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-150`}
+        className={`relative w-full ${maxWidthStyles[maxWidth]} bg-background border shadow-lg sm:rounded-lg overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-200`}
       >
-        {/* Subtle top accent gradient */}
-        <div className="h-[2px] w-full bg-gradient-to-r from-violet-500 via-pink-500 to-cyan-500" />
-
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
-          <h3 className="text-base font-headline font-semibold text-white tracking-tight">
-            {title}
-          </h3>
-          <button
-            onClick={onClose}
-            className="text-slate-400 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/[0.06]"
-          >
-            <X className="w-4 h-4" />
-          </button>
+        <div className="flex flex-col space-y-1.5 p-6 border-b">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold leading-none tracking-tight">
+              {title}
+            </h3>
+            <button
+              onClick={onClose}
+              className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close</span>
+            </button>
+          </div>
         </div>
 
-        <div className="p-6 text-slate-200 max-h-[80vh] overflow-y-auto custom-scrollbar">
+        <div className="p-6 max-h-[80vh] overflow-y-auto">
           {children}
         </div>
       </div>

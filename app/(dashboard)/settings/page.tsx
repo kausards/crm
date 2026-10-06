@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import {
   Store,
   UserPlus,
@@ -21,11 +21,32 @@ import {
   Edit2,
   Globe,
 } from 'lucide-react';
-import { fetchApi, formatBDT } from '@/lib/apiClient';
+import { fetchApi } from '@/lib/apiClient';
 import { useAuth, useToast } from '@/app/providers';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+
+// Shadcn imports
+import { Button } from '@/components/ui/shadcn/button';
+import { Badge } from '@/components/ui/shadcn/badge';
+import { Input } from '@/components/ui/shadcn/input';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription
+} from '@/components/ui/shadcn/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/shadcn/table";
+
+// Old UI components
 import { Modal } from '@/components/ui/Modal';
+import { Input as FormInput } from '@/components/ui/Input';
 
 function SettingsContent() {
   const searchParams = useSearchParams();
@@ -78,7 +99,7 @@ function SettingsContent() {
     } else if (paymentStatus === 'failed') {
       toast('Payment was cancelled or failed. Please try again.', 'error');
     }
-  }, [paymentStatus]);
+  }, [paymentStatus, refreshUser, toast]);
 
   // Billing Checkout Mutation
   const checkoutMutation = useMutation({
@@ -139,334 +160,333 @@ function SettingsContent() {
   const currentPlan = user?.plan || 'pro';
 
   return (
-    <div className="flex flex-col w-full gap-7 max-w-[1400px] mx-auto pb-16">
+    <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 pb-14 max-w-5xl">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="font-bold text-xl text-white">
-            Settings
-          </h1>
-          <p className="text-sm text-slate-500 mt-0.5">
+          <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Your account, team, and billing settings.
           </p>
         </div>
 
         {isOwner && (
-          <button
+          <Button
             onClick={() => setInviteModalOpen(true)}
-            className="btn-gradient-glow flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white"
-            type="button"
+            className="self-start sm:self-auto"
           >
-            <UserPlus className="w-4 h-4" />
-            <span>Invite Team Member</span>
-          </button>
+            <UserPlus className="w-4 h-4 mr-2" />
+            Invite Team Member
+          </Button>
         )}
       </div>
 
       {/* Payment Alerts */}
       {paymentStatus === 'success' && (
-        <div className="p-4 glass-card border-emerald-500/30 rounded-2xl flex items-center gap-3 text-emerald-300 text-xs">
-          <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0" />
+        <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center gap-3 text-emerald-700 dark:text-emerald-400 text-sm">
+          <ShieldCheck className="w-5 h-5 text-emerald-500 shrink-0" />
           <div>
-            <strong className="text-white font-semibold">Subscription Active:</strong> Your SSLCommerz transaction was confirmed.
+            <strong className="font-semibold">Subscription Active:</strong> Your SSLCommerz transaction was confirmed.
           </div>
         </div>
       )}
 
       {paymentStatus === 'failed' && (
-        <div className="p-4 glass-card border-rose-500/30 rounded-2xl flex items-center gap-3 text-rose-300 text-xs">
-          <X className="w-5 h-5 text-rose-400 shrink-0" />
+        <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-center gap-3 text-rose-700 dark:text-rose-400 text-sm">
+          <X className="w-5 h-5 text-rose-500 shrink-0" />
           <div>
-            <strong className="text-white font-semibold">Payment Cancelled:</strong> The transaction could not be processed.
+            <strong className="font-semibold">Payment Cancelled:</strong> The transaction could not be processed.
           </div>
         </div>
       )}
 
       {/* Store Profile Bento */}
-      <div className="glass-card p-6 rounded-2xl relative overflow-hidden">
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-brand-violet/10 border border-brand-violet/20 flex items-center justify-center text-purple-300">
-              <Store className="w-4 h-4" />
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between p-4 sm:p-6 pb-2">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 flex items-center justify-center">
+              <Store className="w-5 h-5" />
             </div>
-            <h3 className="font-headline text-sm font-semibold text-white tracking-wide">
-              Store Profile
-            </h3>
+            <CardTitle>Store Profile</CardTitle>
           </div>
-          <div className="flex items-center gap-2.5">
-            <button
-              type="button"
-              onClick={handleOpenProfileModal}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-xs font-medium text-slate-200 transition-all hover:text-white"
-            >
-              <Edit2 className="w-3.5 h-3.5 text-purple-300" />
-              <span>Edit Profile</span>
-            </button>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-          <div className="p-4 rounded-xl bg-black/40 border border-white/[0.06]">
-            <span className="text-slate-400 block mb-1 text-[11px]">Business Name</span>
-            <span className="font-headline font-bold text-white text-base">
-              {user?.business_name || 'Apex Retail Ltd'}
-            </span>
-            <span className="text-slate-500 block text-[10px] mt-1 font-mono truncate">
-              ID: {user?.tenant_id?.slice(0, 16)}...
-            </span>
-          </div>
-
-          <div className="p-4 rounded-xl bg-black/40 border border-white/[0.06]">
-            <span className="text-slate-400 block mb-1 text-[11px]">Owner</span>
-            <span className="font-bold text-white text-base">
-              {user?.full_name || 'Admin'}
-            </span>
-            <span className="text-slate-400 block text-[11px] truncate mt-1 font-mono">
-              {user?.email}
-            </span>
-          </div>
-
-          <div className="p-4 rounded-xl bg-black/40 border border-white/[0.06]">
-            <span className="text-slate-400 block mb-1 text-[11px]">Active Plan</span>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="badge-purple text-[10px] font-bold uppercase">
-                {currentPlan.toUpperCase()}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleOpenProfileModal}
+          >
+            <Edit2 className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
+            Edit Profile
+          </Button>
+        </CardHeader>
+        <CardContent className="p-4 sm:p-6 pt-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="p-4 rounded-xl bg-muted/50 border">
+              <span className="text-muted-foreground font-medium block mb-1 text-xs">Business Name</span>
+              <span className="font-semibold text-foreground text-base">
+                {user?.business_name || 'Apex Retail Ltd'}
               </span>
-              <span className="text-emerald-400 text-xs font-semibold flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                Active
+              <span className="text-muted-foreground block text-[11px] mt-1 font-mono truncate">
+                ID: {user?.tenant_id?.slice(0, 16)}...
               </span>
             </div>
-            <span className="text-slate-500 block text-[10px] mt-1">Monthly SSLCommerz billing</span>
+
+            <div className="p-4 rounded-xl bg-muted/50 border">
+              <span className="text-muted-foreground font-medium block mb-1 text-xs">Owner</span>
+              <span className="font-semibold text-foreground text-base">
+                {user?.full_name || 'Admin'}
+              </span>
+              <span className="text-muted-foreground block text-xs truncate mt-1">
+                {user?.email}
+              </span>
+            </div>
+
+            <div className="p-4 rounded-xl bg-muted/50 border">
+              <span className="text-muted-foreground font-medium block mb-1 text-xs">Active Plan</span>
+              <div className="flex items-center gap-2 mt-1">
+                <Badge variant="outline" className="bg-indigo-500/10 text-indigo-600 border-indigo-500/20 text-[10px] font-bold uppercase tracking-widest">
+                  {currentPlan}
+                </Badge>
+                <span className="text-emerald-600 dark:text-emerald-500 text-xs font-semibold flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  Active
+                </span>
+              </div>
+              <span className="text-muted-foreground block text-[11px] mt-1.5">Monthly SSLCommerz billing</span>
+            </div>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Website & Store Integration Card */}
-      <div className="glass-card p-6 rounded-2xl relative overflow-hidden border-violet-500/20">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-violet-600/15 border border-violet-500/25 flex items-center justify-center text-violet-400 shrink-0">
-              <Globe className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-base font-semibold text-white flex items-center gap-2">
-                <span>Website &amp; Store</span>
-              </h3>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Connect your store to receive orders directly.
-              </p>
-            </div>
+      <Card className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-6 gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-lg bg-muted border flex items-center justify-center text-muted-foreground shrink-0">
+            <Globe className="w-6 h-6" />
           </div>
-
-          <Link
-            href="/integrations"
-            className="btn-gradient-glow flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white shrink-0 self-start sm:self-auto"
-          >
-            <span>Manage Store Integrations</span>
-            <ExternalLink className="w-3.5 h-3.5" />
-          </Link>
+          <div>
+            <h3 className="text-base font-semibold">
+              Website & Store Connections
+            </h3>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Connect your external store platforms to receive orders directly.
+            </p>
+          </div>
         </div>
-      </div>
+
+        <Link
+          href="/integrations"
+          className="shrink-0"
+        >
+          <Button variant="outline">
+            Manage Integrations
+            <ExternalLink className="w-4 h-4 ml-2 text-muted-foreground" />
+          </Button>
+        </Link>
+      </Card>
 
       {/* Subscription Tiers */}
       <div>
-        <div className="mb-4">
-          <h3 className="font-headline text-base font-bold text-white tracking-tight">
+        <div className="mb-5">
+          <h3 className="font-semibold text-lg">
             Subscription Plans
           </h3>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Instant automated upgrade via SSLCommerz (bKash, Nagad, Cards)
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Instant automated upgrades via SSLCommerz (bKash, Nagad, Cards).
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {/* Starter Plan */}
-          <div
-            className={`glass-card p-6 rounded-2xl flex flex-col justify-between relative transition-all ${
-              currentPlan === 'basic' ? 'border-brand-violet/50 shadow-[0_0_24px_rgba(139,92,246,0.15)]' : ''
-            }`}
-          >
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400">
+          <Card className={`flex flex-col justify-between transition-all ${
+            currentPlan === 'basic' ? 'border-indigo-500 shadow-md ring-1 ring-indigo-500' : ''
+          }`}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Starter Plan
                 </span>
                 {currentPlan === 'basic' && (
-                  <span className="badge-purple text-[10px] font-bold">Current Plan</span>
+                  <Badge variant="secondary" className="bg-indigo-500/10 text-indigo-600 text-[10px] font-bold uppercase tracking-wider">Current Plan</Badge>
                 )}
               </div>
-              <div className="flex items-baseline gap-2 mb-4">
-                <span className="font-headline text-3xl font-bold text-white">৳999</span>
-                <span className="text-xs text-slate-400">/ month</span>
+              <div className="flex items-baseline gap-2 mb-5">
+                <span className="text-4xl font-bold">৳999</span>
+                <span className="text-sm text-muted-foreground font-medium">/ month</span>
               </div>
-              <ul className="space-y-2.5 text-xs text-slate-300 mb-6">
-                <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>Single branch & outlet</span>
+              <ul className="space-y-3 text-sm text-muted-foreground mb-8 font-medium">
+                <li className="flex items-center gap-2.5">
+                  <Check className="w-5 h-5 text-emerald-500 shrink-0" />
+                  <span className="text-foreground">Single branch & outlet</span>
                 </li>
-                <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>Up to 500 monthly orders</span>
+                <li className="flex items-center gap-2.5">
+                  <Check className="w-5 h-5 text-emerald-500 shrink-0" />
+                  <span className="text-foreground">Up to 500 monthly orders</span>
                 </li>
-                <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>Auto-dispatch (Steadfast)</span>
+                <li className="flex items-center gap-2.5">
+                  <Check className="w-5 h-5 text-emerald-500 shrink-0" />
+                  <span className="text-foreground">Auto-dispatch (Steadfast)</span>
                 </li>
-                <li className="flex items-center gap-2 text-slate-500">
-                  <X className="w-4 h-4 shrink-0" />
-                  <span>Multi-courier routing</span>
+                <li className="flex items-center gap-2.5 text-muted-foreground/60">
+                  <X className="w-5 h-5 shrink-0" />
+                  <span className="line-through">Multi-courier routing</span>
                 </li>
               </ul>
-            </div>
+            </CardContent>
 
-            <button
-              onClick={() => checkoutMutation.mutate('basic')}
-              disabled={checkoutMutation.isPending || currentPlan === 'basic'}
-              className="btn-glass w-full py-2.5 text-xs font-semibold text-slate-300 disabled:opacity-50"
-              type="button"
-            >
-              {currentPlan === 'basic' ? 'Active Plan' : 'Downgrade to Starter'}
-            </button>
-          </div>
+            <div className="p-6 pt-0 mt-auto">
+              <Button
+                variant={currentPlan === 'basic' ? 'secondary' : 'outline'}
+                className="w-full"
+                disabled={checkoutMutation.isPending || currentPlan === 'basic'}
+                onClick={() => checkoutMutation.mutate('basic')}
+              >
+                {currentPlan === 'basic' ? 'Active Plan' : 'Downgrade to Starter'}
+              </Button>
+            </div>
+          </Card>
 
           {/* Pro Plan */}
-          <div
-            className={`glass-card p-6 rounded-2xl flex flex-col justify-between relative overflow-hidden border-brand-violet/40 shadow-[0_0_30px_rgba(139,92,246,0.12)]`}
-          >
-            <div className="absolute top-0 right-0 bg-gradient-to-l from-brand-magenta to-brand-violet text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider">
+          <Card className={`flex flex-col justify-between relative overflow-hidden bg-indigo-900 border-indigo-800 text-white ${
+            currentPlan === 'pro' ? 'ring-2 ring-indigo-500 ring-offset-2 ring-offset-background' : ''
+          }`}>
+            <div className="absolute top-0 right-0 bg-indigo-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">
               Recommended
             </div>
 
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-mono font-bold uppercase tracking-wider text-purple-300">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4 mt-1">
+                <span className="text-xs font-semibold uppercase tracking-wider text-indigo-300">
                   Enterprise Pro
                 </span>
                 {currentPlan === 'pro' && (
-                  <span className="badge-green text-[10px] font-bold">Active Subscription</span>
+                  <Badge variant="outline" className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 text-[10px] font-bold uppercase tracking-wider">Active Subscription</Badge>
                 )}
               </div>
-              <div className="flex items-baseline gap-2 mb-4">
-                <span className="font-headline text-3xl font-bold text-white">৳2,499</span>
-                <span className="text-xs text-slate-400">/ month</span>
+              <div className="flex items-baseline gap-2 mb-5">
+                <span className="text-4xl font-bold">৳2,499</span>
+                <span className="text-sm text-indigo-300 font-medium">/ month</span>
               </div>
-              <ul className="space-y-2.5 text-xs text-slate-300 mb-6">
-                <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+              <ul className="space-y-3 text-sm text-indigo-100 mb-8 font-medium">
+                <li className="flex items-center gap-2.5">
+                  <Check className="w-5 h-5 text-emerald-400 shrink-0" />
                   <span>Unlimited orders & catalog SKUs</span>
                 </li>
-                <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                <li className="flex items-center gap-2.5">
+                  <Check className="w-5 h-5 text-emerald-400 shrink-0" />
                   <span>Multi-courier sync</span>
                 </li>
-                <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                <li className="flex items-center gap-2.5">
+                  <Check className="w-5 h-5 text-emerald-400 shrink-0" />
                   <span>Fraud protection</span>
                 </li>
-                <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>Daily backups &amp; priority support</span>
+                <li className="flex items-center gap-2.5">
+                  <Check className="w-5 h-5 text-emerald-400 shrink-0" />
+                  <span>Daily backups & priority support</span>
                 </li>
               </ul>
-            </div>
+            </CardContent>
 
-            <button
-              onClick={() => checkoutMutation.mutate('pro')}
-              disabled={checkoutMutation.isPending}
-              className="btn-gradient-glow w-full py-2.5 text-xs font-semibold text-white"
-              type="button"
-            >
-              {checkoutMutation.isPending
-                ? 'Connecting Gateway...'
-                : currentPlan === 'pro'
-                ? 'Renew / Extend Subscription'
-                : 'Upgrade to Enterprise Pro'}
-            </button>
-          </div>
+            <div className="p-6 pt-0 mt-auto">
+              <Button
+                onClick={() => checkoutMutation.mutate('pro')}
+                disabled={checkoutMutation.isPending}
+                className="w-full bg-indigo-500 hover:bg-indigo-600 text-white"
+              >
+                {checkoutMutation.isPending
+                  ? 'Connecting Gateway...'
+                  : currentPlan === 'pro'
+                  ? 'Renew / Extend Subscription'
+                  : 'Upgrade to Enterprise Pro'}
+              </Button>
+            </div>
+          </Card>
         </div>
       </div>
 
       {/* Team & Access Control */}
-      <div className="glass-card p-6 rounded-2xl space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <Card>
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-6 border-b pb-4 gap-4">
           <div>
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-pink-500/10 border border-pink-500/20 flex items-center justify-center text-pink-300">
-                <Users className="w-4 h-4" />
+              <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center text-muted-foreground border">
+                <Users className="w-5 h-5" />
               </div>
-              <h3 className="font-headline text-sm font-semibold text-white tracking-wide">
-                Team Members & Access
-              </h3>
+              <CardTitle>Team Members & Access</CardTitle>
             </div>
-            <p className="text-xs text-slate-400 mt-1">
+            <CardDescription className="mt-1">
               Role-based access control with isolated tenant boundaries.
-            </p>
+            </CardDescription>
           </div>
 
           {isOwner && (
-            <button
+            <Button
+              variant="outline"
               onClick={() => setInviteModalOpen(true)}
-              className="btn-glass flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-300"
-              type="button"
+              className="shrink-0"
             >
-              <UserPlus className="w-3.5 h-3.5" />
-              <span>Invite Staff</span>
-            </button>
+              <UserPlus className="w-4 h-4 mr-2" />
+              Invite Staff
+            </Button>
           )}
-        </div>
+        </CardHeader>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr className="border-b border-white/[0.06] text-slate-400 font-medium text-xs bg-white/[0.01]">
-                <th className="py-3 px-4 font-semibold">Name</th>
-                <th className="py-3 px-4 font-semibold">Email</th>
-                <th className="py-3 px-4 font-semibold">Role</th>
-                <th className="py-3 px-4 font-semibold">Access Level</th>
-                <th className="py-3 px-4 text-right font-semibold">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/[0.04]">
-              <tr className="hover:bg-white/[0.02] transition-colors">
-                <td className="py-3.5 px-4 font-semibold text-white flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-brand-violet to-brand-magenta text-white font-bold flex items-center justify-center text-xs">
-                    {(user?.full_name || 'A').slice(0, 1)}
-                  </div>
-                  <span>{user?.full_name || 'Admin'} (You)</span>
-                </td>
-                <td className="py-3.5 px-4 font-mono text-slate-400">{user?.email}</td>
-                <td className="py-3.5 px-4">
-                  <span className="badge-purple text-[10px] font-bold uppercase">
-                    {user?.role || 'Owner'}
-                  </span>
-                </td>
-                <td className="py-3.5 px-4 text-slate-400">Full Super Admin & Billing Control</td>
-                <td className="py-3.5 px-4 text-right">
-                  <span className="badge-green text-[10px] font-semibold">Active</span>
-                </td>
-              </tr>
+        <CardContent className="p-0 overflow-hidden">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader className="bg-muted/50">
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Access Level</TableHead>
+                  <TableHead className="text-right">Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold flex items-center justify-center text-sm">
+                        {(user?.full_name || 'A').slice(0, 1)}
+                      </div>
+                      <span>{user?.full_name || 'Admin'} (You)</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">{user?.email}</TableCell>
+                  <TableCell>
+                    <Badge variant="secondary" className="uppercase tracking-widest text-[10px]">
+                      {user?.role || 'Owner'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground text-xs">Full Super Admin & Billing Control</TableCell>
+                  <TableCell className="text-right">
+                    <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 uppercase tracking-widest text-[10px]">Active</Badge>
+                  </TableCell>
+                </TableRow>
 
-              <tr className="hover:bg-white/[0.02] transition-colors">
-                <td className="py-3.5 px-4 font-semibold text-white flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-full bg-white/[0.06] border border-white/[0.08] text-slate-300 font-bold flex items-center justify-center text-xs">
-                    T
-                  </div>
-                  <span>Tariqul Islam</span>
-                </td>
-                <td className="py-3.5 px-4 font-mono text-slate-400">tariqul@apexretail.bd</td>
-                <td className="py-3.5 px-4">
-                  <span className="badge-blue text-[10px] font-bold uppercase">Staff</span>
-                </td>
-                <td className="py-3.5 px-4 text-slate-400">Order fulfillment & inventory edit</td>
-                <td className="py-3.5 px-4 text-right">
-                  <span className="badge-green text-[10px] font-semibold">Active</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+                <TableRow>
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-muted border text-muted-foreground font-bold flex items-center justify-center text-sm">
+                        T
+                      </div>
+                      <span>Tariqul Islam</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">tariqul@apexretail.bd</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/20 uppercase tracking-widest text-[10px]">Staff</Badge>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground text-xs">Order fulfillment & inventory edit</TableCell>
+                  <TableCell className="text-right">
+                    <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 uppercase tracking-widest text-[10px]">Active</Badge>
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Invite Modal */}
       <Modal
@@ -479,27 +499,28 @@ function SettingsContent() {
         maxWidth="md"
       >
         {invitedResult ? (
-          <div className="space-y-4">
-            <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs space-y-2">
-              <p className="font-semibold text-emerald-400">Invitation Generated</p>
-              <p className="text-slate-300">
-                Share this temporary password with <strong>{invitedResult.email}</strong>. They must change it upon first login.
+          <div className="space-y-5 mt-2">
+            <div className="p-5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-sm space-y-3">
+              <p className="font-semibold text-emerald-700 dark:text-emerald-500">Invitation Generated</p>
+              <p className="text-emerald-600 dark:text-emerald-400/80 leading-relaxed">
+                Share this temporary password with <strong className="text-foreground">{invitedResult.email}</strong>. They must change it upon first login.
               </p>
-              <div className="p-3 bg-black/60 rounded-xl border border-white/[0.08] flex items-center justify-between">
-                <span className="font-mono text-sm text-white font-bold">{invitedResult.tempPassword}</span>
-                <button
+              <div className="p-3 bg-background rounded-lg border flex items-center justify-between shadow-sm mt-4">
+                <span className="font-mono text-base font-bold">{invitedResult.tempPassword}</span>
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={copyPassword}
-                  className="px-3 py-1 bg-white/[0.06] hover:bg-white/[0.1] rounded-lg text-xs font-semibold text-purple-300 hover:text-white transition flex items-center gap-1.5"
-                  type="button"
+                  className="text-emerald-600 border-emerald-500 hover:bg-emerald-500/10 hover:text-emerald-600 h-8"
                 >
-                  {copiedPass ? <CheckCheck className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                  <span>{copiedPass ? 'Copied' : 'Copy'}</span>
-                </button>
+                  {copiedPass ? <CheckCheck className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+                  {copiedPass ? 'Copied' : 'Copy'}
+                </Button>
               </div>
             </div>
 
             <Button
-              variant="secondary"
+              variant="outline"
               className="w-full"
               type="button"
               onClick={() => {
@@ -511,8 +532,8 @@ function SettingsContent() {
             </Button>
           </div>
         ) : (
-          <form onSubmit={handleInviteSubmit} className="space-y-4">
-            <Input
+          <form onSubmit={handleInviteSubmit} className="space-y-4 mt-2">
+            <FormInput
               label="Full Name"
               placeholder="e.g. Shakib Al Hasan"
               value={inviteFullName}
@@ -520,7 +541,7 @@ function SettingsContent() {
               required
             />
 
-            <Input
+            <FormInput
               label="Email Address"
               type="email"
               placeholder="shakib@apexretail.bd"
@@ -529,20 +550,17 @@ function SettingsContent() {
               required
             />
 
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/[0.08]">
+            <div className="flex items-center justify-end gap-2 pt-4 border-t mt-4">
               <Button
-                variant="ghost"
-                size="sm"
+                variant="outline"
                 type="button"
                 onClick={() => setInviteModalOpen(false)}
               >
                 Cancel
               </Button>
               <Button
-                variant="primary"
-                size="sm"
                 type="submit"
-                isLoading={inviteMutation.isPending}
+                disabled={inviteMutation.isPending}
               >
                 Create Staff Account
               </Button>
@@ -555,7 +573,7 @@ function SettingsContent() {
       <Modal
         isOpen={profileModalOpen}
         onClose={() => setProfileModalOpen(false)}
-        title="Edit Store Profile & Identity"
+        title="Edit Store Profile"
         maxWidth="md"
       >
         <form
@@ -566,9 +584,9 @@ function SettingsContent() {
               business_name: isOwner ? bizNameInput : undefined,
             });
           }}
-          className="space-y-4"
+          className="space-y-4 mt-2"
         >
-          <Input
+          <FormInput
             label="Full Name (Account Owner)"
             placeholder="e.g. Md Kausar"
             value={fullNameInput}
@@ -577,7 +595,7 @@ function SettingsContent() {
           />
 
           {isOwner ? (
-            <Input
+            <FormInput
               label="Business / Store Name"
               placeholder="e.g. Apex Retail Ltd"
               value={bizNameInput}
@@ -585,42 +603,39 @@ function SettingsContent() {
               required
             />
           ) : (
-            <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-slate-400">
-              <span className="text-slate-500 block text-[11px] mb-0.5">Business Name</span>
-              <span className="font-semibold text-white">{user?.business_name}</span>
-              <span className="block text-[10px] text-slate-500 mt-1">
+            <div className="p-4 rounded-xl bg-muted/50 border text-sm">
+              <span className="text-muted-foreground font-medium block mb-1 text-xs">Business Name</span>
+              <span className="font-semibold">{user?.business_name}</span>
+              <span className="block text-xs text-muted-foreground mt-2">
                 Only account owners can change store branding.
               </span>
             </div>
           )}
 
-          <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-slate-400 space-y-1">
+          <div className="p-4 rounded-xl bg-muted/50 border text-sm space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-slate-500">Registered Email:</span>
-              <span className="font-mono text-slate-300">{user?.email}</span>
+              <span className="text-muted-foreground font-medium">Registered Email:</span>
+              <span className="font-semibold">{user?.email}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-slate-500">Tenant Workspace ID:</span>
-              <span className="font-mono text-slate-400 text-[11px] truncate max-w-[200px]">
+              <span className="text-muted-foreground font-medium">Tenant ID:</span>
+              <span className="font-mono text-muted-foreground text-xs truncate max-w-[200px]">
                 {user?.tenant_id}
               </span>
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/[0.08]">
+          <div className="flex items-center justify-end gap-2 pt-4 border-t mt-4">
             <Button
-              variant="ghost"
-              size="sm"
+              variant="outline"
               type="button"
               onClick={() => setProfileModalOpen(false)}
             >
               Cancel
             </Button>
             <Button
-              variant="primary"
-              size="sm"
               type="submit"
-              isLoading={updateProfileMutation.isPending}
+              disabled={updateProfileMutation.isPending}
             >
               Save Changes
             </Button>
@@ -633,7 +648,7 @@ function SettingsContent() {
 
 export default function SettingsPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-xs text-slate-500">Loading settings...</div>}>
+    <Suspense fallback={<div className="flex items-center justify-center h-full p-8 text-sm text-muted-foreground">Loading settings...</div>}>
       <SettingsContent />
     </Suspense>
   );

@@ -1,4 +1,5 @@
 import React from 'react';
+import { cn } from '@/lib/utils';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -19,34 +20,35 @@ export function Input({
   const inputId = id || (label ? label.toLowerCase().replace(/\s+/g, '-') : undefined);
 
   return (
-    <div className="w-full flex flex-col gap-1.5">
+    <div className="w-full flex flex-col gap-2">
       {label && (
         <label
           htmlFor={inputId}
-          className="text-xs font-label font-medium uppercase tracking-wider text-slate-300"
+          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
         >
           {label}
         </label>
       )}
       <div className="relative">
         {icon && (
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground">
             {icon}
           </div>
         )}
         <input
           id={inputId}
-          className={`glass-input w-full ${icon ? 'pl-9' : 'px-3.5'} py-2.5 text-sm text-slate-100 placeholder-slate-500 font-body transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
-            error
-              ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500/20'
-              : 'border-white/10 hover:border-white/20'
-          } ${className}`}
+          className={cn(
+            "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
+            icon && 'pl-10',
+            error && 'border-destructive focus-visible:ring-destructive',
+            className
+          )}
           {...props}
         />
       </div>
-      {error && <span className="text-xs text-rose-400 font-medium">{error}</span>}
+      {error && <span className="text-[0.8rem] font-medium text-destructive">{error}</span>}
       {helperText && !error && (
-        <span className="text-xs text-slate-500">{helperText}</span>
+        <span className="text-[0.8rem] text-muted-foreground">{helperText}</span>
       )}
     </div>
   );
@@ -69,31 +71,31 @@ export function Select({
   const selectId = id || (label ? label.toLowerCase().replace(/\s+/g, '-') : undefined);
 
   return (
-    <div className="w-full flex flex-col gap-1.5">
+    <div className="w-full flex flex-col gap-2">
       {label && (
         <label
           htmlFor={selectId}
-          className="text-xs font-label font-medium uppercase tracking-wider text-slate-300"
+          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
         >
           {label}
         </label>
       )}
       <select
         id={selectId}
-        className={`glass-input w-full px-3.5 py-2.5 text-sm text-slate-100 font-body transition-all bg-[#0e0f17] disabled:opacity-50 disabled:cursor-not-allowed ${
-          error
-            ? 'border-rose-500 focus:border-rose-500'
-            : 'border-white/10 hover:border-white/20'
-        } ${className}`}
+        className={cn(
+          "flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
+          error && 'border-destructive focus:ring-destructive',
+          className
+        )}
         {...props}
       >
         {options.map((opt) => (
-          <option key={opt.value} value={opt.value} className="bg-[#0e0f17] text-slate-200">
+          <option key={opt.value} value={opt.value}>
             {opt.label}
           </option>
         ))}
       </select>
-      {error && <span className="text-xs text-rose-400 font-medium">{error}</span>}
+      {error && <span className="text-[0.8rem] font-medium text-destructive">{error}</span>}
     </div>
   );
 }
@@ -115,26 +117,28 @@ export function Textarea({
   const textareaId = id || (label ? label.toLowerCase().replace(/\s+/g, '-') : undefined);
 
   return (
-    <div className="w-full flex flex-col gap-1.5">
+    <div className="w-full flex flex-col gap-2">
       {label && (
         <label
           htmlFor={textareaId}
-          className="text-xs font-label font-medium uppercase tracking-wider text-slate-300"
+          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
         >
           {label}
         </label>
       )}
       <textarea
         id={textareaId}
-        className={`glass-input w-full px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-500 font-body transition-all ${
-          error ? 'border-rose-500' : 'border-white/10 hover:border-white/20'
-        } ${className}`}
+        className={cn(
+          "flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
+          error && 'border-destructive focus-visible:ring-destructive',
+          className
+        )}
         rows={3}
         {...props}
       />
-      {error && <span className="text-xs text-rose-400 font-medium">{error}</span>}
+      {error && <span className="text-[0.8rem] font-medium text-destructive">{error}</span>}
       {helperText && !error && (
-        <span className="text-xs text-slate-500">{helperText}</span>
+        <span className="text-[0.8rem] text-muted-foreground">{helperText}</span>
       )}
     </div>
   );

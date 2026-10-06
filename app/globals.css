@@ -5,21 +5,21 @@
 @tailwind utilities;
 
 :root {
-  /* Brand palette */
-  --color-bg:          #0c0e14;
-  --color-surface:     #12141c;
-  --color-surface-2:   #191c27;
-  --color-border:      rgba(255,255,255,0.08);
-  --color-border-md:   rgba(255,255,255,0.12);
+  /* Brand palette - Light Theme */
+  --color-bg:          #F7F8FA; /* Soft off-white */
+  --color-surface:     #FFFFFF; /* Pure white cards */
+  --color-surface-2:   #F9FAFB;
+  --color-border:      #E5E7EB; /* slate-200 */
+  --color-border-md:   #D1D5DB; /* slate-300 */
 
-  /* Text */
-  --color-text-primary:   #f1f5f9;
-  --color-text-secondary: #94a3b8;
-  --color-text-muted:     #64748b;
+  /* Text - Light Theme */
+  --color-text-primary:   #111827; /* gray-900 */
+  --color-text-secondary: #4B5563; /* gray-600 */
+  --color-text-muted:     #9CA3AF; /* gray-400 */
 
   /* Brand */
-  --color-violet:   #7c3aed;
-  --color-violet-l: #8b5cf6;
+  --color-violet:   #6366f1; /* Indigo 500 for a softer look */
+  --color-violet-l: #818cf8;
   --color-emerald:  #10b981;
   --color-amber:    #f59e0b;
   --color-rose:     #f43f5e;
@@ -28,12 +28,39 @@
   /* Typography */
   --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* shadcn UI variables */
+  --background: 0 0% 100%;
+  --foreground: 240 10% 3.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 240 10% 3.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 10% 3.9%;
+  --primary: 240 5.9% 10%;
+  --primary-foreground: 0 0% 98%;
+  --secondary: 240 4.8% 95.9%;
+  --secondary-foreground: 240 5.9% 10%;
+  --muted: 240 4.8% 95.9%;
+  --muted-foreground: 240 3.8% 46.1%;
+  --accent: 240 4.8% 95.9%;
+  --accent-foreground: 240 5.9% 10%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 240 5.9% 90%;
+  --input: 240 5.9% 90%;
+  --ring: 240 5.9% 10%;
+  --radius: 0.75rem; /* Match CRM's rounded-xl preference somewhat */
+  --chart-1: 221 83% 53%;
+  --chart-2: 142 71% 45%;
+  --chart-3: 31 97% 48%;
+  --chart-4: 280 65% 60%;
+  --chart-5: 340 75% 55%;
 }
 
 /* ─── Reset & Base ─────────────────────────────── */
 html {
   scroll-behavior: smooth;
-  color-scheme: dark;
+  color-scheme: light;
   font-size: 16px;
 }
 
@@ -69,10 +96,10 @@ p, span, li {
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.10);
+  background: #CBD5E1; /* slate-300 */
   border-radius: 99px;
 }
-::-webkit-scrollbar-thumb:hover { background: rgba(124,58,237,0.45); }
+::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
 
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -81,73 +108,79 @@ p, span, li {
 .card {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 14px;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .card:hover {
   border-color: var(--color-border-md);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
 .card-elevated {
-  background: var(--color-surface-2);
-  border: 1px solid var(--color-border-md);
-  border-radius: 14px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
 }
 
-/* Keep legacy glass-card working */
+/* Update glass-card for light theme */
 .glass-card {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 14px;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
   transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .glass-card:hover {
   border-color: var(--color-border-md);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.05);
 }
 
 .glass-card-elevated {
-  background: var(--color-surface-2);
-  border: 1px solid var(--color-border-md);
-  border-radius: 14px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.08);
 }
 
 .glass-card-interactive {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 14px;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
   transition: all 0.2s ease;
 }
 .glass-card-interactive:hover {
-  border-color: rgba(124,58,237,0.35);
+  border-color: var(--color-violet-l);
   transform: translateY(-2px);
-  box-shadow: 0 12px 32px rgba(124,58,237,0.12);
+  box-shadow: 0 12px 32px rgba(99,102,241,0.12); /* Soft indigo shadow */
 }
 
 /* ─── Inputs ────────────────────────────────────── */
 .glass-input {
-  background: var(--color-surface-2);
+  background: #F9FAFB; /* gray-50 */
   border: 1px solid var(--color-border);
   color: var(--color-text-primary);
   border-radius: 10px;
   font-family: var(--font-sans);
   font-size: 14px;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
 
 .glass-input:focus {
-  border-color: var(--color-violet-l);
-  box-shadow: 0 0 0 3px rgba(139,92,246,0.18);
+  background: #FFFFFF;
+  border-color: var(--color-violet);
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.15); /* Soft indigo focus */
   outline: none;
 }
 
 .glass-input::placeholder { color: var(--color-text-muted); }
 
 select.glass-input option {
-  background-color: #191c27;
+  background-color: #FFFFFF;
   color: var(--color-text-primary);
 }
 
@@ -166,59 +199,57 @@ select.glass-input option {
   padding: 0 16px;
   height: 36px;
   transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
-  box-shadow: 0 2px 8px rgba(124,58,237,0.35);
+  box-shadow: 0 2px 6px rgba(99,102,241,0.25);
   cursor: pointer;
 }
 .btn-primary:hover {
-  background: #6d28d9;
-  box-shadow: 0 4px 16px rgba(124,58,237,0.5);
+  background: #4f46e5; /* indigo-600 */
+  box-shadow: 0 4px 12px rgba(99,102,241,0.35);
 }
 .btn-primary:active { transform: scale(0.97); }
 
-/* Keep old alias */
+/* Keep old alias but make it solid for light theme */
 .btn-gradient-glow { 
   background: var(--color-violet);
   color: #fff;
   font-weight: 600;
-  box-shadow: 0 2px 12px rgba(124,58,237,0.4);
+  box-shadow: 0 2px 6px rgba(99,102,241,0.25);
   transition: all 0.2s ease;
 }
 .btn-gradient-glow:hover {
-  background: #6d28d9;
-  box-shadow: 0 4px 20px rgba(124,58,237,0.55);
+  background: #4f46e5;
+  box-shadow: 0 4px 12px rgba(99,102,241,0.35);
   transform: translateY(-1px);
 }
 .btn-gradient-glow:active { transform: scale(0.98); }
 
 .btn-glass {
-  background: rgba(255,255,255,0.04);
+  background: #F3F4F6; /* gray-100 */
   border: 1px solid var(--color-border);
   color: var(--color-text-primary);
   font-family: var(--font-sans);
-  font-weight: 500;
+  font-weight: 600;
   font-size: 13px;
   border-radius: 10px;
   transition: all 0.15s ease;
   cursor: pointer;
 }
 .btn-glass:hover {
-  background: rgba(255,255,255,0.07);
+  background: #E5E7EB; /* gray-200 */
   border-color: var(--color-border-md);
 }
 
 /* ─── Background Grid ────────────────────────────── */
+/* Remove grid pattern for light theme, make it invisible */
 .bg-grid-pattern {
-  background-size: 32px 32px;
-  background-image:
-    linear-gradient(to right, rgba(255,255,255,0.025) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255,255,255,0.025) 1px, transparent 1px);
+  display: none;
 }
 
-/* ─── Status Badges ──────────────────────────────── */
+/* ─── Status Badges (Light Theme adjustments) ────── */
 .badge-green {
-  background: rgba(16,185,129,0.10);
-  color: #34d399;
-  border: 1px solid rgba(16,185,129,0.20);
+  background: #ECFDF5; /* emerald-50 */
+  color: #059669; /* emerald-600 */
+  border: 1px solid #D1FAE5; /* emerald-100 */
   border-radius: 99px;
   font-size: 11px;
   font-weight: 600;
@@ -226,9 +257,9 @@ select.glass-input option {
 }
 
 .badge-amber {
-  background: rgba(245,158,11,0.10);
-  color: #fbbf24;
-  border: 1px solid rgba(245,158,11,0.22);
+  background: #FFFBEB; /* amber-50 */
+  color: #D97706; /* amber-600 */
+  border: 1px solid #FEF3C7; /* amber-100 */
   border-radius: 99px;
   font-size: 11px;
   font-weight: 600;
@@ -236,9 +267,9 @@ select.glass-input option {
 }
 
 .badge-red {
-  background: rgba(239,68,68,0.10);
-  color: #f87171;
-  border: 1px solid rgba(239,68,68,0.22);
+  background: #FEF2F2; /* red-50 */
+  color: #DC2626; /* red-600 */
+  border: 1px solid #FEE2E2; /* red-100 */
   border-radius: 99px;
   font-size: 11px;
   font-weight: 600;
@@ -246,9 +277,9 @@ select.glass-input option {
 }
 
 .badge-blue {
-  background: rgba(124,58,237,0.12);
-  color: #c4b5fd;
-  border: 1px solid rgba(124,58,237,0.25);
+  background: #EEF2FF; /* indigo-50 */
+  color: #4F46E5; /* indigo-600 */
+  border: 1px solid #E0E7FF; /* indigo-100 */
   border-radius: 99px;
   font-size: 11px;
   font-weight: 600;
@@ -256,9 +287,9 @@ select.glass-input option {
 }
 
 .badge-cyan {
-  background: rgba(6,182,212,0.10);
-  color: #67e8f9;
-  border: 1px solid rgba(6,182,212,0.22);
+  background: #ECFEFF; /* cyan-50 */
+  color: #0891B2; /* cyan-600 */
+  border: 1px solid #CFFAFE; /* cyan-100 */
   border-radius: 99px;
   font-size: 11px;
   font-weight: 600;
@@ -266,9 +297,9 @@ select.glass-input option {
 }
 
 .badge-gray {
-  background: rgba(255,255,255,0.05);
-  color: #94a3b8;
-  border: 1px solid rgba(255,255,255,0.09);
+  background: #F3F4F6; /* gray-100 */
+  color: #4B5563; /* gray-600 */
+  border: 1px solid #E5E7EB; /* gray-200 */
   border-radius: 99px;
   font-size: 11px;
   font-weight: 600;
@@ -297,3 +328,9 @@ select.glass-input option {
     transition-duration: 0.01ms !important;
   }
 }
+
+.font-bengali { font-family: var(--font-bengali) !important; }
+
+
+.font-bengali * { font-family: var(--font-bengali) !important; }
+

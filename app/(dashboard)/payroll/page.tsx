@@ -18,12 +18,34 @@ import {
   Pencil,
   Trash2,
   UserX,
+  Search,
 } from 'lucide-react';
 import { fetchApi, formatBDT, formatDate } from '@/lib/apiClient';
 import { useToast } from '@/app/providers';
-import { Button } from '@/components/ui/Button';
+
+// Shadcn imports
+import { Button } from '@/components/ui/shadcn/button';
+import { Badge } from '@/components/ui/shadcn/badge';
+import { Input } from '@/components/ui/shadcn/input';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription
+} from '@/components/ui/shadcn/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/shadcn/table";
+
+// Old UI components
 import { Modal } from '@/components/ui/Modal';
-import { Input } from '@/components/ui/Input';
+import { Input as FormInput } from '@/components/ui/Input';
 import { TableSkeleton } from '@/components/ui/TableSkeleton';
 
 interface EmployeeItem {
@@ -277,409 +299,423 @@ export default function PayrollPage() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 pb-14">
       {/* 1. Header & Controls */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="font-bold text-xl text-white">
-            Salary &amp; Payroll
-          </h1>
-          <p className="text-sm text-slate-500 mt-0.5">
+          <h1 className="text-2xl font-semibold tracking-tight">Salary & Payroll</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Manage staff salaries and attendance.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
-          <div className="flex items-center bg-white/[0.04] border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white">
-            <Calendar className="w-3.5 h-3.5 text-violet-400 mr-2" />
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm">
+            <Calendar className="w-4 h-4 text-muted-foreground mr-2" />
             <input
               type="month"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              className="bg-transparent text-xs font-mono text-white focus:outline-none cursor-pointer"
+              className="bg-transparent border-0 p-0 h-full text-sm font-medium focus:ring-0 cursor-pointer focus-visible:outline-none"
             />
           </div>
 
-          <button
+          <Button
+            variant="outline"
+            size="sm"
             onClick={handleDownloadSalaryExcel}
             disabled={isExportingSalary}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.04] border border-white/10 hover:border-white/20 text-xs font-label font-medium text-slate-200 transition-all disabled:opacity-50"
-            type="button"
           >
-            <Download className="w-3.5 h-3.5 text-emerald-400" />
-            <span>{isExportingSalary ? 'Exporting...' : 'Export Sheet'}</span>
-          </button>
+            <Download className="w-4 h-4 mr-2 text-muted-foreground" />
+            {isExportingSalary ? 'Exporting...' : 'Export Sheet'}
+          </Button>
 
-          <button
+          <Button
+            size="sm"
             onClick={() => setAddEmployeeOpen(true)}
-            className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 text-white text-xs font-semibold rounded-xl shadow-lg shadow-violet-600/30 active:scale-[0.98] transition-all"
-            type="button"
           >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Enroll Staff</span>
-          </button>
+            <Plus className="w-4 h-4 mr-2" />
+            Enroll Staff
+          </Button>
         </div>
       </div>
 
       {/* 2. 4 Summary Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-        <div className="glass-card p-4 border-l-2 border-l-violet-500">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-400">Total Budget</span>
-            <Users className="w-4 h-4 text-violet-400" />
-          </div>
-          <div className="text-2xl font-bold text-white mt-2 tabular-nums">
-            {formatBDT(salarySummary?.total_base_budget ?? totalBaseBudget)}
-          </div>
-          <p className="text-[11px] text-slate-500 mt-1">
-            {salarySummary?.total_employees ?? rawEmployees.length} staff enrolled
-          </p>
-        </div>
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Budget</CardTitle>
+            <DollarSign className="h-4 w-4 text-indigo-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold tabular-nums">
+              {formatBDT(salarySummary?.total_base_budget ?? totalBaseBudget)}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1 truncate">
+              {salarySummary?.total_employees ?? rawEmployees.length} staff enrolled
+            </p>
+          </CardContent>
+        </Card>
 
-        <div className="glass-card p-4 border-l-2 border-l-emerald-500">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-400">Paid Out</span>
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-          </div>
-          <div className="text-2xl font-bold text-emerald-400 mt-2 tabular-nums font-mono">
-            {formatBDT(netDisbursable)}
-          </div>
-          <p className="text-[11px] text-emerald-400/80 mt-1">
-            {salarySummary?.paid_count ?? 0} disbursed this month
-          </p>
-        </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Paid Out</CardTitle>
+            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold tabular-nums text-emerald-600">
+              {formatBDT(netDisbursable)}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1 truncate">
+              {salarySummary?.paid_count ?? 0} disbursed this month
+            </p>
+          </CardContent>
+        </Card>
 
-        <div className="glass-card p-4 border-l-2 border-l-rose-500">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-400">Deductions</span>
-            <TrendingDown className="w-4 h-4 text-rose-400" />
-          </div>
-          <div className="text-2xl font-bold text-rose-400 mt-2 tabular-nums font-mono">
-            {formatBDT(salarySummary?.total_deductions ?? 0)}
-          </div>
-          <p className="text-[11px] text-rose-400/80 mt-1">
-            {salarySummary?.cumulative_unpaid_days ?? 0} leave days
-          </p>
-        </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Deductions</CardTitle>
+            <TrendingDown className="h-4 w-4 text-destructive" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold tabular-nums text-destructive">
+              {formatBDT(salarySummary?.total_deductions ?? 0)}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1 truncate">
+              {salarySummary?.cumulative_unpaid_days ?? 0} leave days
+            </p>
+          </CardContent>
+        </Card>
 
-        <div className="glass-card p-4 border-l-2 border-l-amber-500">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-400">Pending</span>
-            <Clock className="w-4 h-4 text-amber-400" />
-          </div>
-          <div className="text-2xl font-bold text-amber-400 mt-2 tabular-nums">
-            {salarySummary?.pending_count ?? rawEmployees.length} Staff
-          </div>
-          <p className="text-[11px] text-amber-400/80 mt-1">
-            Awaiting approval
-          </p>
-        </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pending</CardTitle>
+            <Users className="h-4 w-4 text-amber-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold tabular-nums text-amber-600">
+              {salarySummary?.pending_count ?? rawEmployees.length} Staff
+            </div>
+            <p className="text-xs text-muted-foreground mt-1 truncate">
+              Awaiting approval
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* 3. Two-Column Split Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Column: Employee Directory (7 Cols) */}
-        <div className="lg:col-span-7 glass-card p-5 space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-white/10">
+        <Card className="lg:col-span-7 flex flex-col h-full">
+          <CardHeader className="flex flex-row items-center justify-between border-b p-4 sm:p-6 pb-4">
             <div>
-              <h2 className="font-headline font-bold text-sm text-white flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2">
                 Staff Directory
-                <span className="text-[10px] font-mono bg-violet-500/15 text-violet-300 px-2 py-0.5 rounded-full border border-violet-500/25">
-                  {rawEmployees.length}
-                </span>
-              </h2>
+                <Badge variant="secondary" className="px-1.5 py-0.5 min-w-[24px] justify-center">{rawEmployees.length}</Badge>
+              </CardTitle>
             </div>
-
             <div className="relative">
-              <input
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
                 type="text"
                 placeholder="Filter staff..."
                 value={searchFilter}
                 onChange={(e) => setSearchFilter(e.target.value)}
-                className="glass-input pl-8 pr-3 py-1.5 text-xs w-36 sm:w-48"
+                className="pl-8 w-[150px] sm:w-[200px]"
               />
-              <span className="material-symbols-outlined absolute left-2.5 top-2 text-[14px] text-slate-400">
-                search
-              </span>
             </div>
-          </div>
+          </CardHeader>
 
-          <div className="overflow-x-auto">
+          <CardContent className="p-0 overflow-hidden flex-1">
             {isLoading ? (
-              <TableSkeleton rows={5} cols={4} />
+              <div className="p-6">
+                <TableSkeleton rows={5} cols={4} />
+              </div>
             ) : filteredEmployees.length === 0 ? (
-              <div className="py-16 text-center text-xs text-slate-500">
+              <div className="py-16 text-center text-sm font-medium text-muted-foreground">
                 No employees found. Enroll staff above.
               </div>
             ) : (
-              <table className="w-full text-left text-xs">
-                <thead className="bg-white/[0.02] border-b border-white/10 text-slate-400 uppercase font-label text-[10px]">
-                  <tr>
-                    <th className="py-3 px-3.5 font-semibold">Staff Member</th>
-                    <th className="py-3 px-3 font-semibold">Base Salary</th>
-                    <th className="py-3 px-3 font-semibold">Divisor</th>
-                    <th className="py-3 px-3 text-right font-semibold">Status & Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/[0.04]">
-                  {filteredEmployees.map((emp) => {
-                    const isSelected = currentEmp?.id === emp.id;
-                    const isPaid = salarySummary?.paid_employee_ids?.includes(emp.id);
+              <div className="overflow-auto max-h-[600px]">
+                <Table>
+                  <TableHeader className="bg-muted/50 sticky top-0">
+                    <TableRow>
+                      <TableHead>Staff Member</TableHead>
+                      <TableHead>Base Salary</TableHead>
+                      <TableHead>Divisor</TableHead>
+                      <TableHead className="text-right">Status & Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredEmployees.map((emp) => {
+                      const isSelected = currentEmp?.id === emp.id;
+                      const isPaid = salarySummary?.paid_employee_ids?.includes(emp.id);
 
-                    return (
-                      <tr
-                        key={emp.id}
-                        onClick={() => setActiveEmployee(emp)}
-                        className={`cursor-pointer transition-all ${
-                          isSelected
-                            ? 'bg-violet-600/15 border-l-2 border-l-violet-500'
-                            : 'hover:bg-white/[0.02]'
-                        }`}
-                      >
-                        <td className="py-3 px-3.5">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-violet-600 to-pink-500 text-white font-bold flex items-center justify-center text-xs shrink-0">
-                              {emp.name.slice(0, 2).toUpperCase()}
+                      return (
+                        <TableRow
+                          key={emp.id}
+                          onClick={() => setActiveEmployee(emp)}
+                          className={`cursor-pointer transition-colors ${
+                            isSelected ? 'bg-primary/5' : ''
+                          }`}
+                        >
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center text-sm font-bold shrink-0 border text-muted-foreground">
+                                {emp.name.slice(0, 2).toUpperCase()}
+                              </div>
+                              <div className="min-w-0">
+                                <div className="font-semibold truncate">{emp.name}</div>
+                                <div className="text-xs text-muted-foreground font-mono truncate">{emp.phone || 'No phone'}</div>
+                              </div>
                             </div>
-                            <div className="min-w-0">
-                              <span className="font-semibold text-white block truncate">{emp.name}</span>
-                              <span className="text-[10px] text-slate-400 font-mono">{emp.phone || 'No phone'}</span>
+                          </TableCell>
+                          <TableCell className="font-mono font-medium">
+                            {formatBDT(emp.monthly_salary)}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground font-medium">
+                            {emp.salary_divisor}d
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              {isPaid ? (
+                                <Badge variant="outline" className="border-emerald-500 text-emerald-600 bg-emerald-500/10">
+                                  Paid
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="border-amber-500 text-amber-600 bg-amber-500/10">
+                                  Pending
+                                </Badge>
+                              )}
+
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openEditEmpModal(emp);
+                                }}
+                                title="Edit Staff Member"
+                                className="h-8 w-8 text-muted-foreground"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (confirm(`Deactivate employee "${emp.name}"?`)) {
+                                    deactivateEmpMutation.mutate(emp.id);
+                                  }
+                                }}
+                                title="Deactivate Staff Member"
+                                className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                              >
+                                <UserX className="h-4 w-4" />
+                              </Button>
                             </div>
-                          </div>
-                        </td>
-                        <td className="py-3 px-3 font-mono font-medium text-slate-200">
-                          {formatBDT(emp.monthly_salary)}
-                        </td>
-                        <td className="py-3 px-3 font-mono text-slate-400">
-                          {emp.salary_divisor}d
-                        </td>
-                        <td className="py-3 px-3 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
-                            {isPaid ? (
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-label font-medium bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                                Paid
-                              </span>
-                            ) : (
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-label font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30">
-                                Pending
-                              </span>
-                            )}
-
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openEditEmpModal(emp);
-                              }}
-                              title="Edit Staff Member"
-                              className="p-1 text-slate-400 hover:text-white hover:bg-white/[0.08] rounded transition-colors"
-                            >
-                              <Pencil className="w-3.5 h-3.5" />
-                            </button>
-
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (confirm(`Deactivate employee "${emp.name}"?`)) {
-                                  deactivateEmpMutation.mutate(emp.id);
-                                }
-                              }}
-                              title="Deactivate Staff Member"
-                              className="p-1 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded transition-colors"
-                            >
-                              <UserX className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
             )}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Right Column: Attendance & Payout Calculator (5 Cols) */}
-        <div className="lg:col-span-5 glass-card p-5 space-y-5">
+        <div className="lg:col-span-5 space-y-6">
           {currentEmp ? (
             <>
               {/* Profile Card Header */}
-              <div className="flex items-start justify-between pb-3 border-b border-white/10">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-violet-600 to-pink-500 text-white font-headline font-bold flex items-center justify-center text-sm shadow-md">
-                    {currentEmp.name.slice(0, 2).toUpperCase()}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between p-4 sm:p-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-lg bg-muted text-muted-foreground font-bold flex items-center justify-center text-lg border shadow-sm shrink-0">
+                      {currentEmp.name.slice(0, 2).toUpperCase()}
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-base">{currentEmp.name}</h3>
+                      <p className="text-sm text-muted-foreground">{currentEmp.phone || 'Employee'}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-headline font-bold text-sm text-white">{currentEmp.name}</h3>
-                    <p className="text-[11px] text-slate-400 font-mono">{currentEmp.phone || 'Employee'}</p>
-                  </div>
-                </div>
 
-                <div className="text-right">
-                  <span className="text-[10px] text-slate-400 uppercase font-label">Contract Base</span>
-                  <div className="font-mono font-bold text-sm text-violet-300">{formatBDT(currentEmp.monthly_salary)}</div>
-                </div>
-              </div>
+                  <div className="text-right">
+                    <span className="text-xs text-muted-foreground uppercase font-semibold">Contract Base</span>
+                    <div className="font-mono font-bold text-lg">{formatBDT(currentEmp.monthly_salary)}</div>
+                  </div>
+                </CardHeader>
+              </Card>
 
               {/* Attendance Marker Controls */}
-              <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/10 space-y-3">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-white font-label">Log Attendance</span>
-                  <input
-                    type="date"
-                    value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
-                    className="glass-input text-xs px-2.5 py-1 text-white"
-                  />
-                </div>
+              <Card>
+                <CardContent className="p-4 sm:p-6 space-y-4">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-semibold">Log Attendance</span>
+                    <Input
+                      type="date"
+                      value={selectedDate}
+                      onChange={(e) => setSelectedDate(e.target.value)}
+                      className="w-[140px] h-9"
+                    />
+                  </div>
 
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    onClick={() => markAttendanceMutation.mutate({ empId: currentEmp.id, status: 'present' })}
-                    disabled={markAttendanceMutation.isPending}
-                    className="py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 font-label font-medium text-xs border border-emerald-500/30 transition-all flex items-center justify-center gap-1"
-                    type="button"
-                  >
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Present</span>
-                  </button>
-                  <button
-                    onClick={() => markAttendanceMutation.mutate({ empId: currentEmp.id, status: 'half' })}
-                    disabled={markAttendanceMutation.isPending}
-                    className="py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 font-label font-medium text-xs border border-amber-500/30 transition-all flex items-center justify-center gap-1"
-                    type="button"
-                  >
-                    <Clock className="w-3.5 h-3.5" />
-                    <span>Half Day</span>
-                  </button>
-                  <button
-                    onClick={() => markAttendanceMutation.mutate({ empId: currentEmp.id, status: 'absent' })}
-                    disabled={markAttendanceMutation.isPending}
-                    className="py-1.5 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 font-label font-medium text-xs border border-rose-500/30 transition-all flex items-center justify-center gap-1"
-                    type="button"
-                  >
-                    <XCircle className="w-3.5 h-3.5" />
-                    <span>Absent</span>
-                  </button>
-                </div>
-              </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <Button
+                      variant="outline"
+                      onClick={() => markAttendanceMutation.mutate({ empId: currentEmp.id, status: 'present' })}
+                      disabled={markAttendanceMutation.isPending}
+                      className="text-emerald-600 border-emerald-500 hover:bg-emerald-500/10 hover:text-emerald-600 h-9"
+                    >
+                      <CheckCircle2 className="w-4 h-4 mr-2" />
+                      Present
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => markAttendanceMutation.mutate({ empId: currentEmp.id, status: 'half' })}
+                      disabled={markAttendanceMutation.isPending}
+                      className="text-amber-600 border-amber-500 hover:bg-amber-500/10 hover:text-amber-600 h-9"
+                    >
+                      <Clock className="w-4 h-4 mr-2" />
+                      Half Day
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => markAttendanceMutation.mutate({ empId: currentEmp.id, status: 'absent' })}
+                      disabled={markAttendanceMutation.isPending}
+                      className="text-rose-600 border-rose-500 hover:bg-rose-500/10 hover:text-rose-600 h-9"
+                    >
+                      <XCircle className="w-4 h-4 mr-2" />
+                      Absent
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
 
               {/* Attendance History Calendar Grid */}
-              <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/10 space-y-3">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-white font-label flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5 text-violet-400" />
-                    <span>{selectedMonth} Attendance Calendar</span>
-                  </span>
-                  <span className="text-[10px] text-slate-400 font-mono">
-                    {attendanceHistoryData?.records?.length || 0} logged
-                  </span>
-                </div>
+              <Card>
+                <CardContent className="p-4 sm:p-6 space-y-4">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-semibold flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-muted-foreground" />
+                      <span>{selectedMonth} Attendance Calendar</span>
+                    </span>
+                    <Badge variant="secondary" className="px-2 font-semibold">
+                      {attendanceHistoryData?.records?.length || 0} logged
+                    </Badge>
+                  </div>
 
-                {/* Day of Week Headers */}
-                <div className="grid grid-cols-7 gap-1 text-center text-[10px] text-slate-400 font-label uppercase">
-                  <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
-                </div>
+                  {/* Day of Week Headers */}
+                  <div className="grid grid-cols-7 gap-1.5 text-center text-[10px] text-muted-foreground font-semibold uppercase">
+                    <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+                  </div>
 
-                {/* Days Grid */}
-                <div className="grid grid-cols-7 gap-1">
-                  {(() => {
-                    const [y, m] = selectedMonth.split('-').map(Number);
-                    const daysCount = new Date(y, m, 0).getDate();
-                    const firstDay = new Date(y, m - 1, 1).getDay();
-                    const offset = (firstDay + 6) % 7;
-                    const items = [];
+                  {/* Days Grid */}
+                  <div className="grid grid-cols-7 gap-1.5">
+                    {(() => {
+                      const [y, m] = selectedMonth.split('-').map(Number);
+                      const daysCount = new Date(y, m, 0).getDate();
+                      const firstDay = new Date(y, m - 1, 1).getDay();
+                      const offset = (firstDay + 6) % 7;
+                      const items = [];
 
-                    for (let i = 0; i < offset; i++) {
-                      items.push(<div key={`empty-${i}`} className="h-7 rounded bg-transparent" />);
-                    }
-
-                    for (let d = 1; d <= daysCount; d++) {
-                      const dStr = `${selectedMonth}-${String(d).padStart(2, '0')}`;
-                      const rec = attendanceHistoryData?.records?.find((r) => r.date === dStr);
-                      const isToday = dStr === new Date().toISOString().slice(0, 10);
-                      const isSelectedDay = dStr === selectedDate;
-
-                      let cellColor = 'bg-white/[0.03] text-slate-500 border-white/[0.06] hover:border-white/20';
-                      if (rec?.status === 'present') {
-                        cellColor = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-bold';
-                      } else if (rec?.status === 'half') {
-                        cellColor = 'bg-amber-500/20 text-amber-300 border-amber-500/40 font-bold';
-                      } else if (rec?.status === 'absent') {
-                        cellColor = 'bg-rose-500/20 text-rose-300 border-rose-500/40 font-bold';
+                      for (let i = 0; i < offset; i++) {
+                        items.push(<div key={`empty-${i}`} className="h-8 rounded-md bg-transparent" />);
                       }
 
-                      items.push(
-                        <button
-                          key={d}
-                          type="button"
-                          onClick={() => setSelectedDate(dStr)}
-                          title={`${dStr}: ${rec?.status || 'No entry'}`}
-                          className={`h-7 rounded flex items-center justify-center text-[11px] font-mono border transition-all ${cellColor} ${
-                            isSelectedDay ? 'ring-2 ring-violet-500 shadow-sm' : ''
-                          } ${isToday ? 'underline underline-offset-2' : ''}`}
-                        >
-                          {d}
-                        </button>
-                      );
-                    }
-                    return items;
-                  })()}
-                </div>
+                      for (let d = 1; d <= daysCount; d++) {
+                        const dStr = `${selectedMonth}-${String(d).padStart(2, '0')}`;
+                        const rec = attendanceHistoryData?.records?.find((r) => r.date === dStr);
+                        const isToday = dStr === new Date().toISOString().slice(0, 10);
+                        const isSelectedDay = dStr === selectedDate;
 
-                {/* Legend & Summary */}
-                <div className="flex items-center justify-between text-[10px] text-slate-400 pt-2 border-t border-white/[0.06]">
-                  <span className="flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                    <span>Present ({(attendanceHistoryData?.records || []).filter(r => r.status === 'present').length})</span>
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-amber-400" />
-                    <span>Half ({(attendanceHistoryData?.records || []).filter(r => r.status === 'half').length})</span>
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-rose-400" />
-                    <span>Absent ({(attendanceHistoryData?.records || []).filter(r => r.status === 'absent').length})</span>
-                  </span>
-                </div>
-              </div>
+                        let cellColor = 'bg-muted/50 text-muted-foreground border-transparent hover:bg-muted';
+                        if (rec?.status === 'present') {
+                          cellColor = 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20 font-semibold';
+                        } else if (rec?.status === 'half') {
+                          cellColor = 'bg-amber-500/10 text-amber-600 border-amber-500/20 font-semibold';
+                        } else if (rec?.status === 'absent') {
+                          cellColor = 'bg-rose-500/10 text-rose-600 border-rose-500/20 font-semibold';
+                        }
+
+                        items.push(
+                          <button
+                            key={d}
+                            type="button"
+                            onClick={() => setSelectedDate(dStr)}
+                            title={`${dStr}: ${rec?.status || 'No entry'}`}
+                            className={`h-8 rounded-md flex items-center justify-center text-xs font-mono border transition-all ${cellColor} ${
+                              isSelectedDay ? 'ring-2 ring-primary ring-offset-1 ring-offset-background' : ''
+                            } ${isToday ? 'underline underline-offset-2 decoration-2' : ''}`}
+                          >
+                            {d}
+                          </button>
+                        );
+                      }
+                      return items;
+                    })()}
+                  </div>
+
+                  {/* Legend & Summary */}
+                  <div className="flex items-center justify-between text-[11px] font-semibold text-muted-foreground pt-4 border-t">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                      <span>Present ({(attendanceHistoryData?.records || []).filter(r => r.status === 'present').length})</span>
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                      <span>Half ({(attendanceHistoryData?.records || []).filter(r => r.status === 'half').length})</span>
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-full bg-rose-500" />
+                      <span>Absent ({(attendanceHistoryData?.records || []).filter(r => r.status === 'absent').length})</span>
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
 
               {/* Real-time Calculation Breakdown */}
-              <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/10 space-y-2 text-xs">
-                <span className="font-headline font-semibold text-xs text-white block mb-1">
-                  {selectedMonth} Payout Calculation
-                </span>
+              <Card>
+                <CardContent className="p-4 sm:p-6 space-y-4">
+                  <span className="font-semibold text-sm block mb-2">
+                    {selectedMonth} Payout Calculation
+                  </span>
 
-                <div className="flex justify-between items-center text-slate-400">
-                  <span>Contract Monthly Gross:</span>
-                  <span className="font-mono text-white">{formatBDT(currentEmp.monthly_salary)}</span>
-                </div>
-                <div className="flex justify-between items-center text-slate-400">
-                  <span>Daily Rate:</span>
-                  <span className="font-mono text-slate-300">৳{Math.round(currentEmp.monthly_salary / currentEmp.salary_divisor)}/day ({currentEmp.salary_divisor}d)</span>
-                </div>
-                <div className="flex justify-between items-center text-slate-400">
-                  <span>Days Recorded Present:</span>
-                  <span className="font-mono text-emerald-400 font-medium">
-                    {previewLoading ? '...' : `${salaryPreview?.daysPresent ?? 26} Days`}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center text-rose-400 border-t border-white/[0.06] pt-1.5">
-                  <span>Absenteeism Deduction:</span>
-                  <span className="font-mono font-medium">
-                    {previewLoading ? '...' : `- ${formatBDT(salaryPreview?.deduction ?? 0)}`}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center bg-white/[0.05] p-2 rounded-lg border border-white/10 text-xs mt-1">
-                  <span className="font-semibold text-white">Net Disbursable:</span>
-                  <span className="font-mono font-bold text-emerald-400 text-sm">
-                    {previewLoading ? '...' : formatBDT(salaryPreview?.netPayable ?? currentEmp.monthly_salary)}
-                  </span>
-                </div>
-              </div>
+                  <div className="flex justify-between items-center text-sm text-muted-foreground">
+                    <span>Contract Monthly Gross:</span>
+                    <span className="font-mono text-foreground font-semibold">{formatBDT(currentEmp.monthly_salary)}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm text-muted-foreground">
+                    <span>Daily Rate:</span>
+                    <span className="font-mono">৳{Math.round(currentEmp.monthly_salary / currentEmp.salary_divisor)}/day ({currentEmp.salary_divisor}d)</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm text-muted-foreground">
+                    <span>Days Recorded Present:</span>
+                    <span className="font-mono text-emerald-600 font-semibold">
+                      {previewLoading ? '...' : `${salaryPreview?.daysPresent ?? 26} Days`}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm text-destructive border-t pt-3 mt-1">
+                    <span>Absenteeism Deduction:</span>
+                    <span className="font-mono font-semibold">
+                      {previewLoading ? '...' : `- ${formatBDT(salaryPreview?.deduction ?? 0)}`}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center bg-muted/50 p-3 rounded-xl border text-sm mt-3">
+                    <span className="font-semibold">Net Disbursable:</span>
+                    <span className="font-mono font-bold text-emerald-600 text-base">
+                      {previewLoading ? '...' : formatBDT(salaryPreview?.netPayable ?? currentEmp.monthly_salary)}
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
 
               {/* Disburse CTA */}
-              <button
+              <Button
                 onClick={() =>
                   finalizeSalaryMutation.mutate({
                     month: `${selectedMonth}-01`,
@@ -687,16 +723,15 @@ export default function PayrollPage() {
                   })
                 }
                 disabled={finalizeSalaryMutation.isPending}
-                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 text-white font-semibold text-xs shadow-lg shadow-violet-600/30 active:scale-[0.98] transition-all disabled:opacity-50"
-                type="button"
+                className="w-full h-11 text-base font-semibold"
               >
                 {finalizeSalaryMutation.isPending ? 'Booking Payout...' : 'Finalize & Record Salary'}
-              </button>
+              </Button>
             </>
           ) : (
-            <div className="py-20 text-center text-xs text-slate-500">
+            <Card className="flex items-center justify-center py-24 text-sm font-medium text-muted-foreground">
               Select or enroll an employee to inspect attendance.
-            </div>
+            </Card>
           )}
         </div>
       </div>
@@ -708,8 +743,8 @@ export default function PayrollPage() {
         title="Enroll New Staff"
         maxWidth="md"
       >
-        <form onSubmit={handleAddSubmit} className="space-y-4">
-          <Input
+        <form onSubmit={handleAddSubmit} className="space-y-4 mt-2">
+          <FormInput
             label="Staff Full Name"
             placeholder="e.g. Tariqul Islam"
             value={empName}
@@ -717,7 +752,7 @@ export default function PayrollPage() {
             required
           />
 
-          <Input
+          <FormInput
             label="Phone Number"
             placeholder="017xxxxxxxx"
             value={empPhone}
@@ -725,7 +760,7 @@ export default function PayrollPage() {
           />
 
           <div className="grid grid-cols-2 gap-4">
-            <Input
+            <FormInput
               type="number"
               min="1"
               label="Monthly Base (৳)"
@@ -734,7 +769,7 @@ export default function PayrollPage() {
               onChange={(e) => setEmpSalary(Number(e.target.value))}
               required
             />
-            <Input
+            <FormInput
               type="number"
               min="20"
               max="31"
@@ -745,7 +780,7 @@ export default function PayrollPage() {
             />
           </div>
 
-          <Input
+          <FormInput
             type="date"
             label="Joining Date"
             value={empJoined}
@@ -753,7 +788,7 @@ export default function PayrollPage() {
             required
           />
 
-          <div className="flex items-center justify-end gap-3 pt-3">
+          <div className="flex items-center justify-end gap-2 pt-4 border-t mt-4">
             <Button
               type="button"
               variant="outline"
@@ -763,8 +798,7 @@ export default function PayrollPage() {
             </Button>
             <Button
               type="submit"
-              variant="primary"
-              isLoading={createEmpMutation.isPending}
+              disabled={createEmpMutation.isPending}
             >
               Enroll Staff
             </Button>
@@ -779,8 +813,8 @@ export default function PayrollPage() {
         title="Edit Staff Member"
         maxWidth="md"
       >
-        <form onSubmit={handleEditEmpSubmit} className="space-y-4">
-          <Input
+        <form onSubmit={handleEditEmpSubmit} className="space-y-4 mt-2">
+          <FormInput
             label="Staff Full Name"
             placeholder="e.g. Tariqul Islam"
             value={editEmpName}
@@ -788,7 +822,7 @@ export default function PayrollPage() {
             required
           />
 
-          <Input
+          <FormInput
             label="Phone Number"
             placeholder="017xxxxxxxx"
             value={editEmpPhone}
@@ -796,7 +830,7 @@ export default function PayrollPage() {
           />
 
           <div className="grid grid-cols-2 gap-4">
-            <Input
+            <FormInput
               type="number"
               min="1"
               label="Monthly Base (৳)"
@@ -804,7 +838,7 @@ export default function PayrollPage() {
               onChange={(e) => setEditEmpSalary(Number(e.target.value))}
               required
             />
-            <Input
+            <FormInput
               type="number"
               min="20"
               max="31"
@@ -815,7 +849,7 @@ export default function PayrollPage() {
             />
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-3">
+          <div className="flex items-center justify-end gap-2 pt-4 border-t mt-4">
             <Button
               type="button"
               variant="outline"
@@ -825,8 +859,7 @@ export default function PayrollPage() {
             </Button>
             <Button
               type="submit"
-              variant="primary"
-              isLoading={editEmpMutation.isPending}
+              disabled={editEmpMutation.isPending}
             >
               Save Changes
             </Button>

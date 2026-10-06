@@ -336,7 +336,7 @@ export function OrderInspectorModal({
       maxWidth="6xl"
     >
       {orderLoading ? (
-        <div className="py-16 text-center text-slate-400">
+        <div className="py-16 text-center text-muted-foreground">
           <RefreshCw className="w-8 h-8 animate-spin mx-auto text-violet-500 mb-2" />
           <p className="text-xs">Loading order data & customer history...</p>
         </div>
@@ -346,12 +346,12 @@ export function OrderInspectorModal({
           <p>Order not found or access denied.</p>
         </div>
       ) : (
-        <div className="space-y-5 text-xs text-slate-200">
+        <div className="space-y-5 text-xs text-muted-foreground">
           {/* Top Bar: Status, Date, Full Page Link */}
-          <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/10">
+          <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-muted/50 border border">
             <div className="flex items-center gap-2">
               <Badge status={order.status} showDot={true} />
-              <span className="text-[11px] text-slate-400 font-mono">
+              <span className="text-[11px] text-muted-foreground font-mono">
                 Created: {formatDate(order.created_at)}
               </span>
             </div>
@@ -414,7 +414,7 @@ export function OrderInspectorModal({
               <Link
                 href={`/orders/${order.id}`}
                 target="_blank"
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/[0.05] hover:bg-white/10 text-slate-300 hover:text-white text-[11px] font-medium transition-colors"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-muted/50 hover:bg-white/10 text-muted-foreground hover:text-foreground text-[11px] font-medium transition-colors"
               >
                 <span>Full Page</span>
                 <ExternalLink className="w-3 h-3" />
@@ -455,7 +455,7 @@ export function OrderInspectorModal({
                       </div>
                       <div className="text-[11px] opacity-80 mt-0.5">
                         Delivery Ratio:{" "}
-                        <strong className="text-white font-mono">
+                        <strong className="text-foreground font-mono">
                           {fraudInfo.deliveryRatio !== undefined &&
                           fraudInfo.deliveryRatio !== null
                             ? `${fraudInfo.deliveryRatio}%`
@@ -463,7 +463,7 @@ export function OrderInspectorModal({
                         </strong>
                         {" • "}
                         Cancel Ratio:{" "}
-                        <strong className="text-white font-mono">
+                        <strong className="text-foreground font-mono">
                           {fraudInfo.cancelRatio !== undefined &&
                           fraudInfo.cancelRatio !== null
                             ? `${fraudInfo.cancelRatio}%`
@@ -471,7 +471,7 @@ export function OrderInspectorModal({
                         </strong>
                         {" • "}
                         Fraud Reports:{" "}
-                        <strong className="text-white font-mono">
+                        <strong className="text-foreground font-mono">
                           {fraudInfo.fraudReports || 0}
                         </strong>
                       </div>
@@ -482,7 +482,7 @@ export function OrderInspectorModal({
                     type="button"
                     onClick={handleRunFraudCheck}
                     disabled={isCheckingFraud}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.08] hover:bg-white/[0.15] text-white text-[11px] font-medium shrink-0 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted/50 hover:bg-muted/50 text-foreground text-[11px] font-medium shrink-0 transition-colors"
                   >
                     <RefreshCw
                       className={`w-3.5 h-3.5 ${isCheckingFraud ? "animate-spin" : ""}`}
@@ -496,7 +496,7 @@ export function OrderInspectorModal({
                 {/* Fraud Comment Alert */}
                 {fraudInfo.fraudComment && (
                   <div className="mt-2.5 p-2 rounded-lg bg-rose-900/40 border border-rose-500/50 text-[11px] text-rose-200">
-                    <strong className="text-white">
+                    <strong className="text-foreground">
                       Steadfast Fraud Remark:
                     </strong>{" "}
                     {fraudInfo.fraudComment}
@@ -511,14 +511,14 @@ export function OrderInspectorModal({
 
               {/* Customer Information (Editable) */}
               <div className="space-y-3">
-                <h4 className="font-semibold text-slate-200 text-xs flex items-center gap-1.5 border-b border-white/[0.06] pb-1.5">
+                <h4 className="font-semibold text-muted-foreground text-xs flex items-center gap-1.5 border-b border-white/[0.06] pb-1.5">
                   <User className="w-3.5 h-3.5 text-violet-400" />
                   <span>Customer Information (Editable)</span>
                 </h4>
 
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-[11px] font-medium text-slate-400 mb-1">
+                    <label className="block text-[11px] font-medium text-muted-foreground mb-1">
                       Customer Name *
                     </label>
                     <input
@@ -531,7 +531,7 @@ export function OrderInspectorModal({
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-medium text-slate-400 mb-1">
+                    <label className="block text-[11px] font-medium text-muted-foreground mb-1">
                       Phone Number *
                     </label>
                     <div className="relative">
@@ -546,7 +546,7 @@ export function OrderInspectorModal({
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-medium text-slate-400 mb-1">
+                    <label className="block text-[11px] font-medium text-muted-foreground mb-1">
                       Delivery Address *
                     </label>
                     <textarea
@@ -559,7 +559,7 @@ export function OrderInspectorModal({
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-medium text-slate-400 mb-1">
+                    <label className="block text-[11px] font-medium text-muted-foreground mb-1">
                       Delivery Charge (৳ BDT)
                     </label>
                     <input
@@ -574,7 +574,7 @@ export function OrderInspectorModal({
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-medium text-slate-400 mb-1">
+                    <label className="block text-[11px] font-medium text-muted-foreground mb-1">
                       Sales Team Notes / Instructions
                     </label>
                     <input
@@ -594,19 +594,19 @@ export function OrderInspectorModal({
               {/* Products & Items Section */}
               <div className="space-y-3 pt-2 lg:pt-0">
                 <div className="flex items-center justify-between border-b border-white/[0.06] pb-1.5">
-                  <h4 className="font-semibold text-slate-200 text-xs flex items-center gap-1.5">
+                  <h4 className="font-semibold text-muted-foreground text-xs flex items-center gap-1.5">
                     <Package className="w-3.5 h-3.5 text-violet-400" />
                     <span>Order Items & Products ({items.length})</span>
                   </h4>
-                  <span className="text-[11px] text-slate-400">
+                  <span className="text-[11px] text-muted-foreground">
                     Add, change quantity, or delete products freely
                   </span>
                 </div>
 
                 {/* Current Items Table */}
-                <div className="overflow-x-auto rounded-xl border border-white/10 bg-white/[0.01]">
+                <div className="overflow-x-auto rounded-xl border border bg-muted/50">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-white/[0.03] border-b border-white/10 text-slate-400 text-[11px]">
+                    <thead className="bg-muted/50 border-b border text-muted-foreground text-[11px]">
                       <tr>
                         <th className="py-2.5 px-3">Product Name & SKU</th>
                         <th className="py-2.5 px-3 text-right">Unit Price</th>
@@ -623,20 +623,20 @@ export function OrderInspectorModal({
                         return (
                           <tr
                             key={`${item.product_id}-${idx}`}
-                            className="hover:bg-white/[0.02]"
+                            className="hover:bg-muted/50"
                           >
                             <td className="py-2.5 px-3">
-                              <div className="font-medium text-white">
+                              <div className="font-medium text-foreground">
                                 {item.name}
                               </div>
                               {item.sku && (
-                                <div className="text-[10px] text-slate-400 font-mono">
+                                <div className="text-[10px] text-muted-foreground font-mono">
                                   SKU: {item.sku}
                                 </div>
                               )}
                             </td>
 
-                            <td className="py-2.5 px-3 text-right font-mono font-medium text-slate-200">
+                            <td className="py-2.5 px-3 text-right font-mono font-medium text-muted-foreground">
                               {formatBDT(item.sell_price)}
                             </td>
 
@@ -648,11 +648,11 @@ export function OrderInspectorModal({
                                     handleUpdateQty(idx, item.quantity - 1)
                                   }
                                   disabled={item.quantity <= 1}
-                                  className="w-6 h-6 rounded bg-white/[0.06] hover:bg-white/15 disabled:opacity-30 text-white flex items-center justify-center font-bold text-xs"
+                                  className="w-6 h-6 rounded bg-muted/50 hover:bg-white/15 disabled:opacity-30 text-foreground flex items-center justify-center font-bold text-xs"
                                 >
                                   -
                                 </button>
-                                <span className="w-8 text-center font-mono font-bold text-white text-xs">
+                                <span className="w-8 text-center font-mono font-bold text-foreground text-xs">
                                   {item.quantity}
                                 </span>
                                 <button
@@ -660,7 +660,7 @@ export function OrderInspectorModal({
                                   onClick={() =>
                                     handleUpdateQty(idx, item.quantity + 1)
                                   }
-                                  className="w-6 h-6 rounded bg-white/[0.06] hover:bg-white/15 text-white flex items-center justify-center font-bold text-xs"
+                                  className="w-6 h-6 rounded bg-muted/50 hover:bg-white/15 text-foreground flex items-center justify-center font-bold text-xs"
                                 >
                                   +
                                 </button>
@@ -676,7 +676,7 @@ export function OrderInspectorModal({
                                 type="button"
                                 onClick={() => handleDeleteItem(idx)}
                                 title="Delete product from order"
-                                className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
+                                className="p-1.5 text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
@@ -689,15 +689,15 @@ export function OrderInspectorModal({
                 </div>
 
                 {/* Add New Product Ribbon */}
-                <div className="p-3 rounded-xl bg-white/[0.02] border border-white/10 space-y-2">
-                  <label className="block text-[11px] font-semibold text-slate-300">
+                <div className="p-3 rounded-xl bg-muted/50 border border space-y-2">
+                  <label className="block text-[11px] font-semibold text-muted-foreground">
                     + Add Another Product from Inventory:
                   </label>
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                     <select
                       value={selectedProductId}
                       onChange={(e) => setSelectedProductId(e.target.value)}
-                      className="glass-input flex-1 p-2 text-xs bg-[#0c0e14] text-slate-200"
+                      className="glass-input flex-1 p-2 text-xs bg-transparent text-muted-foreground"
                     >
                       <option value="">
                         -- Choose Product from Catalog --
@@ -718,13 +718,13 @@ export function OrderInspectorModal({
                         onChange={(e) =>
                           setSelectedQty(Math.max(1, Number(e.target.value)))
                         }
-                        className="glass-input w-16 p-2 text-center text-xs font-mono text-white"
+                        className="glass-input w-16 p-2 text-center text-xs font-mono text-foreground"
                         placeholder="Qty"
                       />
                       <button
                         type="button"
                         onClick={handleAddProduct}
-                        className="flex items-center gap-1 px-3 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-xl text-xs font-semibold shrink-0 transition-colors shadow-sm"
+                        className="flex items-center gap-1 px-3 py-2 bg-violet-600 hover:bg-violet-500 text-foreground rounded-xl text-xs font-semibold shrink-0 transition-colors shadow-sm"
                       >
                         <Plus className="w-3.5 h-3.5" />
                         <span>Add Item</span>
@@ -734,25 +734,25 @@ export function OrderInspectorModal({
                 </div>
 
                 {/* Financial Totals Ribbon */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-3 rounded-xl bg-white/[0.03] border border-white/10">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-3 rounded-xl bg-muted/50 border border">
                   <div>
-                    <span className="text-[10px] text-slate-400 block">
+                    <span className="text-[10px] text-muted-foreground block">
                       Items Subtotal:
                     </span>
-                    <span className="font-mono font-bold text-white text-sm">
+                    <span className="font-mono font-bold text-foreground text-sm">
                       {formatBDT(itemsSubtotal)}
                     </span>
                   </div>
                   <div>
-                    <span className="text-[10px] text-slate-400 block">
+                    <span className="text-[10px] text-muted-foreground block">
                       Delivery Charge:
                     </span>
-                    <span className="font-mono font-bold text-slate-300 text-sm">
+                    <span className="font-mono font-bold text-muted-foreground text-sm">
                       +{formatBDT(deliveryCharge)}
                     </span>
                   </div>
                   <div>
-                    <span className="text-[10px] text-slate-400 block">
+                    <span className="text-[10px] text-muted-foreground block">
                       Total Order Value:
                     </span>
                     <span className="font-mono font-bold text-violet-400 text-sm">
@@ -773,8 +773,8 @@ export function OrderInspectorModal({
           </div>
 
           {/* Footer Actions */}
-          <div className="flex items-center justify-between pt-3 border-t border-white/10">
-            <span className="text-[11px] text-slate-500 hidden sm:inline">
+          <div className="flex items-center justify-between pt-3 border-t border">
+            <span className="text-[11px] text-muted-foreground hidden sm:inline">
               Changes update order records, calculations, and customer database
               instantly.
             </span>
@@ -795,7 +795,7 @@ export function OrderInspectorModal({
                 type="button"
                 isLoading={saveMutation.isPending}
                 onClick={handleSave}
-                className="flex items-center gap-1.5 bg-gradient-to-r from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 text-white font-semibold"
+                className="flex items-center gap-1.5 bg-gradient-to-r from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 text-foreground font-semibold"
               >
                 <Save className="w-3.5 h-3.5" />
                 <span>Save All Changes</span>

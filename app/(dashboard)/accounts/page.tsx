@@ -20,9 +20,30 @@ import {
 } from 'lucide-react';
 import { fetchApi, formatBDT, formatDate } from '@/lib/apiClient';
 import { useToast } from '@/app/providers';
-import { Button } from '@/components/ui/Button';
+
+// Shadcn imports
+import { Button } from '@/components/ui/shadcn/button';
+import { Badge } from '@/components/ui/shadcn/badge';
+import { Input } from '@/components/ui/shadcn/input';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription
+} from '@/components/ui/shadcn/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/shadcn/table";
+
+// Old UI components
 import { Modal } from '@/components/ui/Modal';
-import { Input, Select } from '@/components/ui/Input';
+import { Input as FormInput, Select } from '@/components/ui/Input';
 
 interface PnLData {
   total_revenue: number;
@@ -251,54 +272,48 @@ export default function AccountsPage() {
   const skuBreakdowns: ProductPnLItem[] = Array.isArray(productPnLData) ? productPnLData : [];
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6">
       {/* 1. Header & Controls */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="font-bold text-xl text-white">
-            Finance &amp; Accounts
-          </h1>
-          <p className="text-sm text-slate-500 mt-0.5">
-            Your financial overview for the month.
-          </p>
+          <h1 className="text-2xl font-semibold tracking-tight">Accounts & P&L</h1>
+          <p className="text-sm text-muted-foreground mt-1">Financial overview, expenses, and profit margins.</p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2">
           {/* Month Selector */}
-          <div className="flex items-center bg-white/[0.04] border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white">
-            <Calendar className="w-3.5 h-3.5 text-violet-400 mr-2" />
+          <div className="flex items-center bg-background border rounded-md px-3 py-1.5 text-sm h-9">
+            <Calendar className="w-4 h-4 text-muted-foreground mr-2" />
             <input
               type="month"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              className="bg-transparent text-xs font-mono text-white focus:outline-none cursor-pointer"
+              className="bg-transparent text-sm font-medium focus:outline-none cursor-pointer text-foreground"
             />
           </div>
 
-          {/* Export Product P&L */}
-          <button
+          <Button
+            variant="outline"
+            size="sm"
             onClick={handleDownloadProductPnL}
             disabled={isExportingProductPnL}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.04] border border-white/10 hover:border-white/20 text-xs font-medium text-slate-200 transition-all disabled:opacity-50"
-            type="button"
           >
-            <Download className="w-3.5 h-3.5 text-violet-400" />
-            <span>{isExportingProductPnL ? 'Exporting...' : 'Product P&L'}</span>
-          </button>
+            <Download className="w-4 h-4 mr-2" />
+            {isExportingProductPnL ? 'Exporting...' : 'Product P&L'}
+          </Button>
 
-          {/* Export Excel */}
-          <button
+          <Button
+            variant="outline"
+            size="sm"
             onClick={handleDownloadExcel}
             disabled={isExporting}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.04] border border-white/10 hover:border-white/20 text-xs font-medium text-slate-200 transition-all disabled:opacity-50"
-            type="button"
           >
-            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
-            <span>{isExporting ? 'Exporting...' : 'Export Excel'}</span>
-          </button>
+            <FileSpreadsheet className="w-4 h-4 mr-2 text-emerald-500" />
+            {isExporting ? 'Exporting...' : 'Export Excel'}
+          </Button>
 
-          {/* Add Expense CTA */}
-          <button
+          <Button
+            size="sm"
             onClick={() => {
               setEditingExpenseId(null);
               setExpenseName('');
@@ -307,170 +322,168 @@ export default function AccountsPage() {
               setIsRecurring(false);
               setAddExpenseModalOpen(true);
             }}
-            className="flex items-center gap-1.5 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold rounded-xl shadow-sm shadow-violet-600/25 active:scale-[0.98] transition-all"
-            type="button"
           >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Add Expense</span>
-          </button>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Expense
+          </Button>
         </div>
       </div>
 
-      {/* 2. 6 KPI Cards Grid (From Stitch P&L Specification) */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        {/* Revenue */}
-        <div className="glass-card p-3.5 relative overflow-hidden border-l-2 border-l-violet-500">
-          <span className="text-[10px] font-medium text-slate-400 block">Total Revenue</span>
-          <div className="text-lg font-headline font-bold text-white mt-1 tabular-nums">
-            {pnlLoading ? '—' : formatBDT(totalRev)}
-          </div>
-          <p className="text-[10px] text-slate-500 mt-0.5 font-body truncate">{pnl?.orders_count || 0} orders</p>
-        </div>
-
-        {/* COGS */}
-        <div className="glass-card p-3.5 relative overflow-hidden border-l-2 border-l-slate-500">
-          <span className="text-[10px] font-medium text-slate-400 block">Cost of Goods</span>
-          <div className="text-lg font-bold text-slate-300 mt-1 tabular-nums">
-            {pnlLoading ? '—' : formatBDT(cogsVal)}
-          </div>
-          <p className="text-[10px] text-slate-500 mt-0.5 truncate">Purchase cost</p>
-        </div>
-
-        {/* Gross Profit */}
-        <div className="glass-card p-3.5 relative overflow-hidden border-l-2 border-l-violet-400">
-          <span className="text-[10px] font-medium text-slate-400 block">Gross Profit</span>
-          <div className="text-lg font-bold text-violet-300 mt-1 tabular-nums">
-            {pnlLoading ? '—' : formatBDT(grossVal)}
-          </div>
-          <p className="text-[10px] text-emerald-400 mt-0.5">{grossMarginPct}% margin</p>
-        </div>
-
-        {/* OpEx */}
-        <div className="glass-card p-3.5 relative overflow-hidden border-l-2 border-l-amber-500">
-          <span className="text-[10px] font-medium text-slate-400 block">Operating Cost</span>
-          <div className="text-lg font-bold text-amber-300 mt-1 tabular-nums">
-            {pnlLoading ? '—' : formatBDT(opCosts)}
-          </div>
-          <p className="text-[10px] text-slate-500 mt-0.5 truncate">Bills &amp; expenses</p>
-        </div>
-
-        {/* Payroll */}
-        <div className="glass-card p-3.5 relative overflow-hidden border-l-2 border-l-pink-500">
-          <span className="text-[10px] font-medium text-slate-400 block">Staff Payroll</span>
-          <div className="text-lg font-headline font-bold text-pink-300 mt-1 tabular-nums">
-            {pnlLoading ? '—' : formatBDT(salariesCost)}
-          </div>
-          <p className="text-[10px] text-slate-500 mt-0.5 font-body truncate">Monthly wages</p>
-        </div>
-
-        {/* Net Profit */}
-        <div className="glass-card p-3.5 relative overflow-hidden border-l-2 border-l-emerald-500">
-          <span className="text-[10px] font-medium text-slate-400 block">Net Profit</span>
-          <div className={`text-lg font-headline font-bold mt-1 tabular-nums ${netVal >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-            {pnlLoading ? '—' : formatBDT(netVal)}
-          </div>
-          <p className="text-[10px] text-emerald-400/80 mt-0.5 font-label">{netMarginPct}% net margin</p>
-        </div>
-      </div>
-
-      {/* 3. Sub-Navigation Tabs */}
-      <div className="glass-card p-2 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={() => setActiveTab('overview')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
-              activeTab === 'overview'
-                ? 'bg-violet-600 text-white font-semibold shadow-sm'
-                : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
-            }`}
-          >
-            Product Margins
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('bills')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
-              activeTab === 'bills'
-                ? 'bg-violet-600 text-white font-semibold shadow-sm'
-                : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
-            }`}
-          >
-            Expenses
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('ledger')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
-              activeTab === 'ledger'
-                ? 'bg-violet-600 text-white font-semibold shadow-sm'
-                : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
-            }`}
-          >
-            Income Breakdown
-          </button>
-        </div>
-
-        <div className="text-xs text-slate-500 font-mono hidden sm:block">
-          Period: {selectedMonth}
-        </div>
-      </div>
-
-      {/* 4. Tab Content */}
-      <div className="glass-card overflow-hidden p-5">
-        {activeTab === 'bills' ? (
-          /* Operational Expenses Table */
-          <div className="space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
-              <h3 className="font-headline font-bold text-sm text-white">Monthly Expense Records</h3>
-              <input
-                type="text"
-                value={searchFilter}
-                onChange={(e) => setSearchFilter(e.target.value)}
-                placeholder="Filter bills..."
-                className="glass-input px-3 py-1.5 text-xs w-48"
-              />
+      {/* 2. 6 KPI Cards Grid */}
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
+        <Card>
+          <CardHeader className="flex flex-col space-y-1 p-4 pb-2">
+            <CardTitle className="text-xs font-medium text-muted-foreground">Total Revenue</CardTitle>
+            <div className="text-xl font-bold tabular-nums">
+              {pnlLoading ? '—' : formatBDT(totalRev)}
             </div>
+            <p className="text-[11px] text-muted-foreground truncate">{pnl?.orders_count || 0} orders</p>
+          </CardHeader>
+        </Card>
 
-            {billsLoading ? (
-              <div className="py-12 text-center text-xs text-slate-500">Loading expense ledger...</div>
-            ) : filteredExpenses.length === 0 ? (
-              <div className="py-12 text-center text-xs text-slate-500">No expenses recorded for {selectedMonth}.</div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-white/[0.02] border-b border-white/10 text-slate-400 text-[11px]">
-                    <tr>
-                      <th className="py-3 px-3.5 font-semibold">Title</th>
-                      <th className="py-3 px-3 font-semibold">Category</th>
-                      <th className="py-3 px-3 font-semibold">Type</th>
-                      <th className="py-3 px-3 font-semibold">Date</th>
-                      <th className="py-3 px-3.5 text-right font-semibold">Amount</th>
-                      <th className="py-3 px-3 text-right font-semibold">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/[0.04]">
+        <Card>
+          <CardHeader className="flex flex-col space-y-1 p-4 pb-2">
+            <CardTitle className="text-xs font-medium text-muted-foreground">Cost of Goods</CardTitle>
+            <div className="text-xl font-bold tabular-nums">
+              {pnlLoading ? '—' : formatBDT(cogsVal)}
+            </div>
+            <p className="text-[11px] text-muted-foreground truncate">Purchase cost</p>
+          </CardHeader>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-col space-y-1 p-4 pb-2">
+            <CardTitle className="text-xs font-medium text-muted-foreground">Gross Profit</CardTitle>
+            <div className="text-xl font-bold text-primary tabular-nums">
+              {pnlLoading ? '—' : formatBDT(grossVal)}
+            </div>
+            <p className="text-[11px] text-emerald-600 font-medium">{grossMarginPct}% margin</p>
+          </CardHeader>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-col space-y-1 p-4 pb-2">
+            <CardTitle className="text-xs font-medium text-muted-foreground">Operating Cost</CardTitle>
+            <div className="text-xl font-bold tabular-nums">
+              {pnlLoading ? '—' : formatBDT(opCosts)}
+            </div>
+            <p className="text-[11px] text-muted-foreground truncate">Bills & expenses</p>
+          </CardHeader>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-col space-y-1 p-4 pb-2">
+            <CardTitle className="text-xs font-medium text-muted-foreground">Staff Payroll</CardTitle>
+            <div className="text-xl font-bold tabular-nums">
+              {pnlLoading ? '—' : formatBDT(salariesCost)}
+            </div>
+            <p className="text-[11px] text-muted-foreground truncate">Monthly wages</p>
+          </CardHeader>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-col space-y-1 p-4 pb-2">
+            <CardTitle className="text-xs font-medium text-muted-foreground">Net Profit</CardTitle>
+            <div className={`text-xl font-bold tabular-nums ${netVal >= 0 ? 'text-emerald-600' : 'text-destructive'}`}>
+              {pnlLoading ? '—' : formatBDT(netVal)}
+            </div>
+            <p className="text-[11px] text-emerald-600 font-medium">{netMarginPct}% net margin</p>
+          </CardHeader>
+        </Card>
+      </div>
+
+      {/* 3. Main Content Container */}
+      <Card className="flex flex-col overflow-hidden">
+        {/* Tabs inside CardHeader */}
+        <CardHeader className="p-4 border-b bg-muted/20">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-md">
+              <Button
+                variant={activeTab === 'overview' ? 'default' : 'ghost'}
+                size="sm"
+                className="h-8"
+                onClick={() => setActiveTab('overview')}
+              >
+                Product Margins
+              </Button>
+              <Button
+                variant={activeTab === 'bills' ? 'default' : 'ghost'}
+                size="sm"
+                className="h-8"
+                onClick={() => setActiveTab('bills')}
+              >
+                Expenses
+              </Button>
+              <Button
+                variant={activeTab === 'ledger' ? 'default' : 'ghost'}
+                size="sm"
+                className="h-8"
+                onClick={() => setActiveTab('ledger')}
+              >
+                Income Breakdown
+              </Button>
+            </div>
+            <div className="text-xs text-muted-foreground font-medium hidden sm:block">
+              Period: {selectedMonth}
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent className="p-0">
+          {activeTab === 'bills' ? (
+            /* Operational Expenses */
+            <div className="flex flex-col h-full">
+              <div className="flex items-center justify-between p-4 sm:px-6">
+                <h3 className="font-semibold text-sm">Monthly Expense Records</h3>
+                <Input
+                  type="text"
+                  value={searchFilter}
+                  onChange={(e) => setSearchFilter(e.target.value)}
+                  placeholder="Filter bills..."
+                  className="w-48 h-8"
+                />
+              </div>
+
+              {billsLoading ? (
+                <div className="py-12 text-center text-sm text-muted-foreground">Loading expense ledger...</div>
+              ) : filteredExpenses.length === 0 ? (
+                <div className="py-12 text-center text-sm text-muted-foreground">No expenses recorded for {selectedMonth}.</div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Title</TableHead>
+                      <TableHead>Category</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead className="text-right">Amount</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {filteredExpenses.map((bill) => (
-                      <tr key={bill.id} className="hover:bg-white/[0.02] transition-colors group">
-                        <td className="py-3 px-3.5 font-semibold text-white">{bill.name}</td>
-                        <td className="py-3 px-3 capitalize text-slate-400">{bill.category.replace('_', ' ')}</td>
-                        <td className="py-3 px-3">
+                      <TableRow key={bill.id}>
+                        <TableCell className="font-medium">{bill.name}</TableCell>
+                        <TableCell className="capitalize text-muted-foreground">{bill.category.replace('_', ' ')}</TableCell>
+                        <TableCell>
                           {bill.is_recurring ? (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-300 font-label text-[10px]">
+                            <Badge variant="outline" className="border-primary text-primary bg-primary/10">
                               Monthly Auto
-                            </span>
+                            </Badge>
                           ) : (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-white/[0.04] text-slate-400 font-label text-[10px]">
+                            <Badge variant="secondary">
                               One-time
-                            </span>
+                            </Badge>
                           )}
-                        </td>
-                        <td className="py-3 px-3 text-slate-400 font-mono text-[11px]">{formatDate(bill.date)}</td>
-                        <td className="py-3 px-3.5 text-right font-mono font-bold text-white">{formatBDT(bill.amount)}</td>
-                        <td className="py-3 px-3 text-right">
-                          <div className="flex items-center justify-end gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
-                            <button
-                              type="button"
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-xs">{formatDate(bill.date)}</TableCell>
+                        <TableCell className="text-right font-semibold tabular-nums">{formatBDT(bill.amount)}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground"
                               onClick={() => {
                                 setEditingExpenseId(bill.id);
                                 setExpenseName(bill.name);
@@ -480,122 +493,120 @@ export default function AccountsPage() {
                                 setIsRecurring(bill.is_recurring);
                                 setAddExpenseModalOpen(true);
                               }}
-                              className="p-1 rounded-lg hover:bg-white/[0.06] text-slate-400 hover:text-white"
                             >
-                              <Edit2 className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              type="button"
+                              <Edit2 className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive"
                               onClick={() => {
                                 if (window.confirm(`Delete expense "${bill.name}"?`)) {
                                   deleteExpenseMutation.mutate(bill.id);
                                 }
                               }}
-                              className="p-1 rounded-lg hover:bg-rose-500/15 text-slate-400 hover:text-rose-400"
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
                           </div>
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        ) : activeTab === 'ledger' ? (
-          /* Full Waterfall Income Statement */
-          <div className="space-y-3 max-w-2xl mx-auto py-2">
-            <h3 className="font-headline font-bold text-sm text-white mb-4">Financial Statement Waterfall</h3>
-            <div className="divide-y divide-white/[0.06] text-xs">
-              <div className="py-3 flex justify-between items-center">
-                <span className="font-semibold text-white">1. Total Revenue</span>
-                <span className="font-mono font-bold text-white tabular-nums">{formatBDT(totalRev)}</span>
-              </div>
-              <div className="py-3 flex justify-between items-center text-slate-400 pl-4">
-                <span>less: Cost of Goods Sold (COGS)</span>
-                <span className="font-mono tabular-nums text-slate-300">- {formatBDT(cogsVal)}</span>
-              </div>
-              <div className="py-3 flex justify-between items-center font-bold text-violet-300 bg-white/[0.03] px-3.5 rounded-xl border border-white/[0.05]">
-                <span>= Gross Profit</span>
-                <span className="font-mono tabular-nums">{formatBDT(grossVal)}</span>
-              </div>
-              <div className="py-3 flex justify-between items-center text-slate-400 pl-4">
-                <span>less: Operating Expenses (Rent, Bills, Marketing)</span>
-                <span className="font-mono tabular-nums text-slate-300">- {formatBDT(opCosts)}</span>
-              </div>
-              <div className="py-3 flex justify-between items-center text-slate-400 pl-4">
-                <span>less: Staff Payroll</span>
-                <span className="font-mono tabular-nums text-slate-300">- {formatBDT(salariesCost)}</span>
-              </div>
-              <div className="py-3 flex justify-between items-center text-rose-400 pl-4">
-                <span>less: Courier RTO Freight Losses</span>
-                <span className="font-mono tabular-nums text-rose-300">- {formatBDT(returnLoss)}</span>
-              </div>
-              <div className="py-3.5 flex justify-between items-center font-bold text-sm bg-white/[0.06] px-4 rounded-xl border border-white/10 mt-2">
-                <span className={netVal >= 0 ? 'text-emerald-400 font-headline' : 'text-rose-400 font-headline'}>
-                  = Net Operating Profit
-                </span>
-                <span className={`font-mono text-base tabular-nums ${netVal >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                  {formatBDT(netVal)}
-                </span>
+                  </TableBody>
+                </Table>
+              )}
+            </div>
+          ) : activeTab === 'ledger' ? (
+            /* Full Waterfall Income Statement */
+            <div className="p-6 max-w-2xl mx-auto w-full">
+              <h3 className="font-semibold text-lg mb-6">Financial Statement Waterfall</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between items-center py-3 border-b">
+                  <span className="font-medium">1. Total Revenue</span>
+                  <span className="font-bold tabular-nums">{formatBDT(totalRev)}</span>
+                </div>
+                <div className="flex justify-between items-center py-3 text-muted-foreground border-b">
+                  <span>less: Cost of Goods Sold (COGS)</span>
+                  <span className="tabular-nums">- {formatBDT(cogsVal)}</span>
+                </div>
+                <div className="flex justify-between items-center py-4 font-bold text-primary bg-primary/5 px-4 rounded-lg my-2">
+                  <span>= Gross Profit</span>
+                  <span className="tabular-nums">{formatBDT(grossVal)}</span>
+                </div>
+                <div className="flex justify-between items-center py-3 text-muted-foreground border-b">
+                  <span>less: Operating Expenses (Rent, Bills, Marketing)</span>
+                  <span className="tabular-nums">- {formatBDT(opCosts)}</span>
+                </div>
+                <div className="flex justify-between items-center py-3 text-muted-foreground border-b">
+                  <span>less: Staff Payroll</span>
+                  <span className="tabular-nums">- {formatBDT(salariesCost)}</span>
+                </div>
+                <div className="flex justify-between items-center py-3 text-destructive border-b">
+                  <span>less: Courier RTO Freight Losses</span>
+                  <span className="tabular-nums">- {formatBDT(returnLoss)}</span>
+                </div>
+                <div className="flex justify-between items-center py-5 font-bold bg-muted/30 px-4 rounded-lg mt-4 border">
+                  <span className={netVal >= 0 ? 'text-emerald-600' : 'text-destructive'}>
+                    = Net Operating Profit
+                  </span>
+                  <span className={`text-base tabular-nums ${netVal >= 0 ? 'text-emerald-600' : 'text-destructive'}`}>
+                    {formatBDT(netVal)}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
-        ) : (
-          /* SKU Level Margin Table */
-          <div className="overflow-x-auto">
-            {productPnlLoading ? (
-              <div className="py-12 text-center text-xs text-slate-500">Loading SKU-level margins...</div>
-            ) : skuBreakdowns.length === 0 ? (
-              <div className="py-12 text-center text-xs text-slate-500">No SKU sales recorded for this period.</div>
-            ) : (
-              <table className="w-full text-left text-xs">
-                <thead className="bg-white/[0.02] border-b border-white/10 text-slate-400 text-[11px]">
-                  <tr>
-                    <th className="py-3 px-3.5 font-semibold">Product</th>
-                    <th className="py-3 px-2 text-right font-semibold">Stock</th>
-                    <th className="py-3 px-2 text-right font-semibold">Units Sold</th>
-                    <th className="py-3 px-3 text-right font-semibold">Buy / Sell Price</th>
-                    <th className="py-3 px-3 text-right font-semibold">Revenue</th>
-                    <th className="py-3 px-3 text-right font-semibold">COGS</th>
-                    <th className="py-3 px-3 text-right font-semibold">Profit</th>
-                    <th className="py-3 px-3.5 text-right font-semibold">Margin %</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/[0.04]">
-                  {skuBreakdowns.map((row) => (
-                    <tr key={row.productId} className="hover:bg-white/[0.02] transition-colors">
-                      <td className="py-3 px-3.5">
-                        <span className="font-semibold text-white block">{row.productName}</span>
-                        <span className="text-[10px] text-violet-300 font-mono">{row.sku || 'No SKU'}</span>
-                      </td>
-                      <td className="py-3 px-2 text-right font-mono text-slate-400">{row.currentStock}</td>
-                      <td className="py-3 px-2 text-right font-mono font-semibold text-white">{row.totalUnitsSold}</td>
-                      <td className="py-3 px-3 text-right font-mono text-slate-400 text-[11px]">
-                        {formatBDT(row.buyPrice)} / {formatBDT(row.sellPrice)}
-                      </td>
-                      <td className="py-3 px-3 text-right font-mono font-semibold text-slate-200">{formatBDT(row.totalRevenue)}</td>
-                      <td className="py-3 px-3 text-right font-mono text-slate-400">{formatBDT(row.totalCogs)}</td>
-                      <td className={`py-3 px-3 text-right font-mono font-bold ${row.grossProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                        {formatBDT(row.grossProfit)}
-                      </td>
-                      <td className="py-3 px-3.5 text-right">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full font-label text-[10px] font-semibold ${
-                          row.grossProfit >= 0 ? 'bg-emerald-500/15 text-emerald-400' : 'bg-rose-500/15 text-rose-400'
-                        }`}>
-                          {row.marginPercent.toFixed(1)}%
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-        )}
-      </div>
+          ) : (
+            /* SKU Level Margin Table */
+            <div className="flex flex-col h-full">
+              {productPnlLoading ? (
+                <div className="py-12 text-center text-sm text-muted-foreground">Loading SKU-level margins...</div>
+              ) : skuBreakdowns.length === 0 ? (
+                <div className="py-12 text-center text-sm text-muted-foreground">No SKU sales recorded for this period.</div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Product</TableHead>
+                      <TableHead className="text-right">Stock</TableHead>
+                      <TableHead className="text-right">Units Sold</TableHead>
+                      <TableHead className="text-right">Buy / Sell Price</TableHead>
+                      <TableHead className="text-right">Revenue</TableHead>
+                      <TableHead className="text-right">COGS</TableHead>
+                      <TableHead className="text-right">Profit</TableHead>
+                      <TableHead className="text-right">Margin %</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {skuBreakdowns.map((row) => (
+                      <TableRow key={row.productId}>
+                        <TableCell>
+                          <span className="font-medium block">{row.productName}</span>
+                          <span className="text-xs text-muted-foreground">{row.sku || 'No SKU'}</span>
+                        </TableCell>
+                        <TableCell className="text-right text-muted-foreground tabular-nums">{row.currentStock}</TableCell>
+                        <TableCell className="text-right font-bold tabular-nums">{row.totalUnitsSold}</TableCell>
+                        <TableCell className="text-right text-muted-foreground text-xs tabular-nums">
+                          {formatBDT(row.buyPrice)} / {formatBDT(row.sellPrice)}
+                        </TableCell>
+                        <TableCell className="text-right font-medium tabular-nums">{formatBDT(row.totalRevenue)}</TableCell>
+                        <TableCell className="text-right text-muted-foreground tabular-nums">{formatBDT(row.totalCogs)}</TableCell>
+                        <TableCell className={`text-right font-semibold tabular-nums ${row.grossProfit >= 0 ? 'text-emerald-600' : 'text-destructive'}`}>
+                          {formatBDT(row.grossProfit)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Badge variant={row.grossProfit >= 0 ? 'outline' : 'destructive'} className={row.grossProfit >= 0 ? 'border-emerald-500 text-emerald-600 bg-emerald-500/10' : ''}>
+                            {row.marginPercent.toFixed(1)}%
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Record Expense Modal */}
       <Modal
@@ -605,7 +616,7 @@ export default function AccountsPage() {
         maxWidth="md"
       >
         <form onSubmit={handleAddExpenseSubmit} className="space-y-4">
-          <Input
+          <FormInput
             label="Expense Description"
             placeholder="e.g. Shop Rent / FB Ads / Electricity"
             value={expenseName}
@@ -614,7 +625,7 @@ export default function AccountsPage() {
           />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input
+            <FormInput
               type="number"
               min="1"
               label="Amount (৳)"
@@ -623,7 +634,7 @@ export default function AccountsPage() {
               onChange={(e) => setExpenseAmount(Number(e.target.value))}
               required
             />
-            <Input
+            <FormInput
               type="date"
               label="Date"
               value={expenseDate}
@@ -651,9 +662,9 @@ export default function AccountsPage() {
               id="is_recurring_checkbox"
               checked={isRecurring}
               onChange={(e) => setIsRecurring(e.target.checked)}
-              className="rounded bg-white/[0.04] border-white/20 text-violet-600 focus:ring-violet-500"
+              className="rounded bg-background border-input text-primary focus:ring-primary cursor-pointer"
             />
-            <label htmlFor="is_recurring_checkbox" className="text-xs text-slate-300 cursor-pointer font-body">
+            <label htmlFor="is_recurring_checkbox" className="text-sm text-muted-foreground cursor-pointer">
               Auto-generate monthly recurring expense
             </label>
           </div>
@@ -668,10 +679,9 @@ export default function AccountsPage() {
             </Button>
             <Button
               type="submit"
-              variant="primary"
-              isLoading={addExpenseMutation.isPending || updateExpenseMutation.isPending}
+              disabled={addExpenseMutation.isPending || updateExpenseMutation.isPending}
             >
-              {editingExpenseId ? 'Update Expense' : 'Save Expense'}
+              {editingExpenseId ? (updateExpenseMutation.isPending ? 'Updating...' : 'Update Expense') : (addExpenseMutation.isPending ? 'Saving...' : 'Save Expense')}
             </Button>
           </div>
         </form>

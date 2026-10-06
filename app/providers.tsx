@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useState, useMemo } from '
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createClient } from '@/lib/supabase/client';
 import { fetchApi } from '@/lib/apiClient';
+import { LanguageProvider } from '@/lib/i18n';
 
 interface UserProfile {
   id: string;
@@ -162,9 +163,10 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthContext.Provider value={authValue}>
-        <ToastContext.Provider value={{ toast }}>
-          {children}
+      <LanguageProvider>
+        <AuthContext.Provider value={authValue}>
+          <ToastContext.Provider value={{ toast }}>
+            {children}
 
           {/* Toast Notification Container */}
           <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none">
@@ -191,6 +193,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
           </div>
         </ToastContext.Provider>
       </AuthContext.Provider>
+      </LanguageProvider>
     </QueryClientProvider>
   );
 }

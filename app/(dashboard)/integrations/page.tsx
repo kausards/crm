@@ -23,8 +23,18 @@ import {
 } from 'lucide-react';
 import { fetchApi, formatBDT } from '@/lib/apiClient';
 import { useAuth, useToast } from '@/app/providers';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+
+// Shadcn imports
+import { Button } from '@/components/ui/shadcn/button';
+import { Badge } from '@/components/ui/shadcn/badge';
+import { Input } from '@/components/ui/shadcn/input';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription
+} from '@/components/ui/shadcn/card';
 
 interface IntegrationData {
   tenantId: string;
@@ -278,7 +288,7 @@ export default function IntegrationsPage() {
     </label>
   </div>
 
-  <button type="submit" id="nf_submit_btn" style="width: 100%; background: #7c3aed; color: #fff; padding: 12px; font-size: 15px; font-weight: 700; border: none; border-radius: 8px; cursor: pointer;">
+  <button type="submit" id="nf_submit_btn" style="width: 100%; background: #4f46e5; color: #fff; padding: 12px; font-size: 15px; font-weight: 700; border: none; border-radius: 8px; cursor: pointer;">
     অর্ডার সাবমিট করুন (ক্যাশ অন ডেলিভারি)
   </button>
   <div id="nf_msg" style="margin-top: 10px; font-size: 13px; text-align: center;"></div>
@@ -334,78 +344,78 @@ document.getElementById('nexusflow-checkout-form').addEventListener('submit', as
     btn.innerText = 'অর্ডার সাবমিট করুন (ক্যাশ অন ডেলিভারি)';
   }
 });
-<\/script>`;
+</script>`;
 
   return (
-    <div className="flex flex-col w-full gap-7 max-w-[1400px] mx-auto pb-16">
+    <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 pb-14">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="font-bold text-xl text-white">
-            Website &amp; Store
-          </h1>
-          <p className="text-sm text-slate-500 mt-0.5">
+          <h1 className="text-2xl font-semibold tracking-tight">Website & Store</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Connect your store to automatically receive orders.
           </p>
         </div>
 
         <Link
           href="/orders"
-          className="btn-glass flex items-center gap-2 px-4 py-2 text-xs font-semibold text-slate-200 self-start sm:self-auto"
+          className="self-start sm:self-auto"
         >
-          <ShoppingBag className="w-4 h-4 text-violet-400" />
-          <span>View Orders ({integration?.webOrdersCount || 0} Total)</span>
+          <Button variant="outline" size="sm">
+            <ShoppingBag className="w-4 h-4 text-indigo-600 mr-2" />
+            View Orders ({integration?.webOrdersCount || 0} Total)
+          </Button>
         </Link>
       </div>
 
       {/* Top Credentials Bento Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Connected Website Domain Card */}
-        <div className="glass-card p-5 rounded-2xl relative flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1.5">
-                <Globe className="w-3.5 h-3.5 text-violet-400" />
+        <Card className="flex flex-col justify-between">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <Globe className="w-4 h-4 text-indigo-500" />
                 Store Website
               </span>
-              <span className="badge-green text-[10px] font-semibold">
+              <Badge variant={integration?.websiteUrl || wooStatus?.isConnected ? 'outline' : 'secondary'} className={integration?.websiteUrl || wooStatus?.isConnected ? 'border-emerald-500 text-emerald-600 bg-emerald-500/10 uppercase tracking-widest text-[10px]' : 'uppercase tracking-widest text-[10px]'}>
                 {integration?.websiteUrl || wooStatus?.isConnected ? 'Connected' : 'Setup Required'}
-              </span>
+              </Badge>
             </div>
 
             {isEditingWebsite ? (
-              <div className="space-y-2 mt-2">
-                <input
+              <div className="space-y-3 mt-2">
+                <Input
                   type="url"
                   placeholder="https://yourstore.com"
                   value={websiteInput}
                   onChange={(e) => setWebsiteInput(e.target.value)}
-                  className="w-full text-xs bg-black/60 border border-violet-500/40 rounded-xl px-3 py-2 text-white font-mono focus:outline-none focus:ring-1 focus:ring-violet-500"
                 />
                 <div className="flex items-center gap-2">
-                  <button
+                  <Button
+                    size="sm"
                     onClick={() =>
                       updateIntegrationMutation.mutate({ website_url: websiteInput })
                     }
                     disabled={updateIntegrationMutation.isPending}
-                    className="px-3 py-1 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-xs font-semibold"
                   >
                     Save
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
                     onClick={() => setIsEditingWebsite(false)}
-                    className="px-3 py-1 bg-white/[0.05] hover:bg-white/[0.1] text-slate-300 rounded-lg text-xs"
                   >
                     Cancel
-                  </button>
+                  </Button>
                 </div>
               </div>
             ) : (
               <div>
-                <p className="font-headline font-bold text-base text-white truncate mt-1">
+                <p className="font-semibold text-base truncate mt-1">
                   {wooStatus?.storeUrl || integration?.websiteUrl || 'No domain linked yet'}
                 </p>
-                <p className="text-[11px] text-slate-500 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   {wooStatus?.isConnected
                     ? 'Connected'
                     : integration?.websiteUrl
@@ -414,472 +424,478 @@ document.getElementById('nexusflow-checkout-form').addEventListener('submit', as
                 </p>
               </div>
             )}
-          </div>
+          </CardContent>
 
           {!isEditingWebsite && (
-            <button
-              onClick={() => {
-                setWebsiteInput(wooStatus?.storeUrl || integration?.websiteUrl || '');
-                setIsEditingWebsite(true);
-              }}
-              className="mt-4 text-left text-xs text-violet-400 hover:text-violet-300 font-semibold flex items-center gap-1"
-            >
-              <span>{integration?.websiteUrl || wooStatus?.storeUrl ? 'Change Website URL' : '+ Add Store Website'}</span>
-              <ArrowRight className="w-3 h-3" />
-            </button>
+            <div className="p-4 border-t bg-muted/10">
+              <Button
+                variant="ghost"
+                className="w-full text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 justify-between h-9 px-2"
+                onClick={() => {
+                  setWebsiteInput(wooStatus?.storeUrl || integration?.websiteUrl || '');
+                  setIsEditingWebsite(true);
+                }}
+              >
+                <span>{integration?.websiteUrl || wooStatus?.storeUrl ? 'Change Website URL' : '+ Add Store Website'}</span>
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </div>
           )}
-        </div>
+        </Card>
 
         {/* Tenant ID / Store ID Card */}
-        <div className="glass-card p-5 rounded-2xl flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-slate-400">
+        <Card className="flex flex-col justify-between">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Tenant ID
               </span>
             </div>
-            <div className="p-2.5 rounded-xl bg-black/50 border border-white/[0.06] font-mono text-xs text-violet-300 break-all select-all">
+            <div className="p-3 rounded-lg bg-muted/50 border font-mono text-xs break-all select-all font-medium">
               {tenantId}
             </div>
-            <p className="text-[10px] text-slate-500 mt-1.5">
+            <p className="text-xs text-muted-foreground mt-3 leading-relaxed">
               Pass this ID in your webhook payload or script to map orders to this account.
             </p>
-          </div>
+          </CardContent>
 
-          <button
-            onClick={() => copyToClipboard(tenantId, 'Tenant ID')}
-            className="mt-3 py-1.5 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-xs font-semibold text-slate-200 transition flex items-center justify-center gap-1.5"
-          >
-            {copiedField === 'Tenant ID' ? (
-              <Check className="w-3.5 h-3.5 text-emerald-400" />
-            ) : (
-              <Copy className="w-3.5 h-3.5" />
-            )}
-            <span>{copiedField === 'Tenant ID' ? 'Copied Tenant ID' : 'Copy Tenant ID'}</span>
-          </button>
-        </div>
+          <div className="p-4 border-t bg-muted/10">
+            <Button
+              variant="outline"
+              className="w-full h-9"
+              onClick={() => copyToClipboard(tenantId, 'Tenant ID')}
+            >
+              {copiedField === 'Tenant ID' ? (
+                <Check className="w-4 h-4 text-emerald-500 mr-2" />
+              ) : (
+                <Copy className="w-4 h-4 text-muted-foreground mr-2" />
+              )}
+              {copiedField === 'Tenant ID' ? 'Copied Tenant ID' : 'Copy Tenant ID'}
+            </Button>
+          </div>
+        </Card>
 
         {/* Public Order Webhook URL Card */}
-        <div className="glass-card p-5 rounded-2xl flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-slate-400">
+        <Card className="flex flex-col justify-between">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Webhook URL
               </span>
             </div>
-            <div className="p-2.5 rounded-xl bg-black/50 border border-white/[0.06] font-mono text-xs text-cyan-300 break-all select-all">
+            <div className="p-3 rounded-lg bg-muted/50 border font-mono text-xs text-indigo-600 break-all select-all font-medium">
               {publicWebhookUrl}
             </div>
-            <p className="text-[10px] text-slate-500 mt-1.5">
+            <p className="text-xs text-muted-foreground mt-3 leading-relaxed">
               Endpoint for WooCommerce Webhooks, Landing Pages, and Custom Apps.
             </p>
-          </div>
+          </CardContent>
 
-          <button
-            onClick={() => copyToClipboard(publicWebhookUrl, 'Webhook URL')}
-            className="mt-3 py-1.5 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-xs font-semibold text-slate-200 transition flex items-center justify-center gap-1.5"
-          >
-            {copiedField === 'Webhook URL' ? (
-              <Check className="w-3.5 h-3.5 text-emerald-400" />
-            ) : (
-              <Copy className="w-3.5 h-3.5" />
-            )}
-            <span>{copiedField === 'Webhook URL' ? 'Copied Webhook URL' : 'Copy Webhook URL'}</span>
-          </button>
-        </div>
+          <div className="p-4 border-t bg-muted/10">
+            <Button
+              variant="outline"
+              className="w-full h-9"
+              onClick={() => copyToClipboard(publicWebhookUrl, 'Webhook URL')}
+            >
+              {copiedField === 'Webhook URL' ? (
+                <Check className="w-4 h-4 text-emerald-500 mr-2" />
+              ) : (
+                <Copy className="w-4 h-4 text-muted-foreground mr-2" />
+              )}
+              {copiedField === 'Webhook URL' ? 'Copied Webhook URL' : 'Copy Webhook URL'}
+            </Button>
+          </div>
+        </Card>
       </div>
 
       {/* Integration Guides Navigation Tabs */}
-      <div className="glass-card rounded-2xl p-6">
-        <div className="flex flex-wrap items-center gap-2 border-b border-white/[0.08] pb-4 mb-6">
-          <button
+      <Card>
+        <div className="flex flex-wrap items-center gap-2 border-b p-4 sm:p-6 pb-4">
+          <Button
+            variant={activeTab === 'woo' ? 'default' : 'ghost'}
+            className={activeTab === 'woo' ? '' : 'text-muted-foreground'}
             onClick={() => setActiveTab('woo')}
-            className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${
-              activeTab === 'woo'
-                ? 'bg-violet-600 text-white shadow-lg shadow-violet-600/30'
-                : 'text-slate-400 hover:text-white hover:bg-white/[0.05]'
-            }`}
           >
-            <ShoppingBag className="w-3.5 h-3.5" />
-            <span>WooCommerce (Key & Secret / Webhook)</span>
+            <ShoppingBag className="w-4 h-4 mr-2" />
+            <span>WooCommerce (Key & Secret)</span>
             {wooStatus?.isConnected && (
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="w-2 h-2 ml-2 rounded-full bg-emerald-400 animate-pulse" />
             )}
-          </button>
+          </Button>
 
-          <button
+          <Button
+            variant={activeTab === 'embed' ? 'default' : 'ghost'}
+            className={activeTab === 'embed' ? '' : 'text-muted-foreground'}
             onClick={() => setActiveTab('embed')}
-            className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${
-              activeTab === 'embed'
-                ? 'bg-violet-600 text-white shadow-lg shadow-violet-600/30'
-                : 'text-slate-400 hover:text-white hover:bg-white/[0.05]'
-            }`}
           >
-            <Code2 className="w-3.5 h-3.5" />
+            <Code2 className="w-4 h-4 mr-2" />
             <span>Landing Page / HTML Form</span>
-          </button>
+          </Button>
 
-          <button
+          <Button
+            variant={activeTab === 'api' ? 'default' : 'ghost'}
+            className={activeTab === 'api' ? '' : 'text-muted-foreground'}
             onClick={() => setActiveTab('api')}
-            className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${
-              activeTab === 'api'
-                ? 'bg-violet-600 text-white shadow-lg shadow-violet-600/30'
-                : 'text-slate-400 hover:text-white hover:bg-white/[0.05]'
-            }`}
           >
-            <Zap className="w-3.5 h-3.5" />
+            <Zap className="w-4 h-4 mr-2" />
             <span>REST API / Developers</span>
-          </button>
+          </Button>
 
-          <button
+          <Button
+            variant={activeTab === 'test' ? 'default' : 'outline'}
+            className={`sm:ml-auto ${activeTab === 'test' ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'border-emerald-500 text-emerald-600 bg-emerald-500/5'}`}
             onClick={() => setActiveTab('test')}
-            className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ml-auto ${
-              activeTab === 'test'
-                ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
-                : 'text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 border border-emerald-500/20'
-            }`}
           >
-            <Send className="w-3.5 h-3.5" />
-            <span>Live Test Order Simulator</span>
-          </button>
+            <Send className="w-4 h-4 mr-2" />
+            <span>Live Test Order</span>
+          </Button>
         </div>
 
-        {/* Tab 1: WooCommerce Integration (Method 1: Consumer Key/Secret + Method 2: Webhook) */}
-        {activeTab === 'woo' && (
-          <div className="space-y-8">
-            {/* METHOD 1: Direct Consumer Key & Consumer Secret Connection */}
-            <div className="p-6 rounded-2xl bg-white/[0.02] border border-violet-500/25 relative overflow-hidden">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-violet-600/20 border border-violet-500/30 flex items-center justify-center text-violet-400">
-                    <Key className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-bold text-white flex items-center gap-2">
-                      <span>Option 1 — WooCommerce API</span>
-                      <span className="badge-purple text-[10px]">Recommended</span>
-                    </h3>
-                    <p className="text-xs text-slate-400 mt-0.5">
-                      Direct 2-way connection. Fetch orders and import your WooCommerce product catalog directly into NexusFlow CRM.
-                    </p>
-                  </div>
-                </div>
-
-                {wooStatus?.isConnected && (
-                  <span className="badge-green text-xs font-semibold flex items-center gap-1.5 px-3 py-1">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <span>Store Connected</span>
-                  </span>
-                )}
-              </div>
-
-              {wooStatus?.isConnected ? (
-                /* Connected State Dashboard */
-                <div className="space-y-5 pt-2">
-                  <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+        <CardContent className="p-4 sm:p-6">
+          {/* Tab 1: WooCommerce Integration */}
+          {activeTab === 'woo' && (
+            <div className="space-y-8">
+              {/* METHOD 1: Direct Consumer Key & Consumer Secret Connection */}
+              <div className="rounded-xl border bg-card relative overflow-hidden">
+                <div className="p-6 border-b">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
-                      <CheckCircle2 className="w-6 h-6 text-emerald-400 shrink-0" />
+                      <div className="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 flex items-center justify-center text-indigo-600">
+                        <Key className="w-5 h-5" />
+                      </div>
                       <div>
-                        <p className="font-semibold text-white text-sm">
-                          {wooStatus.storeUrl}
-                        </p>
-                        <p className="text-emerald-300 text-[11px] mt-0.5">
-                          REST API credentials encrypted at rest. Status: <strong>Authorized</strong>
-                        </p>
-                        <p className="text-slate-400 text-[10px] mt-1">
-                          Last synchronized: {wooStatus.lastSyncedAt ? new Date(wooStatus.lastSyncedAt).toLocaleString() : 'Not synced yet'}
+                        <h3 className="text-base font-semibold flex items-center gap-2">
+                          <span>Option 1 — WooCommerce API</span>
+                          <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 hover:bg-indigo-100 text-[10px] tracking-widest uppercase">Recommended</Badge>
+                        </h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Direct 2-way connection. Fetch orders and import your WooCommerce product catalog directly into NexusFlow CRM.
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      <a
-                        href={wooStatus.storeUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="px-3 py-1.5 bg-white/[0.05] hover:bg-white/[0.1] rounded-lg text-slate-200 text-xs flex items-center gap-1"
-                      >
-                        <span>Visit Store</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-                      <button
-                        onClick={() => {
-                          if (confirm('Are you sure you want to disconnect this WooCommerce store?')) {
-                            disconnectWooMutation.mutate();
-                          }
-                        }}
-                        disabled={disconnectWooMutation.isPending}
-                        className="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 rounded-lg text-xs flex items-center gap-1 transition"
-                      >
-                        <Unlink className="w-3 h-3" />
-                        <span>Disconnect</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Actions: Sync Orders & Import Products */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="p-4 rounded-xl bg-black/40 border border-white/[0.06] flex flex-col justify-between">
-                      <div>
-                        <h4 className="text-xs font-semibold text-white flex items-center gap-1.5 mb-1">
-                          <RefreshCw className="w-3.5 h-3.5 text-violet-400" />
-                          <span>Sync Recent Orders</span>
-                        </h4>
-                        <p className="text-[11px] text-slate-400">
-                          Pulls all recent Pending & Processing orders from WooCommerce and imports them into your NexusFlow CRM Orders list.
-                        </p>
-                      </div>
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        className="mt-4 w-full"
-                        onClick={() => syncOrdersMutation.mutate()}
-                        isLoading={syncOrdersMutation.isPending}
-                      >
-                        <RefreshCw className="w-3.5 h-3.5 mr-2" />
-                        <span>Sync Orders Now</span>
-                      </Button>
-                    </div>
-
-                    <div className="p-4 rounded-xl bg-black/40 border border-white/[0.06] flex flex-col justify-between">
-                      <div>
-                        <h4 className="text-xs font-semibold text-white flex items-center gap-1.5 mb-1">
-                          <Download className="w-3.5 h-3.5 text-cyan-400" />
-                          <span>Import Product Catalog</span>
-                        </h4>
-                        <p className="text-[11px] text-slate-400">
-                          Imports your products, SKUs, and stock quantities from WooCommerce into your NexusFlow CRM Products catalog.
-                        </p>
-                      </div>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className="mt-4 w-full text-cyan-300 border-cyan-500/30 hover:bg-cyan-500/10"
-                        onClick={() => syncProductsMutation.mutate()}
-                        isLoading={syncProductsMutation.isPending}
-                      >
-                        <Download className="w-3.5 h-3.5 mr-2" />
-                        <span>Import Products Catalog</span>
-                      </Button>
-                    </div>
+                    {wooStatus?.isConnected && (
+                      <Badge variant="outline" className="border-emerald-500 text-emerald-700 bg-emerald-500/10 flex items-center gap-1.5 shrink-0">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                        <span>Store Connected</span>
+                      </Badge>
+                    )}
                   </div>
                 </div>
-              ) : (
-                /* Connect Form */
-                <form onSubmit={handleConnectWooSubmit} className="space-y-4 pt-2">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="sm:col-span-3">
-                      <Input
-                        label="WooCommerce Store Website URL"
-                        placeholder="https://yourstore.com"
-                        value={wooUrl}
-                        onChange={(e) => setWooUrl(e.target.value)}
-                        required
-                      />
+
+                <div className="p-6">
+                {wooStatus?.isConnected ? (
+                  /* Connected State Dashboard */
+                  <div className="space-y-6">
+                    <div className="p-5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div className="flex items-center gap-4">
+                        <CheckCircle2 className="w-8 h-8 text-emerald-500 shrink-0" />
+                        <div>
+                          <p className="font-semibold text-base">
+                            {wooStatus.storeUrl}
+                          </p>
+                          <p className="text-emerald-700 dark:text-emerald-500 text-sm font-medium mt-0.5">
+                            REST API credentials encrypted at rest. Status: <strong>Authorized</strong>
+                          </p>
+                          <p className="text-muted-foreground text-xs mt-1.5 font-medium">
+                            Last synchronized: {wooStatus.lastSyncedAt ? new Date(wooStatus.lastSyncedAt).toLocaleString() : 'Not synced yet'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Button variant="outline" asChild>
+                          <a href={wooStatus.storeUrl} target="_blank" rel="noreferrer">
+                            Visit Store <ExternalLink className="w-4 h-4 ml-2 text-muted-foreground" />
+                          </a>
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="text-destructive border-destructive/50 hover:bg-destructive/10 hover:text-destructive"
+                          onClick={() => {
+                            if (confirm('Are you sure you want to disconnect this WooCommerce store?')) {
+                              disconnectWooMutation.mutate();
+                            }
+                          }}
+                          disabled={disconnectWooMutation.isPending}
+                        >
+                          <Unlink className="w-4 h-4 mr-2" />
+                          Disconnect
+                        </Button>
+                      </div>
                     </div>
 
-                    <div className="sm:col-span-3 sm:grid sm:grid-cols-2 gap-4">
-                      <Input
-                        label="Consumer Key"
-                        placeholder="ck_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                        value={wooConsumerKey}
-                        onChange={(e) => setWooConsumerKey(e.target.value)}
-                        required
-                      />
+                    {/* Actions: Sync Orders & Import Products */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="p-5 rounded-xl bg-muted/50 border flex flex-col justify-between">
+                        <div>
+                          <h4 className="text-sm font-semibold flex items-center gap-2 mb-2">
+                            <RefreshCw className="w-4 h-4 text-indigo-600" />
+                            <span>Sync Recent Orders</span>
+                          </h4>
+                          <p className="text-sm text-muted-foreground leading-relaxed">
+                            Pulls all recent Pending & Processing orders from WooCommerce and imports them into your NexusFlow CRM Orders list.
+                          </p>
+                        </div>
+                        <Button
+                          className="mt-5 w-full"
+                          onClick={() => syncOrdersMutation.mutate()}
+                          disabled={syncOrdersMutation.isPending}
+                        >
+                          <RefreshCw className={`w-4 h-4 mr-2 ${syncOrdersMutation.isPending ? 'animate-spin' : ''}`} />
+                          {syncOrdersMutation.isPending ? 'Syncing...' : 'Sync Orders Now'}
+                        </Button>
+                      </div>
 
-                      <div className="relative">
+                      <div className="p-5 rounded-xl bg-muted/50 border flex flex-col justify-between">
+                        <div>
+                          <h4 className="text-sm font-semibold flex items-center gap-2 mb-2">
+                            <Download className="w-4 h-4 text-emerald-600" />
+                            <span>Import Product Catalog</span>
+                          </h4>
+                          <p className="text-sm text-muted-foreground leading-relaxed">
+                            Imports your products, SKUs, and stock quantities from WooCommerce into your NexusFlow CRM Products catalog.
+                          </p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          className="mt-5 w-full text-emerald-600 border-emerald-500 hover:bg-emerald-500/10 hover:text-emerald-600"
+                          onClick={() => syncProductsMutation.mutate()}
+                          disabled={syncProductsMutation.isPending}
+                        >
+                          <Download className={`w-4 h-4 mr-2 ${syncProductsMutation.isPending ? 'animate-bounce' : ''}`} />
+                          {syncProductsMutation.isPending ? 'Importing...' : 'Import Products Catalog'}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* Connect Form */
+                  <form onSubmit={handleConnectWooSubmit} className="space-y-6">
+                    <div className="grid grid-cols-1 gap-5">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">WooCommerce Store Website URL</label>
                         <Input
-                          label="Consumer Secret"
-                          type={showSecret ? 'text' : 'password'}
-                          placeholder="cs_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                          value={wooConsumerSecret}
-                          onChange={(e) => setWooConsumerSecret(e.target.value)}
+                          placeholder="https://yourstore.com"
+                          value={wooUrl}
+                          onChange={(e) => setWooUrl(e.target.value)}
                           required
                         />
-                        <button
-                          type="button"
-                          onClick={() => setShowSecret(!showSecret)}
-                          className="absolute right-3 top-8 text-slate-400 hover:text-white"
-                          title={showSecret ? 'Hide' : 'Show'}
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Consumer Key</label>
+                          <Input
+                            placeholder="ck_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                            value={wooConsumerKey}
+                            onChange={(e) => setWooConsumerKey(e.target.value)}
+                            required
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Consumer Secret</label>
+                          <div className="relative">
+                            <Input
+                              type={showSecret ? 'text' : 'password'}
+                              placeholder="cs_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                              value={wooConsumerSecret}
+                              onChange={(e) => setWooConsumerSecret(e.target.value)}
+                              required
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setShowSecret(!showSecret)}
+                              className="absolute right-0 top-0 h-9 w-9 text-muted-foreground"
+                              title={showSecret ? 'Hide' : 'Show'}
+                            >
+                              {showSecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Step-by-step Help Box */}
+                    <div className="p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-sm space-y-3">
+                      <p className="font-semibold text-indigo-700 dark:text-indigo-400 flex items-center gap-2">
+                        <span className="text-lg">💡</span> How to get Consumer Key & Consumer Secret in WordPress:
+                      </p>
+                      <ol className="list-decimal list-inside space-y-2 text-indigo-700/80 dark:text-indigo-300 font-medium leading-relaxed pl-1">
+                        <li>Go to your WordPress Admin dashboard &rarr; <strong className="text-indigo-700 dark:text-indigo-400">WooCommerce</strong> &rarr; <strong className="text-indigo-700 dark:text-indigo-400">Settings</strong></li>
+                        <li>Click the <strong className="text-indigo-700 dark:text-indigo-400">Advanced</strong> tab &rarr; <strong className="text-indigo-700 dark:text-indigo-400">REST API</strong></li>
+                        <li>Click the <strong className="text-indigo-700 dark:text-indigo-400">Add key</strong> button</li>
+                        <li>Set Description: <strong className="bg-background px-1.5 py-0.5 rounded border">NexusFlow CRM</strong>, and Permissions: <strong className="bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/30">Read/Write</strong></li>
+                        <li>Click <strong className="text-indigo-700 dark:text-indigo-400">Generate API key</strong> &rarr; Copy the Consumer Key and Consumer Secret and paste them above!</li>
+                      </ol>
+                    </div>
+
+                    <div>
+                      <Button
+                        type="submit"
+                        className="w-full sm:w-auto"
+                        disabled={connectWooMutation.isPending}
+                      >
+                        <Key className="w-4 h-4 mr-2" />
+                        {connectWooMutation.isPending ? 'Connecting...' : 'Connect & Verify WooCommerce Store'}
+                      </Button>
+                    </div>
+                  </form>
+                )}
+                </div>
+              </div>
+
+              {/* METHOD 2: Real-Time Webhook Instructions (Optional) */}
+              <div className="space-y-5 pt-4">
+                <div>
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <span>Option 2 — Webhook (Real-time)</span>
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Optional: Whenever a customer places an order on your WooCommerce checkout, WordPress instantly notifies NexusFlow CRM in real-time.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="p-5 rounded-xl bg-muted/50 border shadow-sm space-y-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-sm">
+                      1
+                    </div>
+                    <h4 className="text-sm font-semibold">Go to Settings</h4>
+                    <p className="text-xs text-muted-foreground leading-relaxed font-medium">
+                      In WordPress Admin: <strong>WooCommerce</strong> &rarr; <strong>Settings</strong> &rarr; <strong>Advanced</strong> &rarr; <strong>Webhooks</strong>.
+                    </p>
+                  </div>
+
+                  <div className="p-5 rounded-xl bg-muted/50 border shadow-sm space-y-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-sm">
+                      2
+                    </div>
+                    <h4 className="text-sm font-semibold">Add Webhook</h4>
+                    <p className="text-xs text-muted-foreground leading-relaxed font-medium">
+                      Click blue <strong>&quot;Add Webhook&quot;</strong> button. Set Name: <strong>NexusFlow Sync</strong>.
+                    </p>
+                  </div>
+
+                  <div className="p-5 rounded-xl bg-muted/50 border shadow-sm space-y-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-sm">
+                      3
+                    </div>
+                    <h4 className="text-sm font-semibold">Enter Values</h4>
+                    <p className="text-xs text-muted-foreground leading-relaxed font-medium">
+                      Topic: <strong>Order created</strong><br />
+                      Delivery URL: <strong>(Copy box below)</strong><br />
+                      Status: <strong>Active</strong>
+                    </p>
+                  </div>
+
+                  <div className="p-5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 shadow-sm space-y-3">
+                    <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold flex items-center justify-center text-sm">
+                      4
+                    </div>
+                    <h4 className="text-sm font-semibold text-emerald-700 dark:text-emerald-500">Save & Done</h4>
+                    <p className="text-xs text-emerald-600 dark:text-emerald-400/80 leading-relaxed font-medium">
+                      Click <strong>Save Webhook</strong>. Orders will now push automatically to your CRM!
+                    </p>
+                  </div>
+                </div>
+
+                {/* Quick Webhook Values Box */}
+                <div className="p-5 rounded-xl bg-card border shadow-sm space-y-4">
+                  <h4 className="text-sm font-semibold">Values to paste into WooCommerce Webhook settings:</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <span className="text-xs font-semibold text-muted-foreground block mb-2 uppercase tracking-wide">Delivery URL</span>
+                      <div className="flex items-center gap-3 bg-muted/50 p-3 rounded-lg border font-mono text-primary text-sm font-medium">
+                        <span className="truncate flex-1">{publicWebhookUrl}</span>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => copyToClipboard(publicWebhookUrl, 'Delivery URL')}
+                          className="h-8 w-8 shrink-0"
+                          title="Copy"
                         >
-                          {showSecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
+                          {copiedField === 'Delivery URL' ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <span className="text-xs font-semibold text-muted-foreground block mb-2 uppercase tracking-wide">Secret / Tenant ID</span>
+                      <div className="flex items-center gap-3 bg-muted/50 p-3 rounded-lg border font-mono text-primary text-sm font-medium">
+                        <span className="truncate flex-1">{tenantId}</span>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => copyToClipboard(tenantId, 'Secret')}
+                          className="h-8 w-8 shrink-0"
+                          title="Copy"
+                        >
+                          {copiedField === 'Secret' ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+                        </Button>
                       </div>
                     </div>
                   </div>
-
-                  {/* Step-by-step Help Box */}
-                  <div className="p-4 rounded-xl bg-black/50 border border-white/[0.08] text-xs space-y-2">
-                    <p className="font-semibold text-violet-300">
-                      💡 How to get Consumer Key & Consumer Secret in WordPress:
-                    </p>
-                    <ol className="list-decimal list-inside space-y-1 text-slate-400 text-[11px] leading-relaxed">
-                      <li>Go to your WordPress Admin dashboard &rarr; <strong>WooCommerce</strong> &rarr; <strong>Settings</strong></li>
-                      <li>Click the <strong>Advanced</strong> tab &rarr; <strong>REST API</strong></li>
-                      <li>Click the <strong>Add key</strong> button</li>
-                      <li>Set Description: <strong className="text-white">NexusFlow CRM</strong>, and Permissions: <strong className="text-emerald-400">Read/Write</strong></li>
-                      <li>Click <strong>Generate API key</strong> &rarr; Copy the Consumer Key and Consumer Secret and paste them above!</li>
-                    </ol>
-                  </div>
-
-                  <div className="pt-2">
-                    <Button
-                      variant="primary"
-                      type="submit"
-                      isLoading={connectWooMutation.isPending}
-                    >
-                      <Key className="w-4 h-4 mr-2" />
-                      <span>Connect & Verify WooCommerce Store</span>
-                    </Button>
-                  </div>
-                </form>
-              )}
+                </div>
+              </div>
             </div>
+          )}
 
-            {/* METHOD 2: Real-Time Webhook Instructions (Optional) */}
-            <div className="space-y-4 pt-2 border-t border-white/[0.08]">
+          {/* Tab 2: Landing Page / HTML Form Snippet */}
+          {activeTab === 'embed' && (
+            <div className="space-y-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-lg font-semibold flex items-center gap-3">
+                    <span>Landing Page Order Form (Ready to Paste)</span>
+                    <Badge variant="outline" className="border-emerald-500 text-emerald-600 bg-emerald-500/10 uppercase tracking-widest text-[10px]">Zero Dependency</Badge>
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Copy and paste this HTML & JavaScript code directly into your custom landing page or website. It includes Dhaka / Outside Dhaka delivery radio buttons and instant submission to your CRM.
+                  </p>
+                </div>
+
+                <Button
+                  onClick={() => copyToClipboard(embedCodeSnippet, 'Landing Page Code')}
+                  className="shrink-0"
+                >
+                  {copiedField === 'Landing Page Code' ? (
+                    <Check className="w-4 h-4 text-emerald-300 mr-2" />
+                  ) : (
+                    <Copy className="w-4 h-4 mr-2" />
+                  )}
+                  <span>{copiedField === 'Landing Page Code' ? 'Code Copied!' : 'Copy Entire Code'}</span>
+                </Button>
+              </div>
+
+              <div className="rounded-xl overflow-hidden border bg-muted/30">
+                <pre className="p-6 text-sm font-mono text-muted-foreground overflow-x-auto max-h-[500px] leading-relaxed">
+                  {embedCodeSnippet}
+                </pre>
+              </div>
+            </div>
+          )}
+
+          {/* Tab 3: REST API & Developers */}
+          {activeTab === 'api' && (
+            <div className="space-y-6">
               <div>
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <span>Option 2 — Webhook (Real-time)</span>
+                <h3 className="text-lg font-semibold flex items-center gap-3">
+                  <span>REST API Specification</span>
+                  <Badge variant="outline" className="border-cyan-500 text-cyan-600 bg-cyan-500/10 uppercase tracking-widest text-[10px]">CORS Enabled</Badge>
                 </h3>
-                <p className="text-xs text-slate-400 mt-1">
-                  Optional: Whenever a customer places an order on your WooCommerce checkout, WordPress instantly notifies NexusFlow CRM in real-time.
+                <p className="text-sm text-muted-foreground mt-1">
+                  For developers building with Next.js, React, Node.js, PHP, or custom shopping carts.
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="p-4 rounded-xl bg-black/40 border border-white/[0.06] space-y-2">
-                  <div className="w-6 h-6 rounded-full bg-violet-600/20 text-violet-400 font-bold flex items-center justify-center text-xs">
-                    1
-                  </div>
-                  <h4 className="text-xs font-semibold text-white">Go to Settings</h4>
-                  <p className="text-[11px] text-slate-400">
-                    In WordPress Admin: <strong>WooCommerce</strong> &rarr; <strong>Settings</strong> &rarr; <strong>Advanced</strong> &rarr; <strong>Webhooks</strong>.
-                  </p>
-                </div>
-
-                <div className="p-4 rounded-xl bg-black/40 border border-white/[0.06] space-y-2">
-                  <div className="w-6 h-6 rounded-full bg-violet-600/20 text-violet-400 font-bold flex items-center justify-center text-xs">
-                    2
-                  </div>
-                  <h4 className="text-xs font-semibold text-white">Add Webhook</h4>
-                  <p className="text-[11px] text-slate-400">
-                    Click blue <strong>&quot;Add Webhook&quot;</strong> button. Set Name: <strong>NexusFlow Sync</strong>.
-                  </p>
-                </div>
-
-                <div className="p-4 rounded-xl bg-black/40 border border-white/[0.06] space-y-2">
-                  <div className="w-6 h-6 rounded-full bg-violet-600/20 text-violet-400 font-bold flex items-center justify-center text-xs">
-                    3
-                  </div>
-                  <h4 className="text-xs font-semibold text-white">Enter Values</h4>
-                  <p className="text-[11px] text-slate-400">
-                    Topic: <strong>Order created</strong><br />
-                    Delivery URL: <strong>(Copy box below)</strong><br />
-                    Status: <strong>Active</strong>
-                  </p>
-                </div>
-
-                <div className="p-4 rounded-xl bg-black/40 border border-white/[0.06] space-y-2">
-                  <div className="w-6 h-6 rounded-full bg-emerald-600/20 text-emerald-400 font-bold flex items-center justify-center text-xs">
-                    4
-                  </div>
-                  <h4 className="text-xs font-semibold text-white">Save & Done</h4>
-                  <p className="text-[11px] text-slate-400">
-                    Click <strong>Save Webhook</strong>. Orders will now push automatically to your CRM!
-                  </p>
-                </div>
-              </div>
-
-              {/* Quick Webhook Values Box */}
-              <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.08] space-y-3">
-                <h4 className="text-xs font-semibold text-slate-200">Values to paste into WooCommerce Webhook settings:</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                  <div>
-                    <span className="text-[11px] text-slate-400 block mb-1">Delivery URL</span>
-                    <div className="flex items-center gap-2 bg-black/60 p-2.5 rounded-lg border border-white/10 font-mono text-cyan-300 text-xs">
-                      <span className="truncate flex-1">{publicWebhookUrl}</span>
-                      <button
-                        onClick={() => copyToClipboard(publicWebhookUrl, 'Delivery URL')}
-                        className="p-1 hover:text-white"
-                        title="Copy"
-                      >
-                        {copiedField === 'Delivery URL' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <span className="text-[11px] text-slate-400 block mb-1">Secret / Tenant ID</span>
-                    <div className="flex items-center gap-2 bg-black/60 p-2.5 rounded-lg border border-white/10 font-mono text-violet-300 text-xs">
-                      <span className="truncate flex-1">{tenantId}</span>
-                      <button
-                        onClick={() => copyToClipboard(tenantId, 'Secret')}
-                        className="p-1 hover:text-white"
-                        title="Copy"
-                      >
-                        {copiedField === 'Secret' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Tab 2: Landing Page / HTML Form Snippet */}
-        {activeTab === 'embed' && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <span>Landing Page Order Form (Ready to Paste)</span>
-                  <span className="badge-green text-[10px]">Zero Dependency</span>
-                </h3>
-                <p className="text-xs text-slate-400 mt-1">
-                  Copy and paste this HTML & JavaScript code directly into your custom landing page or website. It includes Dhaka / Outside Dhaka delivery radio buttons and instant submission to your CRM.
-                </p>
-              </div>
-
-              <button
-                onClick={() => copyToClipboard(embedCodeSnippet, 'Landing Page Code')}
-                className="btn-gradient-glow flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white"
-              >
-                {copiedField === 'Landing Page Code' ? (
-                  <Check className="w-4 h-4 text-emerald-300" />
-                ) : (
-                  <Copy className="w-4 h-4" />
-                )}
-                <span>{copiedField === 'Landing Page Code' ? 'Code Copied!' : 'Copy Entire Code'}</span>
-              </button>
-            </div>
-
-            <div className="relative">
-              <pre className="p-4 rounded-xl bg-black/70 border border-white/[0.08] text-xs font-mono text-slate-300 overflow-x-auto max-h-[380px] leading-relaxed">
-                {embedCodeSnippet}
-              </pre>
-            </div>
-          </div>
-        )}
-
-        {/* Tab 3: REST API & Developers */}
-        {activeTab === 'api' && (
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <span>REST API Specification</span>
-                <span className="badge-cyan text-[10px]">CORS Enabled</span>
-              </h3>
-              <p className="text-xs text-slate-400 mt-1">
-                For developers building with Next.js, React, Node.js, PHP, or custom shopping carts.
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <span className="text-xs font-semibold text-slate-300">cURL Example (Pre-filled with your Tenant ID):</span>
-              <div className="relative">
-                <pre className="p-4 rounded-xl bg-black/70 border border-white/[0.08] text-xs font-mono text-emerald-300 overflow-x-auto">
+              <div className="space-y-3">
+                <span className="text-sm font-semibold block">cURL Example (Pre-filled with your Tenant ID):</span>
+                <div className="relative rounded-xl overflow-hidden border bg-muted/30">
+                  <pre className="p-6 text-sm font-mono text-muted-foreground overflow-x-auto leading-relaxed">
 {`curl -X POST "${publicWebhookUrl}" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -897,25 +913,27 @@ document.getElementById('nexusflow-checkout-form').addEventListener('submit', as
       }
     ]
   }'`}
-                </pre>
-                <button
-                  onClick={() =>
-                    copyToClipboard(
-                      `curl -X POST "${publicWebhookUrl}" -H "Content-Type: application/json" -d '{"tenant_id":"${tenantId}","customer_name":"Tariqul Islam","customer_phone":"01711223344","customer_address":"House 14, Road 5, Dhanmondi, Dhaka","delivery_charge":70,"notes":"Please call before delivery","items":[{"name":"Men Premium Panjabi","sell_price":1450,"quantity":1}]}'`,
-                      'cURL'
-                    )
-                  }
-                  className="absolute top-3 right-3 p-1.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-xs text-slate-300 hover:text-white"
-                  title="Copy cURL"
-                >
-                  {copiedField === 'cURL' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                </button>
+                  </pre>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() =>
+                      copyToClipboard(
+                        `curl -X POST "${publicWebhookUrl}" -H "Content-Type: application/json" -d '{"tenant_id":"${tenantId}","customer_name":"Tariqul Islam","customer_phone":"01711223344","customer_address":"House 14, Road 5, Dhanmondi, Dhaka","delivery_charge":70,"notes":"Please call before delivery","items":[{"name":"Men Premium Panjabi","sell_price":1450,"quantity":1}]}'`,
+                        'cURL'
+                      )
+                    }
+                    className="absolute top-4 right-4 bg-background"
+                    title="Copy cURL"
+                  >
+                    {copiedField === 'cURL' ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+                  </Button>
+                </div>
               </div>
-            </div>
 
-            <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] text-xs text-slate-300 space-y-1">
-              <strong className="text-white block font-semibold mb-1">Expected JSON Response (HTTP 201):</strong>
-              <pre className="font-mono text-[11px] text-cyan-300">
+              <div className="p-5 rounded-xl bg-card border text-sm space-y-3">
+                <strong className="block font-semibold">Expected JSON Response (HTTP 201):</strong>
+                <pre className="font-mono text-xs text-primary bg-muted/50 p-4 rounded-lg border overflow-x-auto">
 {`{
   "success": true,
   "data": {
@@ -926,107 +944,117 @@ document.getElementById('nexusflow-checkout-form').addEventListener('submit', as
     "createdAt": "2026-10-03T07:30:00.000Z"
   }
 }`}
-              </pre>
+                </pre>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Tab 4: Live Test Order Simulator */}
-        {activeTab === 'test' && (
-          <div className="space-y-5">
-            <div>
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <span>Live Test Order Simulator</span>
-                <span className="badge-green text-[10px]">Real-Time Test</span>
-              </h3>
-              <p className="text-xs text-slate-400 mt-1">
-                Send a real test order directly into your NexusFlow CRM to verify that your account receives web orders properly!
-              </p>
-            </div>
-
-            {testResult && (
-              <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs space-y-2">
-                <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm">
-                  <CheckCircle2 className="w-5 h-5" />
-                  <span>Success! Test Order Created</span>
-                </div>
-                <p className="text-slate-300">
-                  Order ID: <strong className="font-mono text-white">{testResult.orderId}</strong> | Total Amount: <strong className="text-emerald-300">{formatBDT(testResult.totalAmount)}</strong>
+          {/* Tab 4: Live Test Order Simulator */}
+          {activeTab === 'test' && (
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold flex items-center gap-3">
+                  <span>Live Test Order Simulator</span>
+                  <Badge variant="outline" className="border-emerald-500 text-emerald-600 bg-emerald-500/10 uppercase tracking-widest text-[10px]">Real-Time Test</Badge>
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Send a real test order directly into your NexusFlow CRM to verify that your account receives web orders properly!
                 </p>
-                <div className="pt-1">
-                  <Link
-                    href="/orders"
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-400 hover:text-emerald-300 underline"
-                  >
-                    <span>View this order in your Orders dashboard &rarr;</span>
-                  </Link>
+              </div>
+
+              {testResult && (
+                <div className="p-5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-sm space-y-3">
+                  <div className="flex items-center gap-2 text-emerald-600 font-semibold text-base">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                    <span>Success! Test Order Created</span>
+                  </div>
+                  <p className="text-emerald-700 dark:text-emerald-500 font-medium">
+                    Order ID: <strong className="font-mono">{testResult.orderId}</strong> | Total Amount: <strong>{formatBDT(testResult.totalAmount)}</strong>
+                  </p>
+                  <div className="pt-2">
+                    <Link
+                      href="/orders"
+                      className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline underline-offset-2 transition-colors"
+                    >
+                      <span>View this order in your Orders dashboard &rarr;</span>
+                    </Link>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            <form onSubmit={handleTestOrderSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Input
-                label="Customer Name"
-                value={testName}
-                onChange={(e) => setTestName(e.target.value)}
-                required
-              />
+              <form onSubmit={handleTestOrderSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-5 p-6 bg-card border rounded-xl shadow-sm">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Customer Name</label>
+                  <Input
+                    value={testName}
+                    onChange={(e) => setTestName(e.target.value)}
+                    required
+                  />
+                </div>
 
-              <Input
-                label="Customer Phone Number"
-                value={testPhone}
-                onChange={(e) => setTestPhone(e.target.value)}
-                required
-              />
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Customer Phone Number</label>
+                  <Input
+                    value={testPhone}
+                    onChange={(e) => setTestPhone(e.target.value)}
+                    required
+                  />
+                </div>
 
-              <div className="sm:col-span-2">
-                <Input
-                  label="Delivery Address"
-                  value={testAddress}
-                  onChange={(e) => setTestAddress(e.target.value)}
-                  required
-                />
-              </div>
+                <div className="sm:col-span-2 space-y-2">
+                  <label className="text-sm font-medium">Delivery Address</label>
+                  <Input
+                    value={testAddress}
+                    onChange={(e) => setTestAddress(e.target.value)}
+                    required
+                  />
+                </div>
 
-              <Input
-                label="Product Name"
-                value={testProductName}
-                onChange={(e) => setTestProductName(e.target.value)}
-                required
-              />
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Product Name</label>
+                  <Input
+                    value={testProductName}
+                    onChange={(e) => setTestProductName(e.target.value)}
+                    required
+                  />
+                </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                <Input
-                  label="Product Price (৳)"
-                  type="number"
-                  value={testPrice}
-                  onChange={(e) => setTestPrice(e.target.value)}
-                  required
-                />
-                <Input
-                  label="Delivery Charge (৳)"
-                  type="number"
-                  value={testDelivery}
-                  onChange={(e) => setTestDelivery(e.target.value)}
-                  required
-                />
-              </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Product Price (৳)</label>
+                    <Input
+                      type="number"
+                      value={testPrice}
+                      onChange={(e) => setTestPrice(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Delivery Charge (৳)</label>
+                    <Input
+                      type="number"
+                      value={testDelivery}
+                      onChange={(e) => setTestDelivery(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
 
-              <div className="sm:col-span-2 pt-2">
-                <Button
-                  variant="primary"
-                  type="submit"
-                  className="w-full sm:w-auto"
-                  isLoading={testOrderMutation.isPending}
-                >
-                  <Send className="w-4 h-4 mr-2" />
-                  <span>Send Test Order to My CRM</span>
-                </Button>
-              </div>
-            </form>
-          </div>
-        )}
-      </div>
+                <div className="sm:col-span-2 pt-4">
+                  <Button
+                    type="submit"
+                    className="w-full sm:w-auto"
+                    disabled={testOrderMutation.isPending}
+                  >
+                    <Send className="w-4 h-4 mr-2" />
+                    {testOrderMutation.isPending ? 'Sending...' : 'Send Test Order to My CRM'}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

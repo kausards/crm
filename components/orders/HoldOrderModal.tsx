@@ -76,27 +76,27 @@ export function HoldOrderModal({
     >
       <form onSubmit={handleSubmit} className="space-y-4 text-xs">
         {/* Order Details Brief */}
-        <div className="p-3 bg-white/[0.03] border border-white/10 rounded-xl space-y-1.5">
-          <div className="flex justify-between items-center text-slate-400">
+        <div className="p-3 bg-muted/50 border border rounded-xl space-y-1.5">
+          <div className="flex justify-between items-center text-muted-foreground">
             <span>Customer:</span>
-            <span className="font-semibold text-slate-200">{customerName || 'N/A'}</span>
+            <span className="font-semibold text-muted-foreground">{customerName || 'N/A'}</span>
           </div>
           {totalAmount !== undefined && (
-            <div className="flex justify-between items-center text-slate-400">
+            <div className="flex justify-between items-center text-muted-foreground">
               <span>Order Amount:</span>
-              <span className="font-mono font-bold text-white">{formatBDT(totalAmount)}</span>
+              <span className="font-mono font-bold text-foreground">{formatBDT(totalAmount)}</span>
             </div>
           )}
           {currentNotes && (
-            <div className="pt-1 text-[11px] text-slate-400 border-t border-white/[0.06]">
-              <span className="text-slate-500">Existing Note:</span> {currentNotes}
+            <div className="pt-1 text-[11px] text-muted-foreground border-t border-white/[0.06]">
+              <span className="text-muted-foreground">Existing Note:</span> {currentNotes}
             </div>
           )}
         </div>
 
         {/* Quick Reason Chips */}
         <div>
-          <label className="block text-[11px] font-medium text-slate-400 mb-1.5 uppercase tracking-wider">
+          <label className="block text-[11px] font-medium text-muted-foreground mb-1.5 uppercase tracking-wider">
             Quick Sales Reason Tags
           </label>
           <div className="flex flex-wrap gap-1.5">
@@ -105,7 +105,7 @@ export function HoldOrderModal({
                 key={chip}
                 type="button"
                 onClick={() => handleSelectQuickReason(chip)}
-                className="px-2.5 py-1 rounded-lg bg-white/[0.03] hover:bg-sky-500/10 border border-white/10 hover:border-sky-500/30 text-slate-300 hover:text-sky-300 text-[11px] transition-all text-left"
+                className="px-2.5 py-1 rounded-lg bg-muted/50 hover:bg-sky-500/10 border border hover:border-sky-500/30 text-muted-foreground hover:text-sky-300 text-[11px] transition-all text-left"
               >
                 + {chip}
               </button>
@@ -115,22 +115,22 @@ export function HoldOrderModal({
 
         {/* Note input */}
         <div className="space-y-1.5">
-          <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-200">
+          <label className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
             <FileText className="w-3.5 h-3.5 text-sky-400" />
             <span>Sales Team Note / Reason</span>
-            <span className="text-[10px] text-slate-500 font-normal">(Why is this order on hold?)</span>
+            <span className="text-[10px] text-muted-foreground font-normal">(Why is this order on hold?)</span>
           </label>
           <textarea
             rows={3}
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             placeholder="E.g. Customer requested delivery on Friday after 4 PM due to office timing..."
-            className="glass-input w-full p-2.5 text-xs text-slate-200 resize-none"
+            className="glass-input w-full p-2.5 text-xs text-muted-foreground resize-none"
           />
         </div>
 
         {/* Modal Actions */}
-        <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-white/10">
+        <div className="flex items-center justify-end gap-2.5 pt-2 border-t border">
           <Button variant="outline" size="sm" type="button" onClick={onClose}>
             Cancel
           </Button>
@@ -139,7 +139,7 @@ export function HoldOrderModal({
             size="sm"
             type="submit"
             isLoading={holdMutation.isPending}
-            className="bg-sky-600 hover:bg-sky-500 text-white flex items-center gap-1.5"
+            className="bg-sky-600 hover:bg-sky-500 text-foreground flex items-center gap-1.5"
           >
             <PauseCircle className="w-3.5 h-3.5" />
             <span>Confirm Put On Hold</span>
