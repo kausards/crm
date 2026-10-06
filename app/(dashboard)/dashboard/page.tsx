@@ -271,9 +271,9 @@ export default function DashboardPage() {
                   tickFormatter={(value) => `${value >= 1000 ? (value/1000) + 'k' : value}`}
                   width={40} 
                 />
-                {/* @ts-expect-error recharts type mismatch */}
+                {/* @ts-ignore */}
                 <ChartTooltip content={<ChartTooltipContent /> as any} />
-                {/* @ts-expect-error recharts type mismatch */}
+                {/* @ts-ignore */}
                 <ChartLegend content={<ChartLegendContent /> as any} />
                 
                 <Area
