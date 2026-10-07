@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
 
     let todaySales = 0;
     let todayCogs = 0;
-    let todayOrdersCount = (todayOrders || []).length;
+    const todayOrdersCount = (todayOrders || []).length;
     let todayDeliveredCount = 0;
 
     for (const order of todayOrders || []) {

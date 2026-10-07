@@ -271,7 +271,6 @@ export default function DashboardPage() {
                   tickFormatter={(value) => `${value >= 1000 ? (value/1000) + 'k' : value}`}
                   width={40} 
                 />
-                {/* @ts-ignore */}
                 <ChartTooltip content={<ChartTooltipContent /> as any} />
                 <ChartLegend content={<ChartLegendContent payload={[]} /> as any} />
                 
@@ -311,7 +310,7 @@ export default function DashboardPage() {
                 </Badge>
               </div>
               <p className="text-xs text-muted-foreground">
-                Percentage of today's orders successfully delivered
+                Percentage of today&apos;s orders successfully delivered
               </p>
               <div className="flex items-center gap-3">
                 <Progress value={orderCompletionRate} aria-label="Order completion progress" />
