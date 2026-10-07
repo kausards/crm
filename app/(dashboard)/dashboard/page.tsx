@@ -273,8 +273,7 @@ export default function DashboardPage() {
                 />
                 {/* @ts-ignore */}
                 <ChartTooltip content={<ChartTooltipContent /> as any} />
-                {/* @ts-ignore */}
-                <ChartLegend content={<ChartLegendContent /> as any} />
+                <ChartLegend content={<ChartLegendContent payload={[]} /> as any} />
                 
                 <Area
                   dataKey="revenue"
